@@ -12,6 +12,8 @@
 package guards
 
 import (
+	"fmt"
+	"math"
 	"sort"
 
 	"github.com/Rishi0507/manhattan/internal/model"
@@ -35,11 +37,36 @@ type NeighbourhoodResult struct {
 	Stable bool `json:"stable"`
 
 	MaxDepth          int                 `json:"max_substitution_depth"`
+	RequestedDepth    int                 `json:"requested_substitution_depth"`
 	RemovalSums       int                 `json:"removal_sums_enumerated"`
 	AdditionSums      int                 `json:"addition_sums_enumerated"`
 	WidenedPoolN      int                 `json:"widened_pool_n"`
 	OriginalPoolN     int                 `json:"original_pool_n"`
 	ConstraintsTested []narrow.Constraint `json:"constraints_tested"`
+
+	// ExpectedSpurious is how many collisions this probe would be expected to
+	// find purely by chance, given how many pairs it compared.
+	//
+	// The probe is a search for a coincidence, so it has a multiple
+	// comparisons problem and it is a severe one. At depth two a witness of
+	// size |S| generates about |S|^2/2 removal sums, and a widened pool of m
+	// spare records generates about m^2/2 addition sums, so the number of
+	// pairs compared grows with the square of both. A six-record witness in a
+	// sixty-record pool compares about forty thousand pairs and a chance
+	// collision is negligible. A one-hundred-and-thirty-eight-record witness
+	// compares over a hundred million, and a chance collision is a near
+	// certainty.
+	//
+	// A guard that fires on a coincidence it was always going to find is not
+	// a guard, it is a false alarm generator, and it would hold every large
+	// batch for review forever. So the probe estimates its own false positive
+	// rate first and reduces its depth until that rate is small. If even
+	// depth one is too noisy it says so and reports itself inconclusive,
+	// which is a different and more honest statement than "stable".
+	ExpectedSpurious float64 `json:"expected_spurious_collisions"`
+	// Inconclusive means the probe could not distinguish a real substitution
+	// from a chance one at any depth, so its silence carries no information.
+	Inconclusive bool `json:"inconclusive"`
 
 	// Rival, when present, is the alternative reconstruction the widened pool
 	// admits, and Culprit is the constraint whose relaxation admitted it.
@@ -78,7 +105,7 @@ type NeighbourhoodResult struct {
 func Probe(witness []model.Record, widened []model.Record, maxDepth int, delta money.Paise, tested []narrow.Constraint, admitted map[string]narrow.Constraint) NeighbourhoodResult {
 	res := NeighbourhoodResult{
 		Method:            "witness_neighbourhood_join",
-		MaxDepth:          maxDepth,
+		RequestedDepth:    maxDepth,
 		WidenedPoolN:      len(widened),
 		ConstraintsTested: tested,
 		Stable:            true,
@@ -96,8 +123,24 @@ func Probe(witness []model.Record, widened []model.Record, maxDepth int, delta m
 	}
 	res.OriginalPoolN = len(widened) - len(additions) + len(witness)
 
-	removals := subsetSums(witness, maxDepth)
-	adds := subsetSums(additions, maxDepth)
+	// Pick the deepest substitution the data can actually support without the
+	// answer being drowned in chance collisions.
+	depth, expected := usableDepth(witness, additions, maxDepth, delta)
+	res.MaxDepth = depth
+	res.ExpectedSpurious = expected
+	if depth < 1 {
+		res.Inconclusive = true
+		res.Stable = false
+		res.Note = fmt.Sprintf(
+			"this probe cannot distinguish a real substitution from a chance one: comparing a %d-record "+
+				"witness against %d spare records would produce an estimated %.1f coincidental collisions "+
+				"even if narrowing were perfect, so its result would carry no information",
+			len(witness), len(additions), expected)
+		return res
+	}
+
+	removals := subsetSums(witness, depth)
+	adds := subsetSums(additions, depth)
 	res.RemovalSums = len(removals)
 	res.AdditionSums = len(adds)
 
@@ -109,6 +152,7 @@ func Probe(witness []model.Record, widened []model.Record, maxDepth int, delta m
 		addSums[i] = a.sum
 	}
 
+	maxDepth = depth
 	for _, rem := range removals {
 		width := money.Paise(rem.card) * delta
 		for ai := lowerBound(addSums, rem.sum-width); ai < len(adds); ai++ {
@@ -136,14 +180,84 @@ func Probe(witness []model.Record, widened []model.Record, maxDepth int, delta m
 					break
 				}
 			}
-			res.Note = "the widened pool admits an alternative reconstruction; " +
-				"this answer came from a filtering decision, not from the arithmetic"
+			res.Note = fmt.Sprintf(
+				"the widened pool admits an alternative reconstruction at substitution depth %d; "+
+					"this answer came from a filtering decision rather than from the arithmetic. "+
+					"An estimated %.3g collisions would be expected here by chance, so this one is a finding",
+				res.Rival.Depth, expected)
 			return res
 		}
 	}
 
-	res.Note = "no alternative reconstruction exists within the tested substitution depth over the widened pool"
+	res.Note = fmt.Sprintf(
+		"no alternative reconstruction exists at substitution depth %d over a pool widened to %d records "+
+			"(an estimated %.3g chance collisions would have been tolerable here)",
+		depth, len(widened), expected)
 	return res
+}
+
+// usableDepth returns the deepest substitution depth at which a collision
+// would still be surprising, together with the number of chance collisions
+// expected at that depth.
+//
+// The estimate is the same collision-index reasoning the feasibility gate
+// uses, applied to the probe's own search: the number of pairs compared,
+// times the density of the difference distribution near zero. Differences of
+// up to d records either side have a standard deviation of about sigma times
+// the square root of 2d, so the density at zero is about
+// 1/(sigma * sqrt(2*pi*2*d)).
+func usableDepth(witness, additions []model.Record, maxDepth int, delta money.Paise) (int, float64) {
+	sigma := spread(append(append([]model.Record{}, witness...), additions...))
+	if sigma <= 0 {
+		return 0, math.Inf(1)
+	}
+	const tolerable = 0.05
+
+	for d := maxDepth; d >= 1; d-- {
+		rem := float64(countSubsets(len(witness), d))
+		add := float64(countSubsets(len(additions), d))
+		density := 1.0 / (sigma * math.Sqrt(2*math.Pi*2*float64(d)))
+		// An inferred-mode tolerance widens the accepted window and therefore
+		// the chance of a spurious hit, proportionally.
+		window := 1.0 + 2*float64(delta)*float64(d)
+		expected := rem * add * density * window
+		if expected <= tolerable {
+			return d, expected
+		}
+		if d == 1 {
+			return 0, expected
+		}
+	}
+	return 0, math.Inf(1)
+}
+
+// countSubsets is the number of subsets of size at most d.
+func countSubsets(n, d int) int64 {
+	total := int64(1)
+	term := int64(1)
+	for i := 1; i <= d && i <= n; i++ {
+		term = term * int64(n-i+1) / int64(i)
+		total += term
+	}
+	return total
+}
+
+// spread is the population standard deviation of the contributions.
+func spread(rs []model.Record) float64 {
+	if len(rs) < 2 {
+		return 0
+	}
+	var mean float64
+	for _, r := range rs {
+		mean += float64(r.Contribution)
+	}
+	mean /= float64(len(rs))
+	var ss float64
+	for _, r := range rs {
+		d := float64(r.Contribution) - mean
+		ss += d * d
+	}
+	return math.Sqrt(ss / float64(len(rs)))
 }
 
 type sumEntry struct {

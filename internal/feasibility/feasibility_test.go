@@ -44,12 +44,20 @@ func TestIndexMatchesPublishedTable(t *testing.T) {
 	}
 }
 
+// analyticConfig pins the gate to the published closed form. The tests that
+// use it are testing the model itself, so sampling would defeat the purpose.
+func analyticConfig() Config {
+	cfg := DefaultConfig()
+	cfg.Empirical = false
+	return cfg
+}
+
 // TestKStarIsTheDispatchParameter asserts the property the whole design
 // rests on: the boundary the gate accepts and the region the solver searches
 // are the same boundary.
 func TestKStarIsTheDispatchParameter(t *testing.T) {
 	contribs := syntheticPool(52, 4_180_000, 20260826)
-	rep := Assess(contribs, 1, nil, DefaultConfig())
+	rep := Assess(contribs, 0, 1, nil, analyticConfig())
 
 	if rep.Decision != DecideEnumerate {
 		t.Fatalf("a 52-item pool at realistic spread should be enumerable, got %s", rep.Decision)
@@ -76,7 +84,7 @@ func TestKStarIsTheDispatchParameter(t *testing.T) {
 func TestRefusalIsSpecificAboutWhy(t *testing.T) {
 	contribs := syntheticPool(320, 4_180_000, 7)
 	declared := 312
-	rep := Assess(contribs, 1, &declared, DefaultConfig())
+	rep := Assess(contribs, 0, 1, &declared, analyticConfig())
 
 	if rep.ImpliedFreeCardinality == nil || *rep.ImpliedFreeCardinality != 8 {
 		t.Fatalf("312 of 320 implies a free cardinality of 8, got %v", rep.ImpliedFreeCardinality)
@@ -106,8 +114,8 @@ func TestLatticeCorrectionRaisesTheIndex(t *testing.T) {
 		t.Fatalf("constructed pool should have lattice spacing 100, got %d", gcd)
 	}
 
-	uncorrected := Assess(rounded, 1, nil, DefaultConfig())
-	corrected := Assess(rounded, gcd, nil, DefaultConfig())
+	uncorrected := Assess(rounded, 0, 1, nil, analyticConfig())
+	corrected := Assess(rounded, 0, gcd, nil, analyticConfig())
 
 	if !corrected.LatticeCorrectionApplied {
 		t.Fatalf("correction flag not set")
@@ -126,10 +134,10 @@ func TestLatticeCorrectionRaisesTheIndex(t *testing.T) {
 // a job and being killed by the operating system halfway through one.
 func TestResourceCeilingRefusesRatherThanAllocating(t *testing.T) {
 	contribs := syntheticPool(1000, 4_180_000, 3)
-	cfg := DefaultConfig()
+	cfg := analyticConfig()
 	cfg.MemoryCeilingBytes = 64 << 20 // 64 MB, well below what k=3 at n=1000 needs
 
-	rep := Assess(contribs, 1, nil, cfg)
+	rep := Assess(contribs, 0, 1, nil, cfg)
 	if rep.Decision != DecideResourceCeiling {
 		t.Fatalf("decision = %s, want a resource-ceiling refusal", rep.Decision)
 	}
@@ -159,7 +167,7 @@ func TestErrorsCostRecallNotPrecision(t *testing.T) {
 		sigma := math.Pow(10, 4+rng.Float64()*3)
 		contribs := syntheticPool(n, sigma, int64(trial))
 		gcd := money.GCD(contribs)
-		rep := Assess(contribs, gcd, nil, DefaultConfig())
+		rep := Assess(contribs, 0, gcd, nil, analyticConfig())
 
 		if rep.Decision != DecideEnumerate {
 			continue
@@ -171,7 +179,7 @@ func TestErrorsCostRecallNotPrecision(t *testing.T) {
 			t.Fatalf("trial %d: gate accepted k*=%d at n=%d but that needs %.0f MB, past the ceiling",
 				trial, rep.KStar, n, float64(bytes)/(1<<20))
 		}
-		if rep.IndexAtKStar > DefaultConfig().UnderdeterminedAbove {
+		if rep.IndexAtKStar > analyticConfig().UnderdeterminedAbove {
 			t.Fatalf("trial %d: accepted a region whose own index (%.3g) exceeds the refusal threshold",
 				trial, rep.IndexAtKStar)
 		}

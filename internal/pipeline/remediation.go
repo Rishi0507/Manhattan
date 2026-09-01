@@ -68,6 +68,9 @@ func underdeterminedRemediation(feas feasibility.Report, contribs []money.Paise,
 			if k < 1 {
 				continue
 			}
+			// The projection uses the analytic form deliberately: it is a
+			// statement about a pool that does not exist yet, so there is
+			// nothing to sample.
 			idx := feasibility.Index(projN, k, feas.SigmaPaise, gcd)
 			pn := projN
 			pi := idx

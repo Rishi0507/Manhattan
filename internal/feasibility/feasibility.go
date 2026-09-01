@@ -65,6 +65,15 @@ type Config struct {
 	MemoryCeilingBytes int64
 	// KHardCap bounds k* regardless of the index, as a backstop.
 	KHardCap int
+	// Empirical measures the collision index by sampling the pool rather than
+	// assuming a normal sum distribution. It is on by default because the
+	// analytic form is measurably wrong on heavy-tailed merchants; turning it
+	// off falls back to the published closed form and is useful only for
+	// reproducing that model's own numbers.
+	Empirical bool
+	// SampleSeed keeps the empirical estimate deterministic, so a run replays
+	// to the same decisions.
+	SampleSeed int64
 }
 
 // DefaultConfig returns the shipped thresholds.
@@ -74,6 +83,8 @@ func DefaultConfig() Config {
 		LikelyUniqueBelow:    0.1,
 		MemoryCeilingBytes:   1 << 30,
 		KHardCap:             12,
+		Empirical:            true,
+		SampleSeed:           20260826,
 	}
 }
 
@@ -87,8 +98,15 @@ type Report struct {
 	// within the contested band. It is both the triage boundary and the
 	// solver's dispatch parameter; the two are deliberately the same number.
 	KStar int `json:"k_star"`
-	// IndexAtKStar is E evaluated at k*.
+	// IndexAtKStar is E evaluated at k*, by whichever estimator was used.
 	IndexAtKStar float64 `json:"collision_index_at_k_star"`
+	// Estimator names how the index was arrived at, and AnalyticAtKStar is
+	// what the published closed form would have said. Both are on the receipt
+	// because they disagree on realistic data, and a receipt that showed only
+	// the one that happened to be used would hide a known limitation of the
+	// model this system publishes.
+	Estimator       string  `json:"collision_index_estimator"`
+	AnalyticAtKStar float64 `json:"collision_index_analytic_at_k_star"`
 	// CumulativeAtKStar sums E over every cardinality the dispatch will
 	// actually search. Because meet-in-the-middle at k* covers the whole
 	// region k(S) <= k*, this cumulative figure, not the top term alone, is
@@ -123,9 +141,10 @@ type Report struct {
 
 // Point is one evaluation of the collision index.
 type Point struct {
-	K       int     `json:"k"`
-	Subsets float64 `json:"subsets"`
-	Index   float64 `json:"collision_index"`
+	K        int     `json:"k"`
+	Subsets  float64 `json:"subsets"`
+	Index    float64 `json:"collision_index"`
+	Analytic float64 `json:"collision_index_analytic"`
 }
 
 // Sigma is the population standard deviation of the contributions, in paise,
@@ -176,9 +195,10 @@ func Index(n, k int, sigma float64, gcd int64) float64 {
 // declared, when non-nil, is the transaction count the settlement report
 // states for this batch. It is used only to make a refusal specific and to
 // offer the tighter dispatch scope; it never widens what the gate accepts.
-func Assess(contribs []money.Paise, gcd int64, declared *int, cfg Config) Report {
+func Assess(contribs []money.Paise, target money.Paise, gcd int64, declared *int, cfg Config) Report {
 	n := len(contribs)
 	sigma := Sigma(contribs)
+	total := money.Sum(contribs)
 
 	rep := Report{
 		N:                        n,
@@ -198,17 +218,35 @@ func Assess(contribs []money.Paise, gcd int64, declared *int, cfg Config) Report
 		hard = 1
 	}
 
+	rep.Estimator = "analytic_normal"
+	var est *densityEstimator
+	if cfg.Empirical && n >= 8 {
+		rep.Estimator = "empirical_subset_sampling"
+		est = sampleSums(contribs, hard, cfg.SampleSeed)
+	}
+
+	indexAt := func(k int) (used, analytic float64) {
+		analytic = Index(n, k, sigma, gcd)
+		if est == nil {
+			return analytic, analytic
+		}
+		return est.EmpiricalIndex(n, k, int64(target), int64(total), gcd, analytic), analytic
+	}
+
 	kStar := 0
 	var cum float64
 	var cumAtStar float64
 	for k := 1; k <= hard; k++ {
-		e := Index(n, k, sigma, gcd)
-		rep.Curve = append(rep.Curve, Point{K: k, Subsets: float64(solver.Binom(n, k)), Index: e})
+		e, a := indexAt(k)
+		rep.Curve = append(rep.Curve, Point{
+			K: k, Subsets: float64(solver.Binom(n, k)), Index: e, Analytic: a,
+		})
 		if e <= cfg.UnderdeterminedAbove {
 			kStar = k
 			cum += e
 			cumAtStar = cum
 			rep.IndexAtKStar = e
+			rep.AnalyticAtKStar = a
 		}
 	}
 	rep.KStar = kStar
@@ -222,18 +260,36 @@ func Assess(contribs []money.Paise, gcd int64, declared *int, cfg Config) Report
 		if implied < 0 {
 			implied = 0
 		}
-		e := Index(n, implied, sigma, gcd)
+		e, _ := indexAt(implied)
 		rep.ImpliedFreeCardinality = &implied
 		rep.IndexAtImplied = &e
 	}
 
 	if kStar == 0 {
 		rep.Decision = DecideUnderdetermined
-		e1 := Index(n, 1, sigma, gcd)
+		e1, _ := indexAt(1)
 		rep.Note = fmt.Sprintf(
 			"even a single-record reconstruction collides an estimated %.3g times in this pool; "+
 				"amounts carry too little information to identify anything", e1)
 		return rep
+	}
+
+	// A declared transaction count can put the batch outside the region any
+	// search could settle. That is a refusal the gate can make before
+	// touching memory, and it is a far more specific one than "too many
+	// possibilities": the report says this batch is 312 of 320, which is a
+	// free cardinality of 8, and at 8 this pool admits an estimated 8.4e7
+	// reconstructions. Enumerating would be both futile and dishonest.
+	if rep.ImpliedFreeCardinality != nil && rep.IndexAtImplied != nil {
+		implied, idx := *rep.ImpliedFreeCardinality, *rep.IndexAtImplied
+		if idx > cfg.UnderdeterminedAbove || implied > kStar {
+			rep.Decision = DecideUnderdetermined
+			rep.Note = fmt.Sprintf(
+				"the declared batch of %d records in a pool of %d implies a free cardinality of %d, "+
+					"at which an estimated %.3g subsets hit this target; the decidable region here stops at k = %d",
+				*rep.DeclaredTxnCount, n, implied, idx, kStar)
+			return rep
+		}
 	}
 
 	entries, bytes := solver.PredictEntries(n, kStar)

@@ -126,7 +126,14 @@ func Build(ds *model.Dataset, cfg Config) []model.Record {
 		records = append(records, rec)
 	}
 
+	// A disputes feed that was never joined is not in the candidate pool, and
+	// pretending otherwise would hide the exact condition the resolution
+	// agent exists to detect: a residual with the shape of a chargeback and
+	// no record in the pool that could produce it.
 	for _, c := range ds.Chargebacks {
+		if !ds.DisputesJoined {
+			continue
+		}
 		total := c.Disputed + c.Fee
 		records = append(records, model.Record{
 			ID:           c.ID,

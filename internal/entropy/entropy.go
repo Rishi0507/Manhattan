@@ -47,6 +47,13 @@ type Report struct {
 	// gcd 100, and ignoring it understates the collision index a hundredfold.
 	LatticeGCD int64 `json:"lattice_gcd_paise"`
 
+	// ZeroContribution lists pool positions whose signed net effect is zero.
+	// Narrowing normally removes these before the gate ever sees them, and
+	// this check is the backstop: if any survive, uniqueness is impossible by
+	// construction rather than merely unlikely, because such a record can be
+	// added to or removed from any witness without changing its sum.
+	ZeroContribution []int `json:"zero_contribution_members,omitempty"`
+
 	Pass bool   `json:"pass"`
 	Note string `json:"note,omitempty"`
 }
@@ -121,6 +128,12 @@ func Analyse(contribs []money.Paise, cfg Config) Report {
 		start = i
 	}
 
+	for i, v := range contribs {
+		if v.Abs() <= cfg.Delta {
+			rep.ZeroContribution = append(rep.ZeroContribution, i)
+		}
+	}
+
 	inTwins := 0
 	for _, c := range classes {
 		inTwins += len(c.Members)
@@ -135,6 +148,39 @@ func Analyse(contribs []money.Paise, cfg Config) Report {
 		rep.Note = "amounts do not distinguish transactions in this pool"
 	}
 	return rep
+}
+
+// ZeroRival returns a witness that differs only by a zero-contribution
+// record, if one is available.
+//
+// Like a twin swap, this proves ambiguity by construction rather than by
+// search: adding or removing a record that contributes nothing leaves the
+// sum untouched, so both sets reconstruct the credit exactly and no
+// arithmetic can prefer one.
+func ZeroRival(witness []int, rep Report) (rival []int, changed int, ok bool) {
+	if len(rep.ZeroContribution) == 0 {
+		return nil, 0, false
+	}
+	inWitness := make(map[int]bool, len(witness))
+	for _, i := range witness {
+		inWitness[i] = true
+	}
+	for _, z := range rep.ZeroContribution {
+		out := make([]int, 0, len(witness)+1)
+		if inWitness[z] {
+			for _, i := range witness {
+				if i != z {
+					out = append(out, i)
+				}
+			}
+		} else {
+			out = append(out, witness...)
+			out = append(out, z)
+		}
+		sort.Ints(out)
+		return out, z, true
+	}
+	return nil, 0, false
 }
 
 // SwapRival looks for an alternative witness constructible purely from twin

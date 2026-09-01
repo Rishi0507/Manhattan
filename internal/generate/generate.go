@@ -207,7 +207,7 @@ func Generate(spec Spec) *model.Dataset {
 func (b *builder) captureDay(m model.Merchant, day time.Time, n int, inBatch bool) []string {
 	var ids []string
 	for i := 0; i < n; i++ {
-		at := day.Add(time.Duration(b.rng.Intn(20)+2) * time.Hour)
+		at := day.Add(captureHour(b.rng))
 		p := model.Payment{
 			ID:         b.id("pay"),
 			OrderID:    b.id("order"),
@@ -251,7 +251,7 @@ func (b *builder) captureDay(m model.Merchant, day time.Time, n int, inBatch boo
 			MerchantID: m.ID,
 			Disputed:   disputed,
 			Fee:        b.spec.Policy.DisputeFee,
-			DebitedAt:  day.Add(11 * time.Hour),
+			DebitedAt:  day.Add(12 * time.Hour),
 		}
 		b.ds.Chargebacks = append(b.ds.Chargebacks, cb)
 		ids = append(ids, cb.ID)
@@ -273,7 +273,7 @@ func (b *builder) captureHoldovers(m model.Merchant, day time.Time, n int) {
 		return
 	}
 	for i := 0; i < n; i++ {
-		at := day.Add(time.Duration(b.rng.Intn(20)+2) * time.Hour)
+		at := day.Add(captureHour(b.rng))
 		p := model.Payment{
 			ID:         b.id("pay"),
 			OrderID:    b.id("order"),
@@ -292,9 +292,24 @@ func (b *builder) captureHoldovers(m model.Merchant, day time.Time, n int) {
 	}
 }
 
+// captureHour places a capture inside the trading day, between 04:00 and
+// 20:00.
+//
+// The bounds matter more than they look. The default narrowing window is
+// fourteen hours either side of the capture day's midpoint, so a capture at
+// 02:00 or 23:00 sits within a couple of hours of the window edge and the
+// NEXT day's early captures fall inside this day's window. That leaked
+// roughly eighteen extra records into every pool, which is invisible in the
+// data and highly visible in the results: pool size drives C(n, k), so an
+// unintended fifty per cent inflation moved settlements from verifiable to
+// ambiguous for reasons that had nothing to do with the reconciler.
+func captureHour(rng *rand.Rand) time.Duration {
+	return time.Duration(4+rng.Intn(17)) * time.Hour
+}
+
 func (b *builder) reconciledNoise(m model.Merchant, day time.Time, n int) {
 	for i := 0; i < n; i++ {
-		at := day.Add(time.Duration(b.rng.Intn(20)+2) * time.Hour)
+		at := day.Add(captureHour(b.rng))
 		b.ds.Payments = append(b.ds.Payments, model.Payment{
 			ID: b.id("pay"), OrderID: b.id("order"), MerchantID: m.ID,
 			Instrument: b.arch.Instrument(b.rng), Currency: "INR",

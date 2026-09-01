@@ -33,6 +33,29 @@ const (
 	ConstraintReconciled   Constraint = "already_reconciled"
 	ConstraintInstrument   Constraint = "payment_method_mismatch"
 	ConstraintSettlementID Constraint = "settlement_reference_mismatch"
+
+	// ConstraintZeroContribution removes records whose signed net effect on
+	// the settlement is exactly zero.
+	//
+	// These are real and they are poison. A UPI payment carries zero merchant
+	// discount rate under Indian regulation, so a UPI payment refunded in full
+	// before settlement nets to precisely nothing: gross in, gross out, no fee
+	// retained. The gateway still lists it, and it still lands in the pool.
+	//
+	// A single such record destroys uniqueness outright. If S reconstructs the
+	// credit then so does S with the zero record added, and so does S with it
+	// removed, because the sums are identical. Two zero records give four
+	// reconstructions, three give eight. Every one of them is arithmetically
+	// perfect and they differ only in membership, which is exactly what a
+	// general ledger posting cares about.
+	//
+	// So they are removed and counted rather than searched over. The honest
+	// statement is that these records cannot be attributed from amounts by any
+	// method, that they cannot affect the credit either, and that the
+	// reconstruction covers everything that moved money. Leaving them in the
+	// pool would make almost every real settlement ambiguous for a reason that
+	// carries no financial information.
+	ConstraintZeroContribution Constraint = "zero_net_contribution"
 )
 
 // RelaxationOrder is the sequence in which constraints are considered for
@@ -134,6 +157,7 @@ func Apply(records []model.Record, credit model.BankCredit, merchant model.Merch
 	enforce := func(c Constraint) bool { return !cfg.Relaxed[c] }
 	for _, c := range []Constraint{
 		ConstraintMerchant, ConstraintCurrency, ConstraintWindow, ConstraintReconciled,
+		ConstraintZeroContribution,
 	} {
 		if enforce(c) {
 			res.Applied = append(res.Applied, c)
@@ -178,6 +202,8 @@ func Apply(records []model.Record, credit model.BankCredit, merchant model.Merch
 			drop(r.ID, ConstraintReconciled)
 		case enforce(ConstraintWindow) && (r.EventAt.Before(lo) || r.EventAt.After(hi)):
 			drop(r.ID, ConstraintWindow)
+		case enforce(ConstraintZeroContribution) && r.Contribution == 0:
+			drop(r.ID, ConstraintZeroContribution)
 		case cfg.EnforceInstrument && enforce(ConstraintInstrument) &&
 			credit.Instrument != "" && r.Instrument != "" && r.Instrument != credit.Instrument:
 			drop(r.ID, ConstraintInstrument)

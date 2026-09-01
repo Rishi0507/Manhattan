@@ -113,7 +113,7 @@ func TestVerifiedIsNeverWrongAcrossArchetypes(t *testing.T) {
 					continue
 				}
 				verified++
-				if !sameSet(rec.Witness, ds.GroundTruth[credit.Ref]) {
+				if !sameSet(rec.Witness, attributable(ds.GroundTruth[credit.Ref], e)) {
 					wrong++
 					t.Errorf("%s: auto-posted the wrong batch", credit.Ref)
 				}
@@ -161,6 +161,25 @@ func TestLumpCreditModeMakesNoFeeClaim(t *testing.T) {
 	if !sawCheck {
 		t.Skip("no settlement reached a witness in this dataset")
 	}
+}
+
+// attributable drops the ground-truth records whose signed contribution is
+// exactly zero.
+//
+// Such a record moved no money, so no amount-based reconstruction can place
+// it in or out of a batch. Manhattan removes it before searching and names it
+// separately on the receipt, and the accounting identity closes exactly
+// either way. Counting it against the reconstruction would mark the system
+// wrong for declining to guess.
+func attributable(truth []string, e *Engine) []string {
+	out := make([]string, 0, len(truth))
+	for _, id := range truth {
+		if r, ok := e.ByID[id]; ok && r.Contribution == 0 {
+			continue
+		}
+		out = append(out, id)
+	}
+	return out
 }
 
 func sameSet(a, b []string) bool {

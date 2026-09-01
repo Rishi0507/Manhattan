@@ -100,6 +100,16 @@ type Engine struct {
 	ByID      map[string]model.Record
 	Merchants map[string]model.Merchant
 	Mode      model.DataMode
+
+	// Unjoined holds source records that exist but were never wired into the
+	// candidate pool, such as a disputes feed nobody connected. The pipeline
+	// never reads it. Only the resolution agent searches it, and only to find
+	// a citation for a hypothesis the verifier has already been handed.
+	Unjoined []model.Record
+
+	// universe is the record set the current reconciliation is running over,
+	// which differs from Records only when a hypothesis overlay is applied.
+	universe []model.Record
 }
 
 // New builds an engine over a dataset, computing every record's signed
@@ -119,7 +129,19 @@ func New(ds *model.Dataset, cfg Config) *Engine {
 	for _, m := range ds.Merchants {
 		ms[m.ID] = m
 	}
-	return &Engine{Cfg: cfg, Records: recs, ByID: byID, Merchants: ms, Mode: ds.Mode}
+	eng := &Engine{Cfg: cfg, Records: recs, ByID: byID, Merchants: ms, Mode: ds.Mode, universe: recs}
+
+	// Records from feeds that were never joined are kept to one side. They are
+	// invisible to the pipeline and searchable only by the resolution agent.
+	if !ds.DisputesJoined {
+		joined := *ds
+		joined.DisputesJoined = true
+		joined.Payments, joined.Refunds, joined.Adjustments = nil, nil, nil
+		for _, r := range accounting.Build(&joined, cfg.Accounting) {
+			eng.Unjoined = append(eng.Unjoined, r)
+		}
+	}
+	return eng
 }
 
 type stopwatch struct {
@@ -135,11 +157,43 @@ func (s *stopwatch) mark(name string) {
 	s.t = now
 }
 
+// Overlay is a hypothesis applied to the inputs before the pipeline runs.
+//
+// This is the mechanism that keeps the resolution agent outside the trust
+// boundary. An agent hypothesis is not a hint, a weight or a prior. It is a
+// concrete edit to the pool or to the target, expressed as data, and the
+// entire gate, solver, completeness and recomputation stack then runs over
+// the edited inputs completely unchanged. The model is never consulted about
+// whether its own suggestion worked.
+type Overlay struct {
+	// ExtraRecords are added to the record universe before narrowing, so a
+	// proposed record still has to survive every business constraint.
+	ExtraRecords []model.Record
+	// TargetDelta adjusts the credit being reconstructed, for hypotheses
+	// about charges levied against the payout rather than against the batch.
+	TargetDelta money.Paise
+	// Provenance names what produced this overlay, for the receipt.
+	Provenance string
+}
+
 // Reconcile runs the full pipeline for one bank credit.
 func (e *Engine) Reconcile(credit model.BankCredit) *evidence.Receipt {
+	return e.ReconcileWith(credit, nil)
+}
+
+// ReconcileWith runs the pipeline with a hypothesis applied.
+func (e *Engine) ReconcileWith(credit model.BankCredit, ov *Overlay) *evidence.Receipt {
 	sw := newStopwatch()
 	cfg := e.Cfg
 	merchant := e.Merchants[credit.MerchantID]
+
+	records := e.Records
+	if ov != nil {
+		if len(ov.ExtraRecords) > 0 {
+			records = append(append([]model.Record{}, e.Records...), ov.ExtraRecords...)
+		}
+		credit.Amount -= ov.TargetDelta
+	}
 
 	rec := &evidence.Receipt{
 		SettlementRef: credit.Ref,
@@ -171,7 +225,7 @@ func (e *Engine) Reconcile(credit model.BankCredit) *evidence.Receipt {
 		nCfg.CycleDays = cfg.Narrow.CycleDays
 	}
 	nCfg.EnforceInstrument = merchant.InstrumentSegregated
-	narrowed := narrow.Apply(e.Records, credit, merchant, nCfg)
+	narrowed := narrow.Apply(records, credit, merchant, nCfg)
 	sw.mark("narrow")
 
 	rec.Narrowing = evidence.NarrowingBlock{
@@ -180,6 +234,12 @@ func (e *Engine) Reconcile(credit model.BankCredit) *evidence.Receipt {
 		Dropped:     narrowed.Dropped,
 		WindowHours: narrowed.WindowHours,
 		Applied:     narrowed.Applied,
+	}
+	for _, d := range narrowed.DropLog {
+		if d.Constraint == narrow.ConstraintZeroContribution {
+			rec.Narrowing.ZeroContributionRecords = append(
+				rec.Narrowing.ZeroContributionRecords, d.RecordID)
+		}
 	}
 
 	pool := narrowed.Pool
@@ -223,7 +283,7 @@ func (e *Engine) Reconcile(credit model.BankCredit) *evidence.Receipt {
 	}
 
 	// ---- Stage 4b: feasibility ------------------------------------------
-	feas := feasibility.Assess(contribs, ent.LatticeGCD, credit.DeclaredTxnCount, cfg.Feasibility)
+	feas := feasibility.Assess(contribs, credit.Amount, ent.LatticeGCD, credit.DeclaredTxnCount, cfg.Feasibility)
 	rec.Feasibility = feas
 	sw.mark("feasibility")
 
@@ -265,6 +325,7 @@ func (e *Engine) Reconcile(credit model.BankCredit) *evidence.Receipt {
 		rec.Solver.NearestMiss = &m
 	}
 
+	e.universe = records
 	e.decide(rec, sr, feas, ent, pool, narrowed, credit, merchant, kMax, scope)
 	sw.mark("prove")
 
@@ -348,6 +409,20 @@ func (e *Engine) decide(
 		}
 		if len(sr.Witnesses) > 0 {
 			e.attachWitness(rec, pool, sr.Witnesses[0], credit)
+			// The twin check runs here as well as on the unique path. The flag
+			// records that identical contributions make a rival CONSTRUCTIBLE,
+			// which is true whether or not the enumeration happened to find
+			// that rival on its own. It also tells an analyst something the
+			// bare count does not: the ambiguity is structural, so no amount
+			// of further narrowing on amounts will resolve it.
+			if _, from, to, ok := entropy.SwapRival(sr.Witnesses[0].Indices, ent); ok {
+				rec.AddFlag(evidence.FlagTwinSwap)
+				rec.Claim = fmt.Sprintf(
+					"%s. %s and %s carry an identical contribution, so an alternative "+
+						"reconstruction is constructible by exchanging one for the other; "+
+						"this ambiguity is structural rather than incidental",
+					rec.Claim, pool[from].ID, pool[to].ID)
+			}
 		}
 		return
 	}
@@ -404,8 +479,9 @@ func (e *Engine) decide(
 	// the latter of which reports itself inactive rather than passing where it
 	// cannot carry information.
 	rec.Narrowing.Checks = []guards.Check{
-		guards.CardinalityCrossCheck(len(witness), credit.DeclaredTxnCount, scope == solver.ScopeDeclared),
-		guards.GrossRatioCheck(witness, e.Mode.FeesObserved(), cfg.Accounting.Policy.BandBps),
+		guards.CardinalityCrossCheck(len(witness), credit.DeclaredTxnCount,
+			narrowed.Dropped[narrow.ConstraintZeroContribution], scope == solver.ScopeDeclared),
+		guards.GrossRatioCheck(witness, pool, e.Mode.FeesObserved(), cfg.Accounting.Policy.BandBps),
 	}
 
 	if !probe.Stable {
@@ -436,6 +512,12 @@ func (e *Engine) decide(
 	rec.Claim = fmt.Sprintf(
 		"this credit is reconstructed exactly by %d records, and that reconstruction is unique among %s",
 		len(witness), uq.Scope)
+	if z := len(rec.Narrowing.ZeroContributionRecords); z > 0 {
+		rec.Claim += fmt.Sprintf(
+			". A further %d record(s) in this window net to exactly zero and are named separately: "+
+				"they moved no money and cannot be attributed from the credit by any method",
+			z)
+	}
 }
 
 func (e *Engine) attachWitness(rec *evidence.Receipt, pool []model.Record, w solver.Witness, credit model.BankCredit) {
@@ -471,7 +553,7 @@ func (e *Engine) neighbourhoodProbe(witness []model.Record, credit model.BankCre
 	widened := append([]model.Record{}, base.Pool...)
 	tested := []narrow.Constraint{narrow.ConstraintWindow}
 
-	wide := narrow.Apply(e.Records, credit, merchant, nCfg.WithWindow(nCfg.Window+cfg.ProbeWindowWidening))
+	wide := narrow.Apply(e.universe, credit, merchant, nCfg.WithWindow(nCfg.Window+cfg.ProbeWindowWidening))
 	for _, r := range wide.Pool {
 		if !inBase[r.ID] {
 			widened = append(widened, r)
@@ -485,7 +567,7 @@ func (e *Engine) neighbourhoodProbe(witness []model.Record, credit model.BankCre
 			continue // the window is already covered; merchant is never relaxed
 		}
 		tested = append(tested, c)
-		rel := narrow.Apply(e.Records, credit, merchant, nCfg.WithRelaxed(c))
+		rel := narrow.Apply(e.universe, credit, merchant, nCfg.WithRelaxed(c))
 		for _, r := range rel.Pool {
 			if !inBase[r.ID] {
 				widened = append(widened, r)

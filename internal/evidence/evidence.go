@@ -167,6 +167,18 @@ type NarrowingBlock struct {
 
 	Neighbourhood *guards.NeighbourhoodResult `json:"neighbourhood_probe,omitempty"`
 	Checks        []guards.Check              `json:"completeness_checks"`
+
+	// ZeroContributionRecords are records that survived every business
+	// constraint but net to exactly zero, so they moved no money and cannot be
+	// identified from the credit by any amount-based method.
+	//
+	// They are named rather than merely counted, because a general ledger
+	// posting has to account for them somehow and "we found 24 records and
+	// there were 25 in the batch" is not an answer. The honest statement is
+	// that the reconstruction is exact over everything that moved money, and
+	// that these records are unattributable by amount and unattributable for a
+	// reason that is a fact about them rather than a limitation of the method.
+	ZeroContributionRecords []string `json:"zero_contribution_records,omitempty"`
 }
 
 // AgentBlock records what the model contributed, and, more importantly, what
