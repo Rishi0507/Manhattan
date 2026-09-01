@@ -1,0 +1,23 @@
+# Build output
+/bin/
+/dist/
+manhattan
+manhattan.exe
+
+# Generated artifacts — every one of these is reproducible with `make demo`,
+# and checking them in would let a stale number outlive the run that made it.
+/out/
+/web/dist/
+/web/node_modules/
+RESULTS.md
+
+# Local secrets
+.env
+.env.local
+
+# Tooling
+.DS_Store
+*.prof
+*.test
+__pycache__/
+.venv/
