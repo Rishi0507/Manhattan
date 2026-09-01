@@ -1,7 +1,6 @@
 package feasibility
 
 import (
-	"math"
 	"math/rand"
 
 	"github.com/Rishi0507/manhattan/internal/money"
@@ -156,7 +155,7 @@ func (e *densityEstimator) EmpiricalIndex(n, k int, target, total int64, gcd int
 	}
 	c := solver.Binom(n, k)
 	if c >= solver.Cap {
-		return math.Inf(1)
+		return IndexSaturated
 	}
 	analyticDensity := 0.0
 	if c > 0 {
@@ -170,9 +169,9 @@ func (e *densityEstimator) EmpiricalIndex(n, k int, target, total int64, gcd int
 	// from two ends only when n = 2k, in which case counting both would
 	// double it.
 	if n == 2*k {
-		return float64(c) * float64(gcd) * direct
+		return clampIndex(float64(c) * float64(gcd) * direct)
 	}
-	return float64(c) * float64(gcd) * (direct + complement)
+	return clampIndex(float64(c) * float64(gcd) * (direct + complement))
 }
 
 func sortInt64(a []int64) {

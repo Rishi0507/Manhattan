@@ -184,10 +184,33 @@ func Index(n, k int, sigma float64, gcd int64) float64 {
 	}
 	subsets := float64(c)
 	if c >= solver.Cap {
-		subsets = math.Inf(1)
+		subsets = IndexSaturated
 	}
 	density := float64(gcd) / (sigma * math.Sqrt(2*math.Pi*float64(k)))
-	return subsets * density
+	return clampIndex(subsets * density)
+}
+
+// IndexSaturated is the value reported when the collision index exceeds any
+// meaningful scale.
+//
+// It is finite on purpose. An infinity serialises to nothing a JSON receipt
+// can carry, and a receipt that cannot be written is worse than one carrying
+// a saturated number: the distinction between "1e18 reconstructions" and
+// "more than 1e18 reconstructions" changes no decision anyone will ever make,
+// while a receipt that fails to serialise loses the whole audit trail.
+const IndexSaturated = 1e18
+
+func clampIndex(v float64) float64 {
+	if math.IsNaN(v) {
+		return IndexSaturated
+	}
+	if v > IndexSaturated || math.IsInf(v, 1) {
+		return IndexSaturated
+	}
+	if v < 0 {
+		return 0
+	}
+	return v
 }
 
 // Assess runs the gate over a pool and returns k* plus the full curve.

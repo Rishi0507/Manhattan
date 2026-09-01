@@ -209,7 +209,9 @@ func Probe(witness []model.Record, widened []model.Record, maxDepth int, delta m
 func usableDepth(witness, additions []model.Record, maxDepth int, delta money.Paise) (int, float64) {
 	sigma := spread(append(append([]model.Record{}, witness...), additions...))
 	if sigma <= 0 {
-		return 0, math.Inf(1)
+		// Every record carries the same contribution, so a substitution is
+		// always available and the probe can say nothing useful.
+		return 0, maxReportable
 	}
 	const tolerable = 0.05
 
@@ -228,8 +230,11 @@ func usableDepth(witness, additions []model.Record, maxDepth int, delta money.Pa
 			return 0, expected
 		}
 	}
-	return 0, math.Inf(1)
+	return 0, maxReportable
 }
+
+// maxReportable keeps the estimate finite so a receipt can always be written.
+const maxReportable = 1e18
 
 // countSubsets is the number of subsets of size at most d.
 func countSubsets(n, d int) int64 {
