@@ -6,7 +6,7 @@
 // its own feasibility analysis points at.
 //
 // The binding constraint in settlement reconciliation is not the value range
-//, it is the cardinality. A 312-transaction batch drawn from a 315-item
+// , it is the cardinality. A 312-transaction batch drawn from a 315-item
 // pool is trivially close to the whole pool; a 6-transaction batch from a
 // 52-item pool is a small subset. Both have a small *free* cardinality
 //
