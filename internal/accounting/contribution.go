@@ -16,6 +16,21 @@ type Config struct {
 	// One paise is the usual value: it covers a single unknown rounding step
 	// per contribution.
 	Delta money.Paise
+	// UseObservedFees makes contributions follow the fee rows the settlement
+	// report actually carries, rather than the fee the policy says should
+	// have been charged.
+	//
+	// This distinction is the whole of Leg C. Where the report supplies
+	// per-payment fee rows, they are what genuinely came out of the bank
+	// credit, so the reconstruction must use them and the policy figure is
+	// then a genuinely independent second opinion: a settlement can
+	// reconstruct exactly while the fee applied to it is wrong, and Manhattan
+	// reports both facts separately.
+	//
+	// Where no such rows exist, contributions are necessarily policy-derived,
+	// the fee comparison becomes a comparison of the policy against itself,
+	// and no anomaly claim is made at all.
+	UseObservedFees bool
 	// CycleWindow is how far either side of the credit's value date an event
 	// may fall and still belong to the batch. Narrowing applies it; the
 	// accounting engine only reports it onto receipts.
@@ -56,8 +71,19 @@ func Build(ds *model.Dataset, cfg Config) []model.Record {
 	records := make([]model.Record, 0, len(ds.Payments)+len(ds.Chargebacks)+len(ds.Adjustments))
 
 	for _, p := range ds.Payments {
-		mdr := cfg.Policy.MDR(p.Instrument, p.Gross)
-		gst := cfg.Policy.GST(mdr)
+		// What policy says should have been charged.
+		policyMDR := cfg.Policy.MDR(p.Instrument, p.Gross)
+		policyGST := cfg.Policy.GST(policyMDR)
+
+		// What was actually deducted, where the report says so.
+		mdr, gst := policyMDR, policyGST
+		if cfg.UseObservedFees && p.FeeObserved != nil {
+			mdr = *p.FeeObserved
+			gst = cfg.Policy.GST(mdr)
+			if p.TaxObserved != nil {
+				gst = *p.TaxObserved
+			}
+		}
 
 		var refunded money.Paise
 		full := false
@@ -78,6 +104,8 @@ func Build(ds *model.Dataset, cfg Config) []model.Record {
 			Gross:        p.Gross,
 			MDR:          mdr,
 			GST:          gst,
+			PolicyMDR:    policyMDR,
+			PolicyGST:    policyGST,
 			Refund:       refunded,
 			Reconciled:   p.Reconciled,
 			SettlementID: p.SettlementID,

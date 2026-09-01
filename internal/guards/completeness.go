@@ -87,11 +87,9 @@ func GrossRatioCheck(witness []model.Record, feesObserved bool, bandBps int64) C
 			continue
 		}
 		gross += r.Gross
-		expected += r.MDR
-		if r.FeeObserved != nil {
-			observed += *r.FeeObserved
-			seen++
-		}
+		expected += r.PolicyMDR
+		observed += r.MDR
+		seen++
 	}
 	if gross == 0 || seen == 0 {
 		return Check{Name: name, State: CheckInactive, Detail: "no fee-bearing records in this witness"}

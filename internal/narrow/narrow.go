@@ -81,7 +81,10 @@ type Config struct {
 // DefaultConfig returns the shipped narrowing rules.
 func DefaultConfig() Config {
 	return Config{
-		Window:            36 * time.Hour,
+		// Fourteen hours either side of the capture day's midpoint covers a
+		// full trading day plus the boundary cases where a late-evening
+		// capture could plausibly fall into either cycle.
+		Window:            14 * time.Hour,
 		CycleDays:         2,
 		EnforceInstrument: false,
 		TrustSettlementID: false,
@@ -147,9 +150,17 @@ func Apply(records []model.Record, credit model.BankCredit, merchant model.Merch
 	}
 	sort.Slice(res.Relaxed, func(i, j int) bool { return res.Relaxed[i] < res.Relaxed[j] })
 
-	// The batch settling on value date D covers events captured around
-	// D minus the settlement cycle, with the window as tolerance either side.
-	centre := credit.ValueDate.AddDate(0, 0, -cfg.CycleDays)
+	// The batch settling on value date D covers events captured on the day
+	// D minus the settlement cycle, so the window is centred on the middle of
+	// that capture day rather than on its midnight boundary.
+	//
+	// This is not cosmetic. Centring on midnight and widening by a day and a
+	// half, which is the obvious first implementation, sweeps in most of the
+	// two adjacent capture days and triples the candidate pool. Since the
+	// collision index grows like C(n, k), tripling n is the difference
+	// between a settlement that verifies and one that is provably
+	// underdetermined. Narrowing geometry is not a detail.
+	centre := credit.ValueDate.AddDate(0, 0, -cfg.CycleDays).Add(12 * time.Hour)
 	lo, hi := centre.Add(-cfg.Window), centre.Add(cfg.Window)
 
 	drop := func(id string, c Constraint) {

@@ -241,8 +241,14 @@ type Record struct {
 	// Components are retained so the independent verification at Stage 6 can
 	// re-derive the accounting equation from the raw parts without reusing
 	// anything the solver touched.
+	// MDR and GST are what was actually deducted from this record. PolicyMDR
+	// and PolicyGST are what the configured schedule says should have been.
+	// Keeping both is what lets the fee detector be a second opinion rather
+	// than a restatement of its own input.
 	MDR         money.Paise  `json:"mdr_paise"`
 	GST         money.Paise  `json:"gst_paise"`
+	PolicyMDR   money.Paise  `json:"policy_mdr_paise"`
+	PolicyGST   money.Paise  `json:"policy_gst_paise"`
 	Refund      money.Paise  `json:"refund_paise"`
 	Chargeback  money.Paise  `json:"chargeback_paise"`
 	Adjustment  money.Paise  `json:"adjustment_paise"`
