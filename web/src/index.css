@@ -1,0 +1,132 @@
+@import "tailwindcss";
+
+/*
+  The design brief for this interface is narrow and it comes from the product.
+
+  Manhattan's whole argument is that a reconciliation should either be proved
+  or refused, and that the difference should be legible. So the interface is
+  built to make a status readable at a glance and a derivation readable on
+  inspection, and to do nothing else. No gradients, no glass, no cards
+  floating over cards, no decorative motion. A finance analyst reading a
+  posting decision at 6pm on a quarter end is not helped by any of it.
+
+  Two typefaces. IBM Plex Sans for prose, because it was designed for
+  technical documentation and reads cleanly at small sizes. IBM Plex Mono for
+  every number, with tabular figures, because amounts that do not align in a
+  column are amounts that get misread.
+*/
+
+@theme {
+  --font-sans: "IBM Plex Sans", ui-sans-serif, system-ui, -apple-system, sans-serif;
+  --font-mono: "IBM Plex Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+
+  /* A deep, slightly blue-cast ground. Pure black is harsh on a screen a
+     person reads for an hour; a blue cast keeps the accent colours honest. */
+  --color-ground: #080a0d;
+  --color-surface: #0e1116;
+  --color-raised: #141922;
+  --color-line: #1e242e;
+  --color-line-soft: #171c25;
+
+  --color-ink: #e6eaf0;
+  --color-ink-dim: #98a2b3;
+  --color-ink-faint: #5b6675;
+
+  /* Razorpay's blue, which is the right register for this context without
+     being a costume. */
+  --color-accent: #3395ff;
+  --color-accent-dim: #1c4f8f;
+
+  /* One colour per status. They are deliberately not a red-to-green scale:
+     four of the five statuses stop the money, and grading them by severity
+     would imply that some refusals are failures. They are all correct answers. */
+  --color-verified: #35c88a;
+  --color-ambiguous: #e0a83a;
+  --color-underdetermined: #6b7c94;
+  --color-sensitive: #f0714f;
+  --color-unresolved: #9b7ce8;
+  --color-wrong: #ff4d4d;
+}
+
+:root {
+  color-scheme: dark;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+}
+
+body {
+  margin: 0;
+  background: var(--color-ground);
+  color: var(--color-ink);
+  font-family: var(--font-sans);
+  font-size: 14px;
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+/* Every numeral in this interface is tabular. Ragged decimal points in a
+   column of money are a real source of misreading. */
+.tnum {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: "tnum" 1, "zero" 1;
+}
+
+::selection {
+  background: var(--color-accent-dim);
+  color: #fff;
+}
+
+/* A thin, unobtrusive scrollbar. The default on Windows is a slab. */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--color-line) transparent;
+}
+*::-webkit-scrollbar {
+  width: 9px;
+  height: 9px;
+}
+*::-webkit-scrollbar-thumb {
+  background: var(--color-line);
+  border-radius: 99px;
+}
+*::-webkit-scrollbar-thumb:hover {
+  background: #2a323e;
+}
+*::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+/* Focus rings that are visible without being loud. */
+:focus-visible {
+  outline: 1px solid var(--color-accent);
+  outline-offset: 2px;
+}
+
+@keyframes fade-up {
+  from {
+    opacity: 0;
+    transform: translateY(3px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+/* Used only where a row genuinely arrives during a live run, so motion
+   carries information rather than decorating. */
+.arrive {
+  animation: fade-up 0.22s ease-out both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .arrive {
+    animation: none;
+  }
+}
