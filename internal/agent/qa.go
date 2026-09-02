@@ -94,7 +94,21 @@ Vocabulary the receipts use:
 Write in plain English for a finance lead, not for an engineer. Be brief.`
 
 // Ask answers one question.
+//
+// Aggregate questions are answered by querying the store directly rather than
+// by asking a model. "Which constraint dropped the most records" has exactly
+// one correct answer and it is a sum over a field; routing it through a
+// language model would be slower, cost money, and introduce the possibility of
+// an arithmetic error into a question that has none.
+//
+// That is the same principle the rest of the system runs on, applied one level
+// up: the model gets the part that needs judgement, and arithmetic gets the
+// part that is arithmetic.
 func (q *QA) Ask(ctx context.Context, question string) (Answer, error) {
+	if a, ok := Direct(q.Store, question); ok {
+		return a, nil
+	}
+
 	receipts := q.retrieve(question)
 
 	var ids []string
