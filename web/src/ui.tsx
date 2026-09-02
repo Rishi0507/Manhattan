@@ -16,8 +16,8 @@ export function StatusPill({ status, size = "md" }: { status: Status; size?: "sm
   return (
     <span
       className={cls(
-        "inline-flex items-center gap-1 rounded-[3px] font-medium whitespace-nowrap",
-        size === "sm" ? "px-1 py-px text-[10px]" : "px-1.5 py-0.5 text-[11px]",
+        "inline-flex items-center gap-1 rounded-[3px] font-semibold whitespace-nowrap",
+        size === "sm" ? "px-1.5 py-px text-[11.5px]" : "px-2 py-0.5 text-[12.5px]",
       )}
       style={{ color: c, background: `color-mix(in srgb, ${c} 9%, transparent)` }}
       title={status}
@@ -34,7 +34,7 @@ export function Flag({ name, title }: { name: string; title?: string }) {
   return (
     <span
       title={title ?? name}
-      className="inline-flex items-center rounded-[3px] bg-sunken px-1.5 py-px text-[10px] whitespace-nowrap text-ink-dim"
+      className="inline-flex items-center rounded-[3px] bg-sunken px-1.5 py-px text-[11.5px] whitespace-nowrap text-ink-dim"
     >
       {shortFlag(name)}
     </span>
@@ -59,15 +59,15 @@ export function Panel({
   return (
     <section className={cls("rounded-md border border-line bg-surface", className)}>
       {(title || right) && (
-        <header className="flex items-center justify-between gap-4 border-b border-line-soft px-3.5 py-2">
+        <header className="flex items-center justify-between gap-4 border-b border-line-soft px-4 py-2.5">
           <div className="flex min-w-0 items-baseline gap-2.5">
-            {title && <h2 className="text-[12.5px] font-semibold text-ink">{title}</h2>}
-            {hint && <p className="truncate text-[11.5px] text-ink-faint">{hint}</p>}
+            {title && <h2 className="display text-[16px] font-medium text-ink">{title}</h2>}
+            {hint && <p className="truncate text-[12.5px] text-ink-faint">{hint}</p>}
           </div>
           {right && <div className="shrink-0">{right}</div>}
         </header>
       )}
-      <div className={flush ? "" : "p-3.5"}>{children}</div>
+      <div className={flush ? "" : "p-4"}>{children}</div>
     </section>
   );
 }
@@ -90,13 +90,13 @@ export function Field({
     <div className="min-w-0">
       <div className="lbl">{label}</div>
       <div
-        className={cls("mt-0.5 truncate text-[12.5px]", mono && "tnum")}
+        className={cls("mt-0.5 truncate text-[13.5px]", mono && "tnum")}
         style={tone ? { color: tone } : undefined}
         title={typeof value === "string" ? value : undefined}
       >
         {value}
       </div>
-      {hint && <div className="mt-px text-[11px] leading-snug text-ink-faint">{hint}</div>}
+      {hint && <div className="mt-px text-[12px] leading-snug text-ink-faint">{hint}</div>}
     </div>
   );
 }
@@ -111,12 +111,12 @@ export function SummaryBar({ items }: { items: { label: string; value: ReactNode
   return (
     <div className="grid grid-cols-2 divide-line-soft rounded-md border border-line bg-surface sm:grid-cols-3 lg:grid-cols-6 lg:divide-x">
       {items.map((it, i) => (
-        <div key={i} className="border-line-soft px-3.5 py-2.5 not-last:max-lg:border-b">
+        <div key={i} className="border-line-soft px-4 py-2.5 not-last:max-lg:border-b">
           <div className="lbl">{it.label}</div>
-          <div className="tnum mt-0.5 text-[19px] leading-tight" style={it.tone ? { color: it.tone } : undefined}>
+          <div className="tnum mt-0.5 text-[21px] leading-tight" style={it.tone ? { color: it.tone } : undefined}>
             {it.value}
           </div>
-          {it.sub && <div className="mt-px truncate text-[11px] text-ink-faint">{it.sub}</div>}
+          {it.sub && <div className="mt-px truncate text-[12px] text-ink-faint">{it.sub}</div>}
         </div>
       ))}
     </div>
@@ -161,14 +161,14 @@ export function Tabs<T extends string>({
           aria-selected={active === t.id}
           onClick={() => onChange(t.id)}
           className={cls(
-            "relative -mb-px whitespace-nowrap border-b-2 px-3 py-2 text-[12.5px] transition-colors",
+            "relative -mb-px whitespace-nowrap border-b-2 px-3.5 py-2.5 text-[13.5px] transition-colors",
             active === t.id
               ? "border-accent font-medium text-ink"
               : "border-transparent text-ink-faint hover:text-ink-dim",
           )}
         >
           {t.label}
-          {t.badge != null && <span className="tnum ml-1.5 text-[11px] text-ink-faint">{t.badge}</span>}
+          {t.badge != null && <span className="tnum ml-1.5 text-[12px] text-ink-faint">{t.badge}</span>}
         </button>
       ))}
     </div>
@@ -179,7 +179,7 @@ export function Tabs<T extends string>({
 export function Note({ children, tone }: { children: ReactNode; tone?: string }) {
   return (
     <p
-      className="rounded-[3px] border-l-2 bg-raised px-3 py-2 text-[11.5px] leading-relaxed text-ink-dim"
+      className="rounded-[3px] border-l-2 bg-raised px-3.5 py-2.5 text-[12.5px] leading-relaxed text-ink-dim"
       style={{ borderColor: tone ?? "var(--color-line-strong)" }}
     >
       {children}
@@ -189,7 +189,7 @@ export function Note({ children, tone }: { children: ReactNode; tone?: string })
 
 export function Empty({ children }: { children: ReactNode }) {
   return (
-    <div className="rounded-md border border-dashed border-line px-4 py-12 text-center text-[12px] text-ink-faint">
+    <div className="rounded-md border border-dashed border-line px-4 py-12 text-center text-[13px] text-ink-faint">
       {children}
     </div>
   );
@@ -200,7 +200,7 @@ export function Th({ children, right, w }: { children: ReactNode; right?: boolea
     <th
       style={w ? { width: w } : undefined}
       className={cls(
-        "lbl sticky top-0 z-10 border-b border-line bg-surface px-2.5 py-1.5",
+        "lbl sticky top-0 z-10 border-b border-line bg-surface px-3 py-2",
         right ? "text-right" : "text-left",
       )}
     >
@@ -225,7 +225,7 @@ export function Td({
   return (
     <td
       className={cls(
-        "border-b border-line-soft px-2.5 py-1 text-[12px]",
+        "border-b border-line-soft px-3 py-1.5 text-[13.5px]",
         right && "text-right",
         mono && "tnum",
         dim && "text-ink-faint",
@@ -258,8 +258,8 @@ export function Row({
         strong && "border-line-strong",
       )}
     >
-      <span className={cls("text-[12px]", dim ? "text-ink-faint" : "text-ink-dim")}>{label}</span>
-      <span className="tnum text-[12px]" style={tone ? { color: tone } : undefined}>
+      <span className={cls("text-[13px]", dim ? "text-ink-faint" : "text-ink-dim")}>{label}</span>
+      <span className="tnum text-[13px]" style={tone ? { color: tone } : undefined}>
         {value}
       </span>
     </div>

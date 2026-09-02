@@ -33,11 +33,11 @@ export function HeadToHead({ cases }: { cases: CaseOutcome[] }) {
         <div className="flex flex-wrap items-end justify-between gap-x-8 gap-y-2">
           <div>
             <div className="lbl">one bank credit, two systems, identical inputs</div>
-            <div className="tnum mt-1 text-[30px] leading-none font-medium">
+            <div className="tnum mt-1 text-[34px] leading-none font-medium">
               {rupees(r.target_paise)}
             </div>
           </div>
-          <div className="tnum text-right text-[11.5px] text-ink-faint">
+          <div className="tnum text-right text-[12.5px] text-ink-faint">
             <div className="text-ink-dim">{r.narration}</div>
             <div className="mt-0.5">
               {r.value_date} · {r.merchant_name} · {r.pool.n} candidates after narrowing
@@ -49,16 +49,16 @@ export function HeadToHead({ cases }: { cases: CaseOutcome[] }) {
       <div className="grid gap-3 lg:grid-cols-2">
         {/* ---- B0 ---- */}
         <section className="flex flex-col rounded-md border border-line bg-surface">
-          <header className="border-b border-line-soft px-3.5 py-2">
-            <h2 className="text-[12.5px] font-semibold">B0, confidence matcher</h2>
-            <p className="text-[11.5px] text-ink-faint">
+          <header className="border-b border-line-soft px-4 py-2.5">
+            <h2 className="text-[13.5px] font-semibold">B0, confidence matcher</h2>
+            <p className="text-[12.5px] text-ink-faint">
               searches, scores, posts above a threshold
             </p>
           </header>
 
-          <div className="flex-1 space-y-2.5 p-3.5">
+          <div className="flex-1 space-y-2.5 p-4">
             <div className="lbl">proposed subset</div>
-            <ul className="tnum space-y-px text-[12px]">
+            <ul className="tnum space-y-px text-[13px]">
               {(c.b0_proposed ?? []).map((id) => {
                 const ok = r.witness?.includes(id);
                 return (
@@ -69,7 +69,7 @@ export function HeadToHead({ cases }: { cases: CaseOutcome[] }) {
                   >
                     <span className={ok ? "text-ink-dim" : "text-ink"}>{id}</span>
                     {!ok && (
-                      <span className="text-[10.5px]" style={{ color: "var(--color-wrong)" }}>
+                      <span className="text-[11.5px]" style={{ color: "var(--color-wrong)" }}>
                         not in this batch
                       </span>
                     )}
@@ -81,7 +81,7 @@ export function HeadToHead({ cases }: { cases: CaseOutcome[] }) {
             <div className="pt-1">
               <div className="mb-1 flex items-baseline justify-between">
                 <span className="lbl">confidence</span>
-                <span className="tnum text-[12.5px]">{c.b0_confidence.toFixed(2)}</span>
+                <span className="tnum text-[13.5px]">{c.b0_confidence.toFixed(2)}</span>
               </div>
               <div className="h-1.5 w-full overflow-hidden rounded-[2px] bg-sunken">
                 <div
@@ -92,9 +92,9 @@ export function HeadToHead({ cases }: { cases: CaseOutcome[] }) {
             </div>
           </div>
 
-          <footer className="border-t border-line-soft p-3.5">
+          <footer className="border-t border-line-soft p-4">
             <div
-              className="rounded-[3px] border px-3 py-2 text-center text-[12.5px] font-semibold"
+              className="rounded-[3px] border px-3.5 py-2.5 text-center text-[13.5px] font-semibold"
               style={{
                 color: c.b0_posted_wrong ? "var(--color-wrong)" : "var(--color-verified)",
                 borderColor: `color-mix(in srgb, ${
@@ -112,14 +112,14 @@ export function HeadToHead({ cases }: { cases: CaseOutcome[] }) {
 
         {/* ---- Manhattan ---- */}
         <section className="flex flex-col rounded-md border border-line bg-surface">
-          <header className="border-b border-line-soft px-3.5 py-2">
-            <h2 className="text-[12.5px] font-semibold">Manhattan, verifier</h2>
-            <p className="text-[11.5px] text-ink-faint">
+          <header className="border-b border-line-soft px-4 py-2.5">
+            <h2 className="text-[13.5px] font-semibold">Manhattan, verifier</h2>
+            <p className="text-[12.5px] text-ink-faint">
               reconstructs, counts every rival, then tests its own filtering
             </p>
           </header>
 
-          <div className="flex-1 space-y-3 p-3.5">
+          <div className="flex-1 space-y-3 p-4">
             <div>
               <div className="lbl mb-1">narrowing waterfall</div>
               <div className="space-y-0.5">
@@ -139,13 +139,13 @@ export function HeadToHead({ cases }: { cases: CaseOutcome[] }) {
             <div className="grid grid-cols-2 gap-3 border-t border-line-soft pt-2.5">
               <div>
                 <div className="lbl">witness found</div>
-                <div className="tnum mt-0.5 text-[12.5px]">
+                <div className="tnum mt-0.5 text-[13.5px]">
                   {r.witness_size} records, {r.uniqueness?.matches_found ?? 0} match
                 </div>
               </div>
               <div>
                 <div className="lbl">identity</div>
-                <div className="tnum mt-0.5 text-[12.5px]" style={{ color: "var(--color-verified)" }}>
+                <div className="tnum mt-0.5 text-[13.5px]" style={{ color: "var(--color-verified)" }}>
                   closes, residual {rupees(r.accounting?.residual_paise ?? 0)}
                 </div>
               </div>
@@ -154,13 +154,13 @@ export function HeadToHead({ cases }: { cases: CaseOutcome[] }) {
             {probe && (
               <div className="border-t border-line-soft pt-2.5">
                 <div className="lbl mb-1">neighbourhood probe</div>
-                <div className="tnum text-[11.5px] text-ink-faint">
+                <div className="tnum text-[12.5px] text-ink-faint">
                   widened to {probe.widened_pool_n} · depth {probe.max_substitution_depth} ·{" "}
                   {num(probe.removal_sums_enumerated)} × {num(probe.addition_sums_enumerated)} sums
                 </div>
                 {probe.rival && (
                   <div
-                    className="mt-2 rounded-[3px] border px-3 py-2"
+                    className="mt-2 rounded-[3px] border px-3.5 py-2.5"
                     style={{
                       borderColor: "color-mix(in srgb, var(--color-sensitive) 30%, transparent)",
                       background: "color-mix(in srgb, var(--color-sensitive) 6%, transparent)",
@@ -169,11 +169,11 @@ export function HeadToHead({ cases }: { cases: CaseOutcome[] }) {
                     <div className="lbl" style={{ color: "var(--color-sensitive)" }}>
                       a rival reconstruction exists
                     </div>
-                    <div className="tnum mt-1 text-[12.5px]">
+                    <div className="tnum mt-1 text-[13.5px]">
                       {probe.rival.removed.join(", ")} <span className="text-ink-faint">→</span>{" "}
                       {probe.rival.added.join(", ")}
                     </div>
-                    <div className="mt-1 text-[11.5px] leading-snug text-ink-faint">
+                    <div className="mt-1 text-[12.5px] leading-snug text-ink-faint">
                       admitted by relaxing {constraintLabel(probe.admitting_constraint ?? "")}. Only{" "}
                       {probe.expected_spurious_collisions.toExponential(1)} chance collisions were
                       expected here, so this one is a finding.
@@ -184,18 +184,18 @@ export function HeadToHead({ cases }: { cases: CaseOutcome[] }) {
             )}
           </div>
 
-          <footer className="border-t border-line-soft p-3.5">
+          <footer className="border-t border-line-soft p-4">
             <div
-              className="flex items-center justify-center gap-2 rounded-[3px] border px-3 py-2"
+              className="flex items-center justify-center gap-2 rounded-[3px] border px-3.5 py-2.5"
               style={{
                 borderColor: "color-mix(in srgb, var(--color-sensitive) 35%, transparent)",
                 background: "color-mix(in srgb, var(--color-sensitive) 7%, transparent)",
               }}
             >
               <StatusPill status={r.status} />
-              <span className="text-[12.5px] font-semibold">held for review</span>
+              <span className="text-[13.5px] font-semibold">held for review</span>
             </div>
-            <p className="mt-1.5 text-center text-[11.5px] text-ink-faint">
+            <p className="mt-1.5 text-center text-[12.5px] text-ink-faint">
               The answer came from a filtering decision, not from the arithmetic.
             </p>
           </footer>
@@ -204,7 +204,7 @@ export function HeadToHead({ cases }: { cases: CaseOutcome[] }) {
 
       <Panel title="What actually happened" hint="from ground truth, which neither system was shown">
         <div className="grid gap-4 md:grid-cols-2">
-          <p className="text-[12px] leading-relaxed text-ink-dim">
+          <p className="text-[13px] leading-relaxed text-ink-dim">
             Narrowing was configured with a value-date window two hours too tight, so one record that
             genuinely belonged to this batch was captured late in the evening and dropped. A
             different record, not in the batch, happened to carry an identical contribution and took
@@ -220,21 +220,21 @@ export function HeadToHead({ cases }: { cases: CaseOutcome[] }) {
           </p>
 
           <div className="space-y-2">
-            <div className="rounded-[3px] border border-line px-3 py-2">
+            <div className="rounded-[3px] border border-line px-3.5 py-2.5">
               <div className="lbl" style={{ color: "var(--color-wrong)" }}>
                 B0
               </div>
-              <p className="mt-1 text-[11.5px] leading-snug text-ink-dim">
+              <p className="mt-1 text-[12.5px] leading-snug text-ink-dim">
                 Posted the wrong batch at {c.b0_confidence.toFixed(2)} confidence. Found at audit, 30
                 to 270 days later, cold. Tracing the credit, re-deriving the batch, restating the
                 ledger and documenting the finding runs 8 to 20 hours.
               </p>
             </div>
-            <div className="rounded-[3px] border border-line px-3 py-2">
+            <div className="rounded-[3px] border border-line px-3.5 py-2.5">
               <div className="lbl" style={{ color: "var(--color-verified)" }}>
                 Manhattan
               </div>
-              <p className="mt-1 text-[11.5px] leading-snug text-ink-dim">
+              <p className="mt-1 text-[12.5px] leading-snug text-ink-dim">
                 Held with the constraint named, priced at{" "}
                 <span className="tnum">₹{r.exception_cost_inr}</span> of analyst time. About 20
                 minutes, warm, and the narrowing configuration gets corrected for every future cycle.

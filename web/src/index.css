@@ -1,62 +1,65 @@
 @import "tailwindcss";
 
 /*
-  The design brief for this interface is narrow and it comes from the product.
+  The design brief is narrow and it comes from the product.
 
   Manhattan's argument is that a reconciliation should either be proved or
-  refused, and that the difference should be legible at a glance. So the
-  interface optimises for two things and ignores everything else: how fast a
-  status reads, and how fast a derivation reads once you look at it.
+  refused, and that the difference should be legible at a glance. The
+  interface optimises for how fast a status reads, and how fast a derivation
+  reads once you look at it. Everything else is subordinate.
 
-  Consequences, in order of how much they matter:
+  The register is a printed audit document rather than a SaaS dashboard.
+  Warm paper ground, ochre and umber, a serif for headings and a humanist
+  sans for everything read in quantity. That choice is not decoration: a
+  settlement decision is a document someone will be asked to defend months
+  later, and it should look like one.
 
-  Density over comfort. A finance analyst comparing settlements wants many
-  rows on one screen, not generous padding. Rows are 26px, body text is 12px,
-  and section prose was cut to about a third of what it was.
+  Three families, each doing one job.
 
-  Light ground. Higher contrast at small sizes than any dark theme manages,
-  and it is the register a working finance tool actually sits in.
-
-  One accent. Blue is used for interaction and for nothing else. Status is
-  carried by a glyph plus a muted tint, so five statuses do not become five
-  competing saturated colours fighting the data for attention.
-
-  Tabular figures everywhere. Amounts that do not align in a column are
-  amounts that get misread.
+    Newsreader     headings and the large figures. A text serif with real
+                   optical sizing, warm on cream, and immediately distinct
+                   from the sans so section boundaries need no rules.
+    Source Sans 3  everything read in quantity. Humanist, generous
+                   apertures, holds up at 13px where a geometric sans blurs.
+    Source Code Pro  every numeral. Same superfamily as the sans, so the two
+                   sit together without the mismatch a mono from a different
+                   designer brings.
 */
 
 @theme {
-  --font-sans: "Inter", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
-  --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+  --font-sans: "Source Sans 3", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-display: "Newsreader", ui-serif, Georgia, "Times New Roman", serif;
+  --font-mono: "Source Code Pro", ui-monospace, SFMono-Regular, Menlo, monospace;
 
-  /* Surfaces. Near-white rather than pure white: a fractionally warm ground
-     is easier to read against for long stretches and keeps the borders from
-     looking like scratches. */
-  --color-ground: #fbfbfc;
-  --color-surface: #ffffff;
-  --color-raised: #f6f7f9;
-  --color-sunken: #f1f3f5;
-  --color-line: #e4e7eb;
-  --color-line-soft: #eef0f3;
-  --color-line-strong: #d3d8de;
+  /* Paper. A warm cream ground with umber-tinted rules, so nothing on the
+     page is a pure neutral and the ochre accent has something to sit in. */
+  --color-ground: #faf6ee;
+  --color-surface: #fffdf8;
+  --color-raised: #f5efe2;
+  --color-sunken: #ede4d2;
+  --color-line: #e0d4bd;
+  --color-line-soft: #ece3d3;
+  --color-line-strong: #cbba9c;
 
-  /* Text. Three weights of emphasis and no more. */
-  --color-ink: #16181d;
-  --color-ink-dim: #565e6b;
-  --color-ink-faint: #868e9b;
+  /* Umber ink, three weights of emphasis and no more. */
+  --color-ink: #2c2318;
+  --color-ink-dim: #6a5a45;
+  --color-ink-faint: #9a8a72;
 
-  --color-accent: #1461cc;
-  --color-accent-soft: #eaf1fd;
+  /* Chestnut for interaction, and for nothing else. Deep enough to separate
+     cleanly from the terracotta and goldenrod used by two of the statuses. */
+  --color-accent: #7b4f2c;
+  --color-accent-soft: #f2e6d5;
 
-  /* Status. Chosen for equal perceived weight on white rather than as a
+  /* Status. Chosen for equal perceived weight on cream rather than as a
      severity ramp: four of the five stop the money and none of them is a
      failure, so grading them by alarm would misrepresent the model. */
-  --color-verified: #0a7d4e;
-  --color-ambiguous: #a76100;
-  --color-underdetermined: #6b7480;
-  --color-sensitive: #c2410c;
-  --color-unresolved: #6335c4;
-  --color-wrong: #c62222;
+  --color-verified: #4a7a34;
+  --color-ambiguous: #b58412;
+  --color-underdetermined: #8b8071;
+  --color-sensitive: #c05a24;
+  --color-unresolved: #7b5ea0;
+  --color-wrong: #a93226;
 }
 
 :root {
@@ -74,30 +77,41 @@ body {
   background: var(--color-ground);
   color: var(--color-ink);
   font-family: var(--font-sans);
-  font-size: 13px;
-  line-height: 1.5;
+  font-size: 15px;
+  line-height: 1.55;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  font-feature-settings: "cv05" 1, "ss03" 1;
 }
 
-/* Every numeral in this interface is tabular and monospaced. */
+/* Headings and the large figures. Optical sizing is why this face was
+   chosen: at 30px it tightens, at 15px it opens up, without a second file. */
+h1,
+h2,
+.display {
+  font-family: var(--font-display);
+  font-optical-sizing: auto;
+  letter-spacing: -0.005em;
+}
+
+/* Every numeral in this interface is tabular and monospaced. Amounts that do
+   not align in a column are amounts that get misread. */
 .tnum {
   font-family: var(--font-mono);
   font-variant-numeric: tabular-nums;
   font-feature-settings: "tnum" 1, "zero" 1;
-  letter-spacing: -0.01em;
+  letter-spacing: -0.005em;
 }
 
-/* Small caps labels, used above every value. Letter-spaced because uppercase
-   at 10px is unreadable without it. */
+/* Small caps labels, above every value. Letter-spaced because uppercase at
+   this size is unreadable without it. */
 .lbl {
-  font-size: 10px;
+  font-family: var(--font-sans);
+  font-size: 11px;
   line-height: 1.3;
-  letter-spacing: 0.055em;
+  letter-spacing: 0.07em;
   text-transform: uppercase;
   color: var(--color-ink-faint);
-  font-weight: 500;
+  font-weight: 600;
 }
 
 ::selection {
@@ -106,20 +120,20 @@ body {
 
 * {
   scrollbar-width: thin;
-  scrollbar-color: #cdd3da transparent;
+  scrollbar-color: #d0c1a6 transparent;
 }
 *::-webkit-scrollbar {
-  width: 10px;
-  height: 10px;
+  width: 11px;
+  height: 11px;
 }
 *::-webkit-scrollbar-thumb {
-  background: #cdd3da;
+  background: #d0c1a6;
   border-radius: 99px;
   border: 3px solid transparent;
   background-clip: padding-box;
 }
 *::-webkit-scrollbar-thumb:hover {
-  background: #b6bec8;
+  background: #bda98a;
   background-clip: padding-box;
 }
 *::-webkit-scrollbar-track {

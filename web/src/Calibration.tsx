@@ -41,9 +41,9 @@ export function Calibration({
           <div className="space-y-2.5">
             {buckets.map((b) => (
               <div key={b.lo} className="grid grid-cols-[130px_1fr] items-center gap-3">
-                <div className="tnum text-right text-[11px] text-ink-faint">
+                <div className="tnum text-right text-[12px] text-ink-faint">
                   {idx(b.lo)} – {idx(b.hi)}
-                  <div className="text-[10.5px] text-ink-faint/70">{b.n} configs</div>
+                  <div className="text-[11.5px] text-ink-faint/70">{b.n} configs</div>
                 </div>
                 <div>
                   <div className="flex h-5 w-full overflow-hidden rounded-[2px]">
@@ -57,7 +57,7 @@ export function Calibration({
                     <Seg v={b.sensitive} c="var(--color-sensitive)" label={`sensitive ${pct(b.sensitive)}`} />
                     <Seg v={b.unresolved} c="var(--color-unresolved)" label={`unresolved ${pct(b.unresolved)}`} />
                   </div>
-                  <div className="mt-1 flex items-center gap-3 text-[11px]">
+                  <div className="mt-1 flex items-center gap-3 text-[12px]">
                     <span style={{ color: b.wrong > 0 ? "var(--color-wrong)" : "var(--color-ink-faint)" }}>
                       Manhattan wrong postings {pct(b.wrong)}
                     </span>
@@ -70,7 +70,7 @@ export function Calibration({
             ))}
           </div>
 
-          <div className="mt-3 flex flex-wrap gap-x-5 gap-y-1 text-[11px] text-ink-faint">
+          <div className="mt-3 flex flex-wrap gap-x-5 gap-y-1 text-[12px] text-ink-faint">
             {[
               ["verified", "var(--color-verified)"],
               ["ambiguous", "var(--color-ambiguous)"],
@@ -143,7 +143,7 @@ export function Calibration({
               ))}
             </tbody>
           </table>
-          <p className="mt-3 text-[11.5px] leading-relaxed text-ink-faint">
+          <p className="mt-3 text-[12.5px] leading-relaxed text-ink-faint">
             Cost tracks the free cardinality, not the pool size. A 100-record pool at k=5 is more
             expensive than a 320-record pool at k=3, and that inversion is the signature of an
             algorithm matched to the constraint that actually binds. Every timing includes the
@@ -254,8 +254,8 @@ function EstimatorComparison({ sweep }: { sweep: SweepPoint[] }) {
           ].map(([label, v, c]) => (
             <div key={label as string}>
               <div className="flex items-baseline justify-between">
-                <span className="text-[12px] text-ink-dim">{label as string}</span>
-                <span className="tnum text-[12.5px]" style={{ color: c as string }}>
+                <span className="text-[13px] text-ink-dim">{label as string}</span>
+                <span className="tnum text-[13.5px]" style={{ color: c as string }}>
                   {(v as number).toFixed(2)}
                 </span>
               </div>
@@ -268,7 +268,7 @@ function EstimatorComparison({ sweep }: { sweep: SweepPoint[] }) {
             </div>
           ))}
         </div>
-        <p className="text-[11.5px] leading-relaxed text-ink-faint">
+        <p className="text-[12.5px] leading-relaxed text-ink-faint">
           The closed form assumes the sums of k-subsets are locally uniform near the target, with a
           density read off a moment-matched normal. Real ticket amounts are close to lognormal, and a
           sum of three of those is nothing like a normal distribution in its body, so its true

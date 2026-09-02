@@ -32,10 +32,10 @@ export function ReceiptView({ r }: { r: Receipt }) {
                 <Flag key={x} name={x} title={flagMeaning(x)} />
               ))}
             </div>
-            <div className="tnum mt-2.5 text-[24px] leading-none text-ink">{rupees(r.target_paise)}</div>
-            <div className="tnum mt-1.5 text-[11.5px] text-ink-faint">{r.settlement_ref}</div>
+            <div className="tnum mt-2.5 text-[27px] leading-none text-ink">{rupees(r.target_paise)}</div>
+            <div className="tnum mt-1.5 text-[12.5px] text-ink-faint">{r.settlement_ref}</div>
           </div>
-          <div className="text-right text-[11.5px] text-ink-faint">
+          <div className="text-right text-[12.5px] text-ink-faint">
             <div className="tnum">{r.narration}</div>
             <div className="tnum mt-0.5">
               {r.merchant_name} · {r.merchant_archetype} · value date {r.value_date}
@@ -45,9 +45,9 @@ export function ReceiptView({ r }: { r: Receipt }) {
         </div>
 
         <div className="space-y-2 px-4 py-3">
-          <p className="text-[12.5px] leading-relaxed text-ink">{r.claim}</p>
-          {r.note && <p className="text-[12px] leading-relaxed text-ink-faint">{r.note}</p>}
-          <p className="pt-1 text-[11.5px] leading-relaxed text-ink-faint">{statusMeaning(r.status)}</p>
+          <p className="text-[13.5px] leading-relaxed text-ink">{r.claim}</p>
+          {r.note && <p className="text-[13px] leading-relaxed text-ink-faint">{r.note}</p>}
+          <p className="pt-1 text-[12.5px] leading-relaxed text-ink-faint">{statusMeaning(r.status)}</p>
         </div>
       </div>
 
@@ -142,7 +142,7 @@ export function ReceiptView({ r }: { r: Receipt }) {
               />
             </div>
 
-            <p className="text-[11.5px] leading-relaxed text-ink-faint">{f.note}</p>
+            <p className="text-[12.5px] leading-relaxed text-ink-faint">{f.note}</p>
 
             {f.collision_index_analytic_at_k_star > 0 &&
               Math.abs(
@@ -175,7 +175,7 @@ export function ReceiptView({ r }: { r: Receipt }) {
           title="Reconstruction and proof"
           hint="Uniqueness is not a sweep bolted on after the search. It is the count the search itself produced."
           right={
-            <div className="text-right text-[11px] text-ink-faint">
+            <div className="text-right text-[12px] text-ink-faint">
               <div className="tnum">{num(r.solver.entries_left + r.solver.entries_right)} entries enumerated</div>
               <div className="tnum">{(r.solver.memory_bytes / 1048576).toFixed(0)} MB</div>
             </div>
@@ -192,17 +192,17 @@ export function ReceiptView({ r }: { r: Receipt }) {
             <Field label="solve side" value={r.solver.solve_side || "witness"} />
           </div>
 
-          <div className="mt-3 rounded-md border border-line bg-raised/50 px-3 py-2">
+          <div className="mt-3 rounded-md border border-line bg-raised/50 px-3.5 py-2.5">
             <div className="lbl">scope of the claim</div>
-            <div className="tnum mt-1 text-[12.5px] text-ink">{u.scope}</div>
-            <div className="mt-1 text-[11px] text-ink-faint">
+            <div className="tnum mt-1 text-[13.5px] text-ink">{u.scope}</div>
+            <div className="mt-1 text-[12px] text-ink-faint">
               bounded by{" "}
               {u.scope_source === "declared_txn_count"
                 ? "the settlement report's own declared transaction count"
                 : "the feasibility gate, computed from the pool alone"}
             </div>
             {u.scope_note && (
-              <p className="mt-2 text-[11.5px] leading-relaxed" style={{ color: "var(--color-ambiguous)" }}>
+              <p className="mt-2 text-[12.5px] leading-relaxed" style={{ color: "var(--color-ambiguous)" }}>
                 {u.scope_note}
               </p>
             )}
@@ -215,7 +215,7 @@ export function ReceiptView({ r }: { r: Receipt }) {
                 {r.witness.map((id) => (
                   <span
                     key={id}
-                    className="tnum rounded-[3px] border border-line bg-raised px-1.5 py-0.5 text-[11px]"
+                    className="tnum rounded-[3px] border border-line bg-raised px-1.5 py-0.5 text-[12px]"
                     style={
                       r.negative_members?.includes(id)
                         ? { color: "var(--color-unresolved)", borderColor: "color-mix(in srgb, var(--color-unresolved) 30%, transparent)" }
@@ -234,13 +234,13 @@ export function ReceiptView({ r }: { r: Receipt }) {
               <div className="lbl mb-1">
                 rival reconstructions, exhibited
               </div>
-              <p className="mb-2 text-[11.5px] text-ink-faint">
+              <p className="mb-2 text-[12.5px] text-ink-faint">
                 An ambiguous result shows its alternatives rather than asserting they exist. An analyst
                 may be able to choose between these on grounds the arithmetic cannot see.
               </p>
               <div className="space-y-1.5">
                 {u.alternative_witnesses.slice(0, 3).map((w, i) => (
-                  <div key={i} className="tnum rounded-md border border-line px-2.5 py-1.5 text-[11px] text-ink-dim">
+                  <div key={i} className="tnum rounded-md border border-line px-2.5 py-1.5 text-[12px] text-ink-dim">
                     {w.join("  ")}
                   </div>
                 ))}
@@ -309,7 +309,7 @@ export function ReceiptView({ r }: { r: Receipt }) {
               </tr>
             </tbody>
           </table>
-          <p className="mt-3 text-[11.5px] text-ink-faint">
+          <p className="mt-3 text-[12.5px] text-ink-faint">
             rounding mode <span className="tnum text-ink-dim">{r.rounding.mode}</span>, tolerance{" "}
             <span className="tnum text-ink-dim">{r.rounding.tolerance_paise} paise</span> per record,
             band scaled by <span className="text-ink-dim">{r.rounding.band_basis}</span>, slack
@@ -327,11 +327,11 @@ export function ReceiptView({ r }: { r: Receipt }) {
           hint="The dangerous failure is a wrong posting with a proof attached. These exist for that case alone."
         >
           {probe && (
-            <div className="mb-3 rounded-md border border-line px-3 py-2">
+            <div className="mb-3 rounded-md border border-line px-3.5 py-2.5">
               <div className="flex items-baseline justify-between gap-3">
-                <div className="text-[12px] text-ink">witness neighbourhood probe</div>
+                <div className="text-[13px] text-ink">witness neighbourhood probe</div>
                 <div
-                  className="text-[11px]"
+                  className="text-[12px]"
                   style={{
                     color: probe.inconclusive
                       ? "var(--color-ambiguous)"
@@ -343,15 +343,15 @@ export function ReceiptView({ r }: { r: Receipt }) {
                   {probe.inconclusive ? "inconclusive" : probe.stable ? "stable" : "rival found"}
                 </div>
               </div>
-              <p className="mt-1.5 text-[11.5px] leading-relaxed text-ink-faint">{probe.note}</p>
-              <div className="tnum mt-2 text-[11px] text-ink-faint">
+              <p className="mt-1.5 text-[12.5px] leading-relaxed text-ink-faint">{probe.note}</p>
+              <div className="tnum mt-2 text-[12px] text-ink-faint">
                 depth {probe.max_substitution_depth} of {probe.requested_substitution_depth} requested
                 · {num(probe.removal_sums_enumerated)} × {num(probe.addition_sums_enumerated)} sums ·
                 pool widened to {probe.widened_pool_n} · {probe.expected_spurious_collisions.toExponential(1)}{" "}
                 chance collisions expected
               </div>
               {probe.rival && (
-                <div className="tnum mt-2 text-[11.5px]" style={{ color: "var(--color-sensitive)" }}>
+                <div className="tnum mt-2 text-[12.5px]" style={{ color: "var(--color-sensitive)" }}>
                   {probe.rival.removed.join(", ")} → {probe.rival.added.join(", ")}, admitted by{" "}
                   {constraintLabel(probe.admitting_constraint ?? "")}
                 </div>
@@ -361,11 +361,11 @@ export function ReceiptView({ r }: { r: Receipt }) {
 
           <div className="space-y-2">
             {r.narrowing.completeness_checks?.map((c) => (
-              <div key={c.name} className="rounded-md border border-line px-3 py-2">
+              <div key={c.name} className="rounded-md border border-line px-3.5 py-2.5">
                 <div className="flex items-baseline justify-between gap-3">
-                  <span className="text-[12px] text-ink">{c.name.replace(/_/g, " ")}</span>
+                  <span className="text-[13px] text-ink">{c.name.replace(/_/g, " ")}</span>
                   <span
-                    className="text-[11px] tracking-wide uppercase"
+                    className="text-[12px] tracking-wide uppercase"
                     style={{
                       color:
                         c.state === "pass"
@@ -378,7 +378,7 @@ export function ReceiptView({ r }: { r: Receipt }) {
                     {c.state}
                   </span>
                 </div>
-                <p className="mt-1 text-[11.5px] leading-relaxed text-ink-faint">{c.detail}</p>
+                <p className="mt-1 text-[12.5px] leading-relaxed text-ink-faint">{c.detail}</p>
               </div>
             ))}
           </div>
@@ -405,7 +405,7 @@ export function ReceiptView({ r }: { r: Receipt }) {
                       tone={r.fee_check.within_band ? "var(--color-verified)" : "var(--color-ambiguous)"}
                     />
                   </div>
-                  <p className="mt-3 text-[11.5px] leading-relaxed text-ink-faint">{r.fee_check.claim}</p>
+                  <p className="mt-3 text-[12.5px] leading-relaxed text-ink-faint">{r.fee_check.claim}</p>
                 </>
               )}
             </Panel>
@@ -416,7 +416,7 @@ export function ReceiptView({ r }: { r: Receipt }) {
               title="Agent"
               hint="observe, choose one action, apply it as an edit to the inputs, re-verify with the stack unchanged"
               right={
-                <span className="tnum text-[11px] text-ink-faint">
+                <span className="tnum text-[12px] text-ink-faint">
                   {r.agent.provider} · {r.agent.iterations} iteration
                   {r.agent.iterations === 1 ? "" : "s"}
                 </span>
@@ -431,7 +431,7 @@ export function ReceiptView({ r }: { r: Receipt }) {
                   {r.agent.steps.map((s) => (
                     <div
                       key={s.step}
-                      className="rounded-[3px] border px-3 py-2"
+                      className="rounded-[3px] border px-3.5 py-2.5"
                       style={{
                         borderColor: s.accepted
                           ? "color-mix(in srgb, var(--color-verified) 30%, transparent)"
@@ -442,22 +442,22 @@ export function ReceiptView({ r }: { r: Receipt }) {
                       }}
                     >
                       <div className="flex flex-wrap items-baseline justify-between gap-2">
-                        <span className="tnum text-[11.5px]">
+                        <span className="tnum text-[12.5px]">
                           <span className="text-ink-faint">{s.step}.</span>{" "}
                           <span className="font-medium">{s.action.replace(/_/g, " ").toLowerCase()}</span>
                         </span>
-                        <span className="tnum text-[11px] text-ink-faint">
+                        <span className="tnum text-[12px] text-ink-faint">
                           pool {s.pool_before} to {s.pool_after} · index{" "}
                           {idx(s.collision_index_before)} to {idx(s.collision_index_after)} ·{" "}
                           <span style={{ color: statusColor(s.result_status) }}>{s.result_status}</span>
                         </span>
                       </div>
                       {s.rationale && (
-                        <p className="mt-1 text-[11.5px] leading-snug text-ink-dim">{s.rationale}</p>
+                        <p className="mt-1 text-[12.5px] leading-snug text-ink-dim">{s.rationale}</p>
                       )}
-                      <p className="mt-0.5 text-[11px] leading-snug text-ink-faint">{s.note}</p>
+                      <p className="mt-0.5 text-[12px] leading-snug text-ink-faint">{s.note}</p>
                       {s.citation && (
-                        <p className="tnum mt-0.5 text-[11px]" style={{ color: "var(--color-verified)" }}>
+                        <p className="tnum mt-0.5 text-[12px]" style={{ color: "var(--color-verified)" }}>
                           cites {s.citation}
                         </p>
                       )}
@@ -472,7 +472,7 @@ export function ReceiptView({ r }: { r: Receipt }) {
                   return (
                     <div
                       key={i}
-                      className="rounded border px-3 py-2"
+                      className="rounded border px-3.5 py-2.5"
                       style={{
                         borderColor: accepted
                           ? "color-mix(in srgb, var(--color-verified) 35%, transparent)"
@@ -483,30 +483,30 @@ export function ReceiptView({ r }: { r: Receipt }) {
                       }}
                     >
                       <div className="flex items-baseline justify-between gap-3">
-                        <span className="tnum text-[12px] text-ink">
+                        <span className="tnum text-[13px] text-ink">
                           {h.kind.replace(/_/g, " ").toLowerCase()}
                         </span>
-                        <span className="tnum text-[12px] text-ink-dim">{rupees(h.amount_paise)}</span>
+                        <span className="tnum text-[13px] text-ink-dim">{rupees(h.amount_paise)}</span>
                       </div>
                       {h.rationale && (
-                        <p className="mt-1 text-[11.5px] leading-relaxed text-ink-faint">{h.rationale}</p>
+                        <p className="mt-1 text-[12.5px] leading-relaxed text-ink-faint">{h.rationale}</p>
                       )}
                       {h.source_ref ? (
-                        <p className="tnum mt-1.5 text-[11px]" style={{ color: "var(--color-verified)" }}>
+                        <p className="tnum mt-1.5 text-[12px]" style={{ color: "var(--color-verified)" }}>
                           cites {h.source_ref} — {h.evidence}
                         </p>
                       ) : (
-                        <p className="mt-1.5 text-[11px] text-ink-faint">
+                        <p className="mt-1.5 text-[12px] text-ink-faint">
                           uncited, so it can never post whatever the arithmetic says
                         </p>
                       )}
-                      <p className="mt-1 text-[11px] text-ink-faint">{h.outcome}</p>
+                      <p className="mt-1 text-[12px] text-ink-faint">{h.outcome}</p>
                     </div>
                   );
                 })}
               </div>
               {r.agent.note && (
-                <p className="mt-3 text-[11.5px] leading-relaxed text-ink-faint">{r.agent.note}</p>
+                <p className="mt-3 text-[12.5px] leading-relaxed text-ink-faint">{r.agent.note}</p>
               )}
             </Panel>
           )}
@@ -521,11 +521,11 @@ export function ReceiptView({ r }: { r: Receipt }) {
         >
           <div className="space-y-2">
             {r.remediation.map((rm, i) => (
-              <div key={i} className="rounded-md border border-line px-3 py-2">
-                <div className="text-[12px] text-ink">{rm.action}</div>
-                <div className="mt-0.5 text-[11.5px] text-ink-faint">{rm.effect}</div>
+              <div key={i} className="rounded-md border border-line px-3.5 py-2.5">
+                <div className="text-[13px] text-ink">{rm.action}</div>
+                <div className="mt-0.5 text-[12.5px] text-ink-faint">{rm.effect}</div>
                 {rm.projected_collision_index !== undefined && (
-                  <div className="tnum mt-1 text-[11px]" style={{ color: "var(--color-accent)" }}>
+                  <div className="tnum mt-1 text-[12px]" style={{ color: "var(--color-accent)" }}>
                     projected index {idx(rm.projected_collision_index)}
                     {rm.projected_pool_n !== undefined && ` at a pool of ${rm.projected_pool_n}`}
                   </div>
@@ -556,7 +556,7 @@ export function ReceiptView({ r }: { r: Receipt }) {
             ))}
           </tbody>
         </table>
-        <p className="mt-3 text-[11.5px] text-ink-faint">
+        <p className="mt-3 text-[12.5px] text-ink-faint">
           There is no separate line for the uniqueness proof, because the reconstruction step
           produced the count. Policy <span className="tnum text-ink-dim">{r.policy_version}</span>,
           replay seed <span className="tnum text-ink-dim">{r.replay_seed}</span>.

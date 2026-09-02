@@ -95,8 +95,8 @@ export function Run({
       />
 
       {streaming && progress && (
-        <div className="rounded-md border border-line bg-surface px-3.5 py-2">
-          <div className="flex items-baseline justify-between text-[12px]">
+        <div className="rounded-md border border-line bg-surface px-4 py-2.5">
+          <div className="flex items-baseline justify-between text-[13px]">
             <span className="text-ink-dim">reconciling</span>
             <span className="tnum text-ink-faint">
               {progress.done} / {progress.total}
@@ -118,7 +118,7 @@ export function Run({
         right={
           <button
             onClick={() => setLegend(!legend)}
-            className="text-[11.5px] text-ink-faint transition-colors hover:text-accent"
+            className="text-[12.5px] text-ink-faint transition-colors hover:text-accent"
           >
             {legend ? "hide" : "what these mean"}
           </button>
@@ -141,7 +141,7 @@ export function Run({
                 onClick={() => setFilter(active ? "ALL" : s)}
                 title={statusMeaning(s)}
                 className={cls(
-                  "inline-flex items-center gap-1.5 rounded-[3px] border px-2 py-1 text-[11.5px] transition-colors",
+                  "inline-flex items-center gap-1.5 rounded-[3px] border px-2 py-1.5 text-[11.5px] transition-colors",
                   active ? "border-accent bg-accent-soft" : "border-line hover:bg-raised",
                 )}
               >
@@ -158,7 +158,7 @@ export function Run({
           {filter !== "ALL" && (
             <button
               onClick={() => setFilter("ALL")}
-              className="px-2 py-1 text-[11.5px] text-ink-faint hover:text-accent"
+              className="px-2 py-1.5 text-[11.5px] text-ink-faint hover:text-accent"
             >
               clear
             </button>
@@ -172,7 +172,7 @@ export function Run({
                 <span className="w-[92px] shrink-0">
                   <StatusPill status={s} size="sm" />
                 </span>
-                <span className="text-[11.5px] leading-snug text-ink-dim">{statusMeaning(s)}</span>
+                <span className="text-[12.5px] leading-snug text-ink-dim">{statusMeaning(s)}</span>
               </div>
             ))}
           </div>
@@ -189,7 +189,7 @@ export function Run({
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             placeholder="filter"
-            className="tnum w-44 rounded border border-line bg-surface px-2 py-1 text-[11.5px] text-ink placeholder:text-ink-faint focus:border-accent focus:outline-none"
+            className="tnum w-44 rounded border border-line bg-surface px-2 py-1.5 text-[11.5px] text-ink placeholder:text-ink-faint focus:border-accent focus:outline-none"
           />
         }
       >
@@ -248,7 +248,7 @@ export function Run({
             </tbody>
           </table>
           {shown.length === 0 && (
-            <div className="py-10 text-center text-[12px] text-ink-faint">nothing matches</div>
+            <div className="py-10 text-center text-[13px] text-ink-faint">nothing matches</div>
           )}
         </div>
       </Panel>
@@ -319,7 +319,7 @@ export function Run({
               ))}
             </tbody>
           </table>
-          <div className="p-3.5">
+          <div className="p-4">
             <Note tone="var(--color-accent)">
               Read the two wrong-posting columns against twin mass. Where amounts genuinely fail to
               distinguish transactions, our auto-post rate falls to zero and B0's wrong-posting rate
@@ -360,7 +360,7 @@ export function Run({
                 dim
               />
             </div>
-            <p className="mt-2.5 text-[11.5px] leading-relaxed text-ink-faint">
+            <p className="mt-2.5 text-[12.5px] leading-relaxed text-ink-faint">
               Priced at <span className="tnum">{summary.priced_at_model}</span>
               {summary.price_is_real_spend ? "" : ", modelled rather than billed"}. B0's input scales
               with pool size because it must read the pool; ours reads one line of narration whatever
@@ -372,14 +372,14 @@ export function Run({
             <Panel title="This run is gated" hint="a property of the batch, not of any settlement">
               {summary.narrowing_drift.map((d) => (
                 <div key={d.constraint}>
-                  <p className="text-[12px] leading-relaxed text-ink">
+                  <p className="text-[13px] leading-relaxed text-ink">
                     <span className="tnum" style={{ color: "var(--color-sensitive)" }}>
                       {d.constraint}
                     </span>{" "}
                     dropped {pct(d.drop_rate_observed, 1)} of the record universe against a stored
                     baseline of {pct(d.drop_rate_baseline, 1)}.
                   </p>
-                  <p className="mt-1.5 text-[11.5px] leading-relaxed text-ink-faint">
+                  <p className="mt-1.5 text-[12.5px] leading-relaxed text-ink-faint">
                     It holds the whole batch rather than appearing on receipts an analyst could clear
                     one by one. {d.note}
                   </p>
@@ -394,7 +394,7 @@ export function Run({
                 <Row label="provider" value={summary.provider} dim />
                 <Row label="models" value={summary.provider_models.split(" ")[0]} dim />
               </div>
-              <p className="mt-2.5 text-[11.5px] leading-relaxed text-ink-faint">
+              <p className="mt-2.5 text-[12.5px] leading-relaxed text-ink-faint">
                 Every amount is an integer count of paise, with no floating point anywhere in the
                 verification path. The same seed reproduces the same receipts byte for byte.
               </p>

@@ -108,30 +108,30 @@ export function Exceptions({ receipts, onOpen }: { receipts: Receipt[]; onOpen: 
             <button
               key={r.settlement_ref}
               onClick={() => onOpen(r)}
-              className="w-full rounded-md border border-line px-3 py-2 text-left transition-colors hover:bg-raised"
+              className="w-full rounded-md border border-line px-3.5 py-2.5 text-left transition-colors hover:bg-raised"
             >
               <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
                 <span className="flex items-center gap-2">
                   <StatusPill status={r.status} size="sm" />
-                  <span className="tnum text-[11.5px] text-ink-dim">
+                  <span className="tnum text-[12.5px] text-ink-dim">
                     {r.settlement_ref.replace("bank_credit_", "")}
                   </span>
                 </span>
-                <span className="tnum text-[11.5px] text-ink-faint">
+                <span className="tnum text-[12.5px] text-ink-faint">
                   {rupeesShort(r.target_paise)} · pool {r.pool.n} · index{" "}
                   {idx(r.feasibility.collision_index_at_k_star)} · ₹{r.exception_cost_inr}
                 </span>
               </div>
-              <p className="mt-1.5 text-[12px] leading-snug text-ink-dim">{r.claim}</p>
+              <p className="mt-1.5 text-[13px] leading-snug text-ink-dim">{r.claim}</p>
               {r.remediation?.[0] && (
-                <p className="mt-1.5 text-[11.5px] leading-snug" style={{ color: "var(--color-accent)" }}>
+                <p className="mt-1.5 text-[12.5px] leading-snug" style={{ color: "var(--color-accent)" }}>
                   {r.remediation[0].action} — {r.remediation[0].effect}
                 </p>
               )}
             </button>
           ))}
           {ex.length > 60 && (
-            <p className="py-2 text-center text-[11.5px] text-ink-faint">
+            <p className="py-2 text-center text-[12.5px] text-ink-faint">
               and {ex.length - 60} more, in the same order
             </p>
           )}

@@ -95,22 +95,22 @@ export default function App() {
       <header className="sticky top-0 z-20 border-b border-line bg-ground/95 backdrop-blur">
         <div className="mx-auto max-w-[1400px] px-5">
           <div className="flex flex-wrap items-baseline justify-between gap-x-8 gap-y-2 py-3">
-            <div className="flex items-baseline gap-3.5">
-              <h1 className="text-[15px] font-semibold tracking-tight text-ink">Manhattan</h1>
-              <p className="text-[12px] text-ink-faint">
+            <div className="flex items-baseline gap-4">
+              <h1 className="display text-[22px] leading-none font-semibold text-ink">Manhattan</h1>
+              <p className="text-[14px] text-ink-faint">
                 An agent that proves settlements instead of guessing them.
               </p>
             </div>
             <div className="flex items-center gap-3">
               {provider && (
-                <span className="tnum text-[11px] text-ink-faint" title="which language model backs this run">
+                <span className="tnum text-[12px] text-ink-faint" title="which language model backs this run">
                   {provider}
                 </span>
               )}
               <button
                 onClick={() => void startRun()}
                 disabled={streaming}
-                className="rounded-md border border-line px-3 py-1.5 text-[11.5px] text-ink-dim transition-colors hover:border-accent hover:text-accent disabled:opacity-50"
+                className="rounded-md border border-line px-3 py-1.5 text-[12.5px] text-ink-dim transition-colors hover:border-accent hover:text-accent disabled:opacity-50"
               >
                 {streaming ? "running" : "run a batch"}
               </button>
@@ -134,7 +134,7 @@ export default function App() {
 
       <main className="mx-auto max-w-[1400px] px-5 py-4">
         {loadError && (
-          <p className="mb-3 rounded-md border border-line px-3.5 py-2.5 text-[12px]" style={{ color: "var(--color-wrong)" }}>
+          <p className="mb-3 rounded-md border border-line px-4 py-2.5 text-[13px]" style={{ color: "var(--color-wrong)" }}>
             {loadError}
           </p>
         )}
@@ -172,10 +172,10 @@ export default function App() {
             onClick={(e) => e.stopPropagation()}
           >
             <div className="sticky top-0 z-10 flex items-center justify-between border-b border-line bg-ground/95 px-4 py-2 backdrop-blur">
-              <span className="text-[12px] text-ink-faint">evidence object</span>
+              <span className="text-[13px] text-ink-faint">evidence object</span>
               <button
                 onClick={() => setOpen(null)}
-                className="rounded-md border border-line px-2.5 py-1 text-[11.5px] text-ink-faint transition-colors hover:border-ink-faint hover:text-ink-dim"
+                className="rounded-md border border-line px-2.5 py-1.5 text-[11.5px] text-ink-faint transition-colors hover:border-ink-faint hover:text-ink-dim"
               >
                 close
               </button>
