@@ -114,7 +114,7 @@ export function Run({
       {/* Status mix as one compact strip of filter chips. */}
       <Panel
         title="Outcomes"
-        hint="four of the five stop the money, and none of them is a failure"
+        hint="four of five statuses hold the settlement"
         right={
           <button
             onClick={() => setLegend(!legend)}
@@ -257,8 +257,8 @@ export function Run({
       {summary && summary.by_archetype?.length > 0 && (
         <Panel
           flush
-          title="Which merchants this works for"
-          hint="the rate is predictable from the amount distribution alone, before any integration"
+          title="Merchant segments"
+          hint="auto-post rate follows the amount distribution"
         >
           <table className="w-full border-separate border-spacing-0">
             <thead>
@@ -321,9 +321,8 @@ export function Run({
           </table>
           <div className="p-4">
             <Note tone="var(--color-accent)">
-              Read the two wrong-posting columns against twin mass. Where amounts genuinely fail to
-              distinguish transactions, our auto-post rate falls to zero and B0's wrong-posting rate
-              climbs to 73%. Both systems see the same data. One reacts to it.
+              As twin mass rises, the auto-post rate falls to zero and the baseline's wrong-posting
+              rate climbs. Both systems see the same data.
             </Note>
           </div>
         </Panel>
@@ -332,7 +331,7 @@ export function Run({
       {/* Cost, compact */}
       {summary && (
         <div className="grid gap-3 lg:grid-cols-2">
-          <Panel title="What it costs to be right" hint="accuracy that costs 10x is not obviously a win">
+          <Panel title="Cost" hint="per settlement">
             <div className="space-y-0.5">
               <Row
                 label="model calls per settlement"
@@ -362,14 +361,13 @@ export function Run({
             </div>
             <p className="mt-2.5 text-[12.5px] leading-relaxed text-ink-faint">
               Priced at <span className="tnum">{summary.priced_at_model}</span>
-              {summary.price_is_real_spend ? "" : ", modelled rather than billed"}. B0's input scales
-              with pool size because it must read the pool; ours reads one line of narration whatever
-              the pool size.
+              {summary.price_is_real_spend ? "" : ", modelled rather than billed"}. The baseline's
+              input scales with pool size; ours does not.
             </p>
           </Panel>
 
           {summary.narrowing_drift && summary.narrowing_drift.length > 0 ? (
-            <Panel title="This run is gated" hint="a property of the batch, not of any settlement">
+            <Panel title="This run is gated" hint="batch-level finding">
               {summary.narrowing_drift.map((d) => (
                 <div key={d.constraint}>
                   <p className="text-[13px] leading-relaxed text-ink">
@@ -387,7 +385,7 @@ export function Run({
               ))}
             </Panel>
           ) : (
-            <Panel title="Reproducibility" hint="a decision that cannot be reproduced cannot be audited">
+            <Panel title="Reproducibility" hint="same seed, same receipts">
               <div className="space-y-0.5">
                 <Row label="run" value={summary.run_id} dim />
                 <Row label="seed" value={summary.seed} />
@@ -395,8 +393,7 @@ export function Run({
                 <Row label="models" value={summary.provider_models.split(" ")[0]} dim />
               </div>
               <p className="mt-2.5 text-[12.5px] leading-relaxed text-ink-faint">
-                Every amount is an integer count of paise, with no floating point anywhere in the
-                verification path. The same seed reproduces the same receipts byte for byte.
+                All amounts are integer paise. No floating point appears in the verification path.
               </p>
             </Panel>
           )}

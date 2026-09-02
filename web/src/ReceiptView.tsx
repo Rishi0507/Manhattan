@@ -1,6 +1,7 @@
 import type { Receipt } from "./types";
 import { constraintLabel, flagMeaning, idx, num, rupees, statusColor, statusMeaning } from "./lib";
 import { Bar, Field, Flag, Fold, Note, Panel, StatusPill, Td, Th } from "./ui";
+import { FeasibilityCurve } from "./Charts";
 
 /**
  * The evidence object, rendered.
@@ -27,7 +28,9 @@ export function ReceiptView({ r }: { r: Receipt }) {
         <div className="flex flex-wrap items-start justify-between gap-3 border-b border-line-soft px-4 py-3">
           <div className="min-w-0">
             <div className="flex flex-wrap items-center gap-2">
-              <StatusPill status={r.status} />
+              <span title={statusMeaning(r.status)}>
+                <StatusPill status={r.status} />
+              </span>
               {r.flags.map((x) => (
                 <Flag key={x} name={x} title={flagMeaning(x)} />
               ))}
@@ -51,7 +54,7 @@ export function ReceiptView({ r }: { r: Receipt }) {
         </div>
       </div>
 
-      <div className="grid gap-3 lg:grid-cols-2">
+      <div className="grid items-start gap-3 lg:grid-cols-2">
         {/* Stage 2: narrowing */}
         <Fold
           title="Narrowing"
@@ -108,7 +111,7 @@ export function ReceiptView({ r }: { r: Receipt }) {
 
         {/* Stage 4: gates */}
         <Fold
-          title="Can this even be answered?"
+          title="Feasibility"
           summary={`k* ${r.feasibility.k_star}, index ${idx(r.feasibility.collision_index_at_k_star)}`}
         >
           <div className="space-y-3">
@@ -142,6 +145,14 @@ export function ReceiptView({ r }: { r: Receipt }) {
               />
             </div>
 
+            {f.curve && f.curve.length > 1 && (
+              <FeasibilityCurve
+                curve={f.curve}
+                kStar={f.k_star}
+                threshold={f.threshold_underdetermined}
+              />
+            )}
+
             <p className="text-[12.5px] leading-relaxed text-ink-faint">{f.note}</p>
 
             {f.collision_index_analytic_at_k_star > 0 &&
@@ -172,7 +183,7 @@ export function ReceiptView({ r }: { r: Receipt }) {
       {/* Stage 5 and 6 */}
       {u && r.solver && (
         <Fold
-          title="Reconstruction and proof"
+          title="Reconstruction"
           summary={`${r.witness_size} records, ${u.matches_found} match${
             u.matches_found === 1 ? "" : "es"
           }, ${num(r.solver.entries_left + r.solver.entries_right)} subsets enumerated`}
@@ -259,8 +270,8 @@ export function ReceiptView({ r }: { r: Receipt }) {
       {/* Accounting */}
       {r.accounting && (
         <Panel
-          title="The accounting identity, re-derived"
-          hint="Recomputed from the raw records without reusing any value the solver touched. If the two disagree, the solver is wrong and nothing posts."
+          title="Accounting check"
+          hint="recomputed from raw records, independently of the solver"
         >
           <table className="w-full max-w-lg">
             <tbody>
@@ -319,7 +330,7 @@ export function ReceiptView({ r }: { r: Receipt }) {
       <div className="grid gap-3 lg:grid-cols-2">
         {/* Completeness */}
         <Fold
-          title="Completeness guards"
+          title="Completeness"
           summary={probe ? (probe.stable ? "stable" : probe.inconclusive ? "inconclusive" : "rival found") : undefined}
         >
           {probe && (
@@ -385,7 +396,7 @@ export function ReceiptView({ r }: { r: Receipt }) {
           {r.fee_check && (
             <Panel
               title="Fee check"
-              hint="Whether the money is accounted for and whether the fee applied to it was right are different questions."
+              hint="independent of the reconciliation"
             >
               {r.fee_check.circular ? (
                 <Note tone="var(--color-underdetermined)">{r.fee_check.claim}</Note>
@@ -410,7 +421,7 @@ export function ReceiptView({ r }: { r: Receipt }) {
           {r.agent.invoked && (
             <Panel
               title="Agent"
-              hint="observe, choose one action, apply it as an edit to the inputs, re-verify with the stack unchanged"
+              hint="observe, act, re-verify"
               right={
                 <span className="tnum text-[12px] text-ink-faint">
                   {r.agent.provider} · {r.agent.iterations} iteration
@@ -512,8 +523,8 @@ export function ReceiptView({ r }: { r: Receipt }) {
       {/* Remediation */}
       {r.remediation && r.remediation.length > 0 && (
         <Panel
-          title="What would change this"
-          hint="Not advice. Where possible, the collision index the named change is estimated to produce."
+          title="Remediation"
+          hint="with the projected outcome where computable"
         >
           <div className="space-y-2">
             {r.remediation.map((rm, i) => (
@@ -533,7 +544,7 @@ export function ReceiptView({ r }: { r: Receipt }) {
       )}
 
       {/* Timings */}
-      <Fold title="Where the time went">
+      <Fold title="Timings">
         <table className="w-full max-w-md">
           <thead>
             <tr>

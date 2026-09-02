@@ -38,11 +38,10 @@ export function Landing({
           An agent that proves settlements instead of guessing them.
         </h1>
 
-        <p className="mt-6 max-w-[62ch] text-[17px] leading-relaxed text-ink-dim">
-          A gateway settlement arrives as one number in a bank account. Behind it are hundreds of
-          payments, fees, taxes, refunds and chargebacks. Manhattan runs that arrow backwards and
-          either produces an exact reconstruction with a proof that no rival exists, or it names the
-          precise property it could not establish and refuses.
+        <p className="mt-6 max-w-[60ch] text-[17px] leading-relaxed text-ink-dim">
+          A gateway settlement arrives as a single credit representing hundreds of payments, fees,
+          taxes, refunds and chargebacks. Manhattan reconstructs it exactly and proves no rival
+          reconstruction exists, or states which property it could not establish.
         </p>
 
         <div className="mt-8 flex flex-wrap items-center gap-3">
@@ -50,13 +49,13 @@ export function Landing({
             onClick={() => onEnter("hook")}
             className="rounded-md bg-accent px-5 py-2.5 text-[15px] font-medium text-[#fffdf8] transition-colors hover:bg-[#633f22]"
           >
-            See it catch a wrong posting
+            View the comparison
           </button>
           <button
             onClick={() => onEnter("run")}
             className="rounded-md border border-line-strong px-5 py-2.5 text-[15px] text-ink-dim transition-colors hover:border-accent hover:text-accent"
           >
-            Open the run
+            Open the dashboard
           </button>
         </div>
       </section>
@@ -90,39 +89,34 @@ export function Landing({
             />
           </div>
 
-          <p className="mt-9 max-w-[74ch] text-[15px] leading-relaxed text-ink-dim">
-            B0 posted {num(postedB0)} and got{" "}
-            <strong className="font-semibold text-ink">{num(wrongB0)} of them wrong</strong>. Not
-            approximately wrong: attributed to the wrong transactions, at high confidence, with
-            nothing to indicate a problem. Found at audit, that is eight to twenty hours each.
-            <br />
-            <br />
-            Manhattan posts fewer. Every one is right, and every refusal names its own cure.
+          <p className="mt-9 max-w-[72ch] text-[15px] leading-relaxed text-ink-dim">
+            The baseline posted {num(postedB0)} settlements and attributed{" "}
+            <strong className="font-semibold text-ink">{num(wrongB0)} to the wrong transactions</strong>,
+            at high confidence, with no indication of a problem. Manhattan posts fewer, and every
+            refusal states its remediation.
           </p>
         </section>
       )}
 
       {/* ---- How ------------------------------------------------------ */}
       <section className="py-14">
-        <h2 className="display text-[28px] leading-tight font-medium">
-          Why guessing fails here, specifically
-        </h2>
+        <h2 className="display text-[28px] leading-tight font-medium">Why matching fails</h2>
 
         <div className="mt-8 grid gap-x-10 gap-y-9 md:grid-cols-3">
           <Step
             n="01"
             title="Adding up is not proof"
-            body="Forty candidate payments give a trillion possible combinations. On a real batch, many of them hit the target exactly by coincidence. Finding one is easy and worthless; the work is proving no other exists."
+            body="Forty candidate payments produce a trillion combinations. Many hit the target exactly by coincidence. Finding one is trivial; proving no other exists is the problem."
           />
           <Step
             n="02"
             title="Ask whether it is answerable first"
-            body="Before searching, we estimate how many combinations would hit this target by chance. Above a threshold, no method can single one out, so we refuse without searching and say what would change that."
+            body="Before searching, the system estimates how many combinations would hit the target by chance. Above a threshold no method can identify one, so it refuses and states what would change that."
           />
           <Step
             n="03"
             title="Then suspect ourselves"
-            body="If our own filters dropped a real payment, a coincidental set can still add up, and we would post a wrong answer with a proof attached. So we widen the net afterwards and check whether a rival appears."
+            body="If a filter dropped a real payment, a coincidental set can still reconcile exactly. The pool is widened afterwards to check whether a rival reconstruction appears."
           />
         </div>
       </section>
@@ -133,24 +127,17 @@ export function Landing({
           <div className="grid items-start gap-10 lg:grid-cols-[1.1fr_1fr]">
             <div>
               <p className="lbl">the case worth seeing</p>
-              <h2 className="display mt-3 text-[28px] leading-tight font-medium">
-                One filter, two hours too tight
-              </h2>
+              <h2 className="display mt-3 text-[28px] leading-tight font-medium">A filter set two hours too tight</h2>
               <p className="mt-4 max-w-[54ch] text-[15px] leading-relaxed text-ink-dim">
-                A value-date window was set slightly wrong, so one payment that genuinely belonged to
-                this batch was dropped. A different payment, not in the batch, happened to carry an
-                identical amount and took its place.
-                <br />
-                <br />
-                Every arithmetic check passes on the survivors. The identity closes to the paise. B0
-                posts it at {hero.b0_confidence.toFixed(2)} confidence and is wrong. Manhattan holds
-                it and names the filter.
+                One payment belonging to this batch was dropped by the value-date window. A payment
+                outside the batch carrying an identical amount took its place. Every arithmetic check
+                passes on the survivors.
               </p>
               <button
                 onClick={() => onEnter("hook")}
                 className="mt-6 text-[15px] font-medium text-accent underline-offset-4 hover:underline"
               >
-                See both systems on this settlement
+                View this settlement
               </button>
             </div>
 
@@ -177,13 +164,10 @@ export function Landing({
       {/* ---- Segmentation --------------------------------------------- */}
       {summary && summary.by_archetype?.length > 0 && (
         <section className="border-t border-line py-14">
-          <h2 className="display text-[28px] leading-tight font-medium">
-            It can tell a merchant whether it will work, before integration
-          </h2>
-          <p className="mt-4 max-w-[70ch] text-[15px] leading-relaxed text-ink-dim">
-            One pass over historical settlement amounts gives the spread and how much of it repeats.
-            Those give the expected outcome. Nothing else in this space can scope itself honestly at
-            the sales stage, because nothing else knows exactly what makes it fail.
+          <h2 className="display text-[28px] leading-tight font-medium">Predicting suitability before integration</h2>
+          <p className="mt-4 max-w-[68ch] text-[15px] leading-relaxed text-ink-dim">
+            A single pass over historical settlement amounts yields the spread and the proportion
+            that repeats, which determine the expected outcome.
           </p>
 
           <div className="mt-8 space-y-2.5">
@@ -215,11 +199,10 @@ export function Landing({
               ))}
           </div>
 
-          <p className="mt-6 max-w-[70ch] text-[14px] leading-relaxed text-ink-faint">
+          <p className="mt-6 max-w-[68ch] text-[14px] leading-relaxed text-ink-faint">
             The merchants at the bottom bill three repeated subscription prices. Their settlements
-            are genuinely not reconstructable from amounts by any method, ours included. We say so in
-            eleven milliseconds and name the fix, rather than guessing and being wrong seven times
-            in ten.
+            are not reconstructable from amounts by any method. The system reports this in
+            milliseconds and states the remediation.
           </p>
         </section>
       )}

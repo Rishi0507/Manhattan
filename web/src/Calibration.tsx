@@ -2,6 +2,8 @@ import { useMemo } from "react";
 import type { EnvelopePoint, SweepPoint } from "./types";
 import { idx, num, pct } from "./lib";
 import { Empty, Note, Panel, Td, Th } from "./ui";
+import { AgreementScatter, EnvelopeBars, OutcomeBands, SERIES } from "./Charts";
+import { statusColor } from "./lib";
 
 /**
  * The calibration study.
@@ -35,62 +37,47 @@ export function Calibration({
     <div className="space-y-3">
       {buckets.length > 0 && (
         <Panel
-          title="Does the system know in advance when it is about to be wrong?"
-          hint="Predicted on the left, measured on the right. The index is computed before any search runs."
+          title="Calibration"
+          hint="index computed before any search, outcomes measured after"
         >
-          <div className="space-y-2.5">
-            {buckets.map((b) => (
-              <div key={b.lo} className="grid grid-cols-[130px_1fr] items-center gap-3">
-                <div className="tnum text-right text-[12px] text-ink-faint">
-                  {idx(b.lo)} – {idx(b.hi)}
-                  <div className="text-[11.5px] text-ink-faint/70">{b.n} configs</div>
-                </div>
-                <div>
-                  <div className="flex h-5 w-full overflow-hidden rounded-[2px]">
-                    <Seg v={b.verified} c="var(--color-verified)" label={`verified ${pct(b.verified)}`} />
-                    <Seg v={b.ambiguous} c="var(--color-ambiguous)" label={`ambiguous ${pct(b.ambiguous)}`} />
-                    <Seg
-                      v={b.underdetermined}
-                      c="var(--color-underdetermined)"
-                      label={`underdetermined ${pct(b.underdetermined)}`}
-                    />
-                    <Seg v={b.sensitive} c="var(--color-sensitive)" label={`sensitive ${pct(b.sensitive)}`} />
-                    <Seg v={b.unresolved} c="var(--color-unresolved)" label={`unresolved ${pct(b.unresolved)}`} />
-                  </div>
-                  <div className="mt-1 flex items-center gap-3 text-[12px]">
-                    <span style={{ color: b.wrong > 0 ? "var(--color-wrong)" : "var(--color-ink-faint)" }}>
-                      Manhattan wrong postings {pct(b.wrong)}
-                    </span>
-                    <span style={{ color: b.b0Wrong > 0.15 ? "var(--color-wrong)" : "var(--color-ink-faint)" }}>
-                      B0 wrong postings {pct(b.b0Wrong)}
-                    </span>
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
+          <OutcomeBands
+            bands={buckets.map((b) => ({
+              lo: b.lo,
+              hi: b.hi,
+              n: b.n,
+              wrong: b.wrong,
+              b0Wrong: b.b0Wrong,
+              parts: [
+                { label: "verified", value: b.verified, color: statusColor("VERIFIED") },
+                { label: "ambiguous", value: b.ambiguous, color: statusColor("AMBIGUOUS") },
+                { label: "underdetermined", value: b.underdetermined, color: statusColor("UNDERDETERMINED") },
+                { label: "narrowing sensitive", value: b.sensitive, color: statusColor("NARROWING_SENSITIVE") },
+                { label: "unresolved", value: b.unresolved, color: statusColor("UNRESOLVED") },
+              ],
+            }))}
+          />
 
           <div className="mt-3 flex flex-wrap gap-x-5 gap-y-1 text-[12px] text-ink-faint">
-            {[
-              ["verified", "var(--color-verified)"],
-              ["ambiguous", "var(--color-ambiguous)"],
-              ["underdetermined", "var(--color-underdetermined)"],
-              ["narrowing sensitive", "var(--color-sensitive)"],
-              ["unresolved", "var(--color-unresolved)"],
-            ].map(([l, c]) => (
-              <span key={l} className="inline-flex items-center gap-1.5">
-                <span className="size-2 rounded-[2px]" style={{ background: c }} />
-                {l}
+            {(
+              [
+                ["verified", "VERIFIED"],
+                ["ambiguous", "AMBIGUOUS"],
+                ["underdetermined", "UNDERDETERMINED"],
+                ["narrowing sensitive", "NARROWING_SENSITIVE"],
+                ["unresolved", "UNRESOLVED"],
+              ] as const
+            ).map(([label, st]) => (
+              <span key={label} className="inline-flex items-center gap-1.5">
+                <span className="size-2.5 rounded-[2px]" style={{ background: statusColor(st) }} />
+                {label}
               </span>
             ))}
           </div>
 
           <div className="mt-3">
             <Note tone="var(--color-accent)">
-              As the predicted collision index rises, verified gives way to ambiguous and then to
-              refusal, and the wrong-posting rate stays at zero throughout while B0's climbs. The
-              gate is not merely conservative; it is turning at the point its own estimator said it
-              would.
+              As the predicted index rises, verified gives way to ambiguous and then to refusal. The
+              wrong-posting rate remains zero throughout.
             </Note>
           </div>
         </Panel>
@@ -100,9 +87,22 @@ export function Calibration({
 
       {envelope.length > 0 && (
         <Panel
-          title="Resource envelope, modelled against measured"
-          hint="Publishing a modelled number under a measured heading is the class of unverified claim this project exists to refuse, so both columns are printed."
+          title="Resource envelope"
+          hint="modelled against measured"
         >
+          <EnvelopeBars
+            rows={envelope.map((e) => ({
+              pool: e.pool_n,
+              k: e.k_star,
+              ms: e.solve_and_prove_ms,
+              mb: e.observed_mb,
+            }))}
+          />
+          <p className="mt-1 mb-4 text-[12.5px] leading-relaxed text-ink-faint">
+            Cost follows the free cardinality rather than the pool size. A 100-record pool at k=5
+            exceeds a 320-record pool at k=3. Every timing includes the uniqueness proof.
+          </p>
+
           <table className="w-full">
             <thead>
               <tr>
@@ -153,7 +153,7 @@ export function Calibration({
       )}
 
       {sweep.length > 0 && (
-        <Panel title="Full sweep" hint="Pool size and batch size varied independently across four merchant shapes.">
+        <Panel title="Full sweep" hint="pool and batch size varied independently">
           <div className="max-h-[420px] overflow-auto">
             <table className="w-full">
               <thead className="sticky top-0 bg-surface">
@@ -214,10 +214,6 @@ export function Calibration({
   );
 }
 
-function Seg({ v, c, label }: { v: number; c: string; label: string }) {
-  if (v <= 0) return null;
-  return <div title={label} style={{ width: `${v * 100}%`, background: c }} />;
-}
 
 /**
  * The two estimators, side by side.
@@ -243,14 +239,23 @@ function EstimatorComparison({ sweep }: { sweep: SweepPoint[] }) {
 
   return (
     <Panel
-      title="Two estimators, and why the closed form was not enough"
-      hint="Mean absolute log-ratio against the exhaustively counted number of reconstructions. Zero is perfect; 1.0 is off by a factor of e."
+      title="Estimator accuracy"
+      hint="mean absolute log-ratio against the exhaustive count"
     >
-      <div className="grid gap-3 md:grid-cols-2">
+      <AgreementScatter
+        points={rows.map((p) => ({
+          observed: p.mean_reconstructions_counted,
+          empirical: p.mean_collision_index,
+          analytic: p.mean_analytic_collision_index,
+          label: `${p.archetype.replace(/_/g, " ")} · pool ${p.pool_n} · batch ${p.batch_size}`,
+        }))}
+      />
+
+      <div className="mt-5 grid gap-3 md:grid-cols-2">
         <div className="space-y-2.5">
           {[
-            ["measured, by sampling this pool", emp, "var(--color-verified)"],
-            ["analytic, moment-matched normal", ana, "var(--color-ambiguous)"],
+            ["measured, by sampling this pool", emp, SERIES.a],
+            ["analytic, moment-matched normal", ana, SERIES.b],
           ].map(([label, v, c]) => (
             <div key={label as string}>
               <div className="flex items-baseline justify-between">

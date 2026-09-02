@@ -1,7 +1,7 @@
 import { useMemo } from "react";
 import type { Receipt } from "./types";
 import { idx, num, rupeesShort, statusColor } from "./lib";
-import { Empty, Note, Panel, StatusPill, SummaryBar, Td, Th } from "./ui";
+import { Empty, Panel, StatusPill, SummaryBar, Td, Th } from "./ui";
 
 /**
  * The exception queue.
@@ -69,7 +69,7 @@ export function Exceptions({ receipts, onOpen }: { receipts: Receipt[]; onOpen: 
 
       <Panel
         title="Grouped by cause"
-        hint="Sorted by money, because that is the order the queue should be worked in."
+        hint="ordered by cost"
       >
         <table className="w-full">
           <thead>
@@ -102,7 +102,7 @@ export function Exceptions({ receipts, onOpen }: { receipts: Receipt[]; onOpen: 
         </table>
       </Panel>
 
-      <Panel title="The queue" hint="Highest cost first. Click a row for the full derivation.">
+      <Panel title="The queue" hint="highest cost first, click for the derivation">
         <div className="max-h-[540px] space-y-2 overflow-auto pr-1">
           {ex.slice(0, 60).map((r) => (
             <button
@@ -138,11 +138,7 @@ export function Exceptions({ receipts, onOpen }: { receipts: Receipt[]; onOpen: 
         </div>
       </Panel>
 
-      <Note tone="var(--color-accent)">
-        A refusal that names its own cure is a work item. A refusal that does not is an apology. The
-        difference is that this list can be sorted by cost, grouped by cause, and worked in the order
-        that clears the most money per hour.
-      </Note>
+
     </div>
   );
 }

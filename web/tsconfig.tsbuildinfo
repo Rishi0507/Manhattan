@@ -1,1 +1,1 @@
-{"root":["./src/app.tsx","./src/ask.tsx","./src/calibration.tsx","./src/cases.tsx","./src/exceptions.tsx","./src/headtohead.tsx","./src/landing.tsx","./src/receiptview.tsx","./src/run.tsx","./src/lib.ts","./src/main.tsx","./src/types.ts","./src/ui.tsx"],"version":"5.8.3"}
+{"root":["./src/app.tsx","./src/ask.tsx","./src/calibration.tsx","./src/cases.tsx","./src/charts.tsx","./src/exceptions.tsx","./src/headtohead.tsx","./src/landing.tsx","./src/receiptview.tsx","./src/run.tsx","./src/lib.ts","./src/main.tsx","./src/types.ts","./src/ui.tsx"],"version":"5.8.3"}

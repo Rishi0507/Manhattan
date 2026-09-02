@@ -30,8 +30,8 @@ export function Cases({ cases, onOpen }: { cases: CaseOutcome[]; onOpen: (r: Rec
   return (
     <div className="space-y-3">
       <Panel
-        title="Eleven adversarial cases, head to head"
-        hint="Both systems see identical inputs and identical narrowing. The only difference is what each is willing to conclude from them."
+        title="Adversarial cases"
+        hint="identical inputs and filters for both systems"
         right={
           <div className="text-right text-[12px]">
             <div className="tnum text-ink-dim">
@@ -117,10 +117,8 @@ export function Cases({ cases, onOpen }: { cases: CaseOutcome[]; onOpen: (r: Rec
       </Panel>
 
       <Note tone="var(--color-accent)">
-        Manhattan posts fewer of these than B0 does, and that is the result rather than a
-        concession. Every case B0 posts and Manhattan holds is one where a rival reconstruction
-        exists, the amounts cannot distinguish the transactions, or the answer came from a filtering
-        decision. B0 cannot see any of those, because it never looks.
+        Each case the baseline posts and Manhattan holds contains a rival reconstruction,
+        indistinguishable amounts, or an answer produced by filtering.
       </Note>
     </div>
   );

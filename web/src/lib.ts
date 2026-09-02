@@ -108,40 +108,33 @@ export function statusGlyph(s: Status): string {
 export function statusMeaning(s: Status): string {
   switch (s) {
     case "VERIFIED":
-      return "Exactly one reconstruction exists in the region searched, the count was exhaustive, and the accounting identity closes. This is the only status that posts.";
+      return "One reconstruction exists in the searched region. The count was exhaustive and the accounting identity closes. Only this status posts.";
     case "AMBIGUOUS":
-      return "Two or more reconstructions fit. Both are exhibited, because an analyst may be able to choose between them on grounds the arithmetic cannot see.";
+      return "Two or more reconstructions fit. Both are shown for review.";
     case "UNDERDETERMINED":
-      return "The combinatorics guarantee a large population of reconstructions. Showing one would misrepresent it as an answer. The remedy is more data, not more search.";
+      return "The pool admits too many reconstructions for any to be identified. Additional data is required.";
     case "NARROWING_SENSITIVE":
-      return "A reconstruction was found, but widening the pool admits a rival. The answer came from a filtering decision rather than from the arithmetic.";
+      return "A reconstruction was found, but widening the pool admits a rival. A filter determined the answer.";
     case "UNRESOLVED":
-      return "Nothing reconstructs this credit within the declared tolerance. The exact residual is carried, and the agent gets one bounded, cited attempt to explain it.";
+      return "No reconstruction exists within tolerance. The exact residual is recorded.";
   }
 }
 
 export function flagMeaning(f: string): string {
   const m: Record<string, string> = {
     SIGNED_ITEMS_PRESENT:
-      "The batch contains negative contributions: a chargeback debit, or a payment refunded in full whose fee was retained.",
-    FEE_ANOMALY:
-      "The money is accounted for, but the effective fee rate applied to it sits outside the configured band.",
+      "The batch contains negative contributions from a chargeback or a fully refunded payment.",
+    FEE_ANOMALY: "The effective fee rate is outside the configured band.",
     FEE_CHECK_CIRCULAR:
-      "In this data mode the observed fee derives from the same policy that built the contributions, so the check cannot fail. No anomaly claim is made.",
+      "The observed fee derives from the policy that built the contributions. No anomaly claim is made.",
     ROUNDING_APPLIED:
-      "The rounding convention was unknown, so a tolerance scaled by the witness cardinality was allowed. The slack consumed is reported.",
-    RESOLVED_BY_HYPOTHESIS:
-      "An agent hypothesis, backed by a real cited record, closed the gap. The verifier re-ran unmodified over the amended pool.",
-    COMPLEMENT_SOLVED:
-      "The batch was almost the whole pool, so the answer was recovered by solving for the excluded set in the same enumeration.",
-    TWIN_SWAP:
-      "Two records carry an identical contribution, so an alternative reconstruction is constructible. The ambiguity is structural, not incidental.",
-    LATTICE_CORRECTED:
-      "Every contribution shares a common divisor, so achievable sums are that many times denser than a continuous model assumes. The index was corrected.",
-    AMOUNT_ENTROPY_INSUFFICIENT:
-      "Too much of the pool sits in classes of identical amounts. These settlements are not reconstructable from amounts by any method.",
-    RESOURCE_CEILING:
-      "The region is decidable in principle, but enumerating it exceeds the configured memory ceiling.",
+      "The rounding convention was unknown. Tolerance was scaled by witness cardinality.",
+    RESOLVED_BY_HYPOTHESIS: "An agent action citing a real record closed the gap.",
+    COMPLEMENT_SOLVED: "Recovered by solving for the excluded set.",
+    TWIN_SWAP: "Identical contributions make an alternative reconstruction constructible.",
+    LATTICE_CORRECTED: "Contributions share a common divisor. The index was corrected.",
+    AMOUNT_ENTROPY_INSUFFICIENT: "Amounts do not distinguish the transactions in this pool.",
+    RESOURCE_CEILING: "Enumeration would exceed the configured memory ceiling.",
   };
   return m[f] ?? f;
 }

@@ -176,9 +176,11 @@ export default function App() {
       )}
 
       {!entered ? (
-        <Landing summary={summary} cases={cases} onEnter={enter} />
+        <div className="view-in">
+          <Landing summary={summary} cases={cases} onEnter={enter} />
+        </div>
       ) : (
-        <main className="mx-auto max-w-[1240px] px-6 py-5">
+        <main key={tab} className="view-in mx-auto max-w-[1240px] px-6 py-5">
           {tab === "hook" && <HeadToHead cases={cases} />}
           {tab === "run" && (
             <Run
@@ -207,7 +209,7 @@ export default function App() {
         >
           <div
             className={cls(
-              "h-full w-full max-w-[980px] overflow-y-auto border-l border-line-strong bg-ground",
+              "panel-in h-full w-full max-w-[980px] overflow-y-auto border-l border-line-strong bg-ground",
               "shadow-[-8px_0_28px_rgba(44,35,24,0.12)]",
             )}
             onClick={(e) => e.stopPropagation()}

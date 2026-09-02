@@ -32,7 +32,7 @@ export function HeadToHead({ cases }: { cases: CaseOutcome[] }) {
       <div className="rounded-md border border-line bg-surface px-4 py-3">
         <div className="flex flex-wrap items-end justify-between gap-x-8 gap-y-2">
           <div>
-            <div className="lbl">one bank credit, two systems, identical inputs</div>
+            <div className="lbl">single credit, identical inputs to both systems</div>
             <div className="tnum mt-1 text-[34px] leading-none font-medium">
               {rupees(r.target_paise)}
             </div>
@@ -202,19 +202,17 @@ export function HeadToHead({ cases }: { cases: CaseOutcome[] }) {
         </section>
       </div>
 
-      <Panel title="What actually happened" hint="from ground truth, which neither system was shown">
+      <Panel title="Ground truth" hint="not shown to either system">
         <div className="grid gap-4 md:grid-cols-2">
           <p className="text-[13px] leading-relaxed text-ink-dim">
-            Narrowing was configured with a value-date window two hours too tight, so one record that
-            genuinely belonged to this batch was captured late in the evening and dropped. A
-            different record, not in the batch, happened to carry an identical contribution and took
+            The value-date window was configured two hours too tight. One record belonging to this
+            batch was dropped, and a record outside the batch carrying an identical contribution took
             its place.
             <br />
             <br />
-            Every arithmetic check passes on the surviving subset. The identity closes to the paise,
-            the uniqueness count is one, the fee ratio is right.{" "}
+            Every arithmetic check passes on the surviving subset.{" "}
             <span className="text-ink">
-              Only the neighbourhood probe catches it, by widening the window and finding that a
+              Only the neighbourhood probe detects it, by widening the window and finding that a
               one-record substitution reproduces the same total.
             </span>
           </p>
@@ -225,9 +223,8 @@ export function HeadToHead({ cases }: { cases: CaseOutcome[] }) {
                 B0
               </div>
               <p className="mt-1 text-[12.5px] leading-snug text-ink-dim">
-                Posted the wrong batch at {c.b0_confidence.toFixed(2)} confidence. Found at audit, 30
-                to 270 days later, cold. Tracing the credit, re-deriving the batch, restating the
-                ledger and documenting the finding runs 8 to 20 hours.
+                Posted the wrong batch at {c.b0_confidence.toFixed(2)} confidence. Typically detected
+                at audit, 30 to 270 days later. Remediation runs 8 to 20 hours.
               </p>
             </div>
             <div className="rounded-[3px] border border-line px-3.5 py-2.5">
@@ -235,9 +232,9 @@ export function HeadToHead({ cases }: { cases: CaseOutcome[] }) {
                 Manhattan
               </div>
               <p className="mt-1 text-[12.5px] leading-snug text-ink-dim">
-                Held with the constraint named, priced at{" "}
-                <span className="tnum">₹{r.exception_cost_inr}</span> of analyst time. About 20
-                minutes, warm, and the narrowing configuration gets corrected for every future cycle.
+                Held with the constraint named, at{" "}
+                <span className="tnum">₹{r.exception_cost_inr}</span> of analyst time. Approximately
+                20 minutes, and the configuration is corrected for future cycles.
               </p>
             </div>
           </div>
@@ -245,9 +242,8 @@ export function HeadToHead({ cases }: { cases: CaseOutcome[] }) {
 
         <div className="mt-3">
           <Note tone="var(--color-accent)">
-            A confidence-threshold matcher trades precision against recall by construction: raise the
-            threshold and it posts fewer, lower it and it posts wrong ones. Manhattan does not sit on
-            that curve. Its refusals cost minutes and its postings are proofs.
+            A confidence threshold trades precision against recall by construction. Manhattan does
+            not sit on that curve: refusals cost minutes, postings are proofs.
           </Note>
         </div>
       </Panel>

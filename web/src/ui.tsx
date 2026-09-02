@@ -60,8 +60,10 @@ export function Panel({
     <section className={cls("rounded-md border border-line bg-surface", className)}>
       {(title || right) && (
         <header className="flex items-center justify-between gap-4 border-b border-line-soft px-4 py-2.5">
-          <div className="flex min-w-0 items-baseline gap-2.5">
-            {title && <h2 className="display text-[16px] font-medium text-ink">{title}</h2>}
+          <div className="flex min-w-0 items-baseline gap-3">
+            {title && (
+              <h2 className="display shrink-0 text-[16px] font-medium text-ink">{title}</h2>
+            )}
             {hint && <p className="truncate text-[12.5px] text-ink-faint">{hint}</p>}
           </div>
           {right && <div className="shrink-0">{right}</div>}
@@ -262,14 +264,14 @@ export function Fold({
 }) {
   const [open, setOpen] = useState(!!defaultOpen);
   return (
-    <section className="rounded-md border border-line bg-surface">
+    <section className="self-start rounded-md border border-line bg-surface">
       <button
         onClick={() => setOpen(!open)}
         aria-expanded={open}
         className="flex w-full items-center justify-between gap-4 px-4 py-2.5 text-left"
       >
-        <span className="flex min-w-0 items-baseline gap-2.5">
-          <span className="display text-[16px] font-medium text-ink">{title}</span>
+        <span className="flex min-w-0 items-baseline gap-3">
+          <span className="display shrink-0 text-[16px] font-medium text-ink">{title}</span>
           {summary && (
             <span className="truncate text-[12.5px]" style={{ color: tone ?? "var(--color-ink-faint)" }}>
               {summary}
