@@ -49,13 +49,27 @@ type Summary struct {
 	// Cost is reported as a decomposition rather than as a single typed
 	// total, because a typed aggregate is exactly the kind of number that
 	// drifts away from the receipts it is supposed to summarise.
-	ParseCalls    int     `json:"parse_calls"`
-	AgentCalls    int     `json:"agent_calls"`
-	ModelCalls    int     `json:"model_calls"`
-	InputTokens   int     `json:"input_tokens"`
-	OutputTokens  int     `json:"output_tokens"`
-	ExceptionRate float64 `json:"exception_rate"`
-	INRPer1k      float64 `json:"inr_per_1k_settlements"`
+	ParseCalls int `json:"parse_calls"`
+	AgentCalls int `json:"agent_calls"`
+	// AgentSteps is how many actions the agent actually took, and
+	// AgentRepaired how many settlements it moved into a postable state.
+	AgentSteps    int `json:"agent_steps"`
+	AgentRepaired int `json:"agent_repaired"`
+	// AgentInvoked and AgentSkipped split the exception queue by whether the
+	// agent was consulted at all. The skipped count is the interesting one: it
+	// is the exceptions a deterministic check settled without a model call.
+	AgentInvoked int `json:"agent_invoked"`
+	AgentSkipped int `json:"agent_skipped"`
+	// AgentProvenCures counts settlements where the agent established, by
+	// re-running the full stack, that a specific change would make the credit
+	// reconstruct uniquely, without that change being corroborated enough to
+	// post on.
+	AgentProvenCures int     `json:"agent_proven_cures"`
+	ModelCalls       int     `json:"model_calls"`
+	InputTokens      int     `json:"input_tokens"`
+	OutputTokens     int     `json:"output_tokens"`
+	ExceptionRate    float64 `json:"exception_rate"`
+	INRPer1k         float64 `json:"inr_per_1k_settlements"`
 
 	// B0TokensPer1k is what a fuzzy matcher would spend, which scales with
 	// pool size because the pool has to enter the context window.
@@ -180,7 +194,7 @@ func RunBatch(ctx context.Context, spec BatchSpec, provider llm.Provider) (*evid
 		eng := pipeline.New(ds, cfg)
 
 		parser := agent.NewParser(provider)
-		resolver := agent.NewResolver(provider)
+		controller := agent.NewController(provider)
 
 		for _, credit := range ds.Credits {
 			truth := attributable(ds.GroundTruth[credit.Ref], eng)
@@ -199,15 +213,38 @@ func RunBatch(ctx context.Context, spec BatchSpec, provider llm.Provider) (*evid
 
 			rec := eng.Reconcile(credit)
 
-			// Stage 7 runs only on exceptions, which is what keeps the
-			// aggregate model spend close to the parse cost.
-			if rec.Status == evidence.StatusUnresolved {
-				resolved, u := resolver.Resolve(ctx, eng, credit, rec)
+			// Stage 7 runs on everything that did not post, not only on the
+			// UNRESOLVED minority.
+			//
+			// That widening is the point of having a controller rather than a
+			// hypothesis loop. A missing record explains an UNRESOLVED
+			// settlement, which is a small population. Most refusals are
+			// UNDERDETERMINED, and those are caused by a candidate pool that
+			// is too wide, which is a narrowing decision the agent can act on
+			// and a hypothesis cannot.
+			if !rec.Status.Postable() {
+				worked, st, u := controller.Work(ctx, eng, credit, rec)
 				usage.Add(u)
-				if u.Calls > 0 {
-					sum.AgentCalls += u.Calls
+				sum.AgentCalls += u.Calls
+				sum.AgentSteps += len(st)
+				if worked.Agent.Invoked {
+					sum.AgentInvoked++
+				} else {
+					sum.AgentSkipped++
 				}
-				rec = resolved
+				cured := false
+				for _, s := range st {
+					if s.Accepted {
+						sum.AgentRepaired++
+					}
+					if s.Result == evidence.StatusVerified && !s.Accepted {
+						cured = true
+					}
+				}
+				if cured {
+					sum.AgentProvenCures++
+				}
+				rec = worked
 			}
 			latencies = append(latencies, float64(time.Since(t0).Microseconds())/1000)
 

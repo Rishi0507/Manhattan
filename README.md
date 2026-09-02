@@ -62,9 +62,9 @@ Four consequences follow, and they define the system.
 | auto-posted | 74 | 405 |
 | **auto-posted WRONG** | **0** | **218** |
 | held for review | 424 | 93 |
-| median latency | 14.0 ms | 4.8 ms |
-| input tokens per 1k settlements | 0.42 M | 1.59 M |
-| cost per 1k settlements | ₹326 | ₹962 |
+| median latency | 19.6 ms | 5.1 ms |
+| input tokens per 1k settlements | 0.99 M | 1.59 M |
+| cost per 1k settlements | ₹609 | ₹962 |
 
 The wrong-posting row is the only one that matters, and it means something only because the baseline sits beside it on the same data. Manhattan reporting zero on its own would be close to tautological, since it posts only when an integer identity closes and nothing rivals it. Manhattan reporting zero next to 218 is a result.
 
@@ -119,25 +119,25 @@ flowchart TB
     D -->|"a filter decided it"| NS["NARROWING_SENSITIVE<br/><small>constraint named</small>"]
     D -->|"nothing reconstructs it"| UR["UNRESOLVED"]
 
-    UR --> S7["<b>7 · Resolve</b><br/>agent hypothesis loop<br/><small>propose, cite, re-verify unmodified</small>"]
-    S7 -->|"identity closes AND a real record is cited"| V
-    S7 -->|"uncited or does not close"| REV["review queue"]
+    A --> S7
+    U --> S7
+    NS --> S7
+    UR --> S7["<b>7 · Agent</b><br/>observe, choose one action, act, re-verify<br/><small>bounded; only a cited action may post</small>"]
 
-    A --> REV
-    U --> REV
-    NS --> REV
+    S7 -->|"a real record was cited<br/>and the identity closes uniquely"| V
+    S7 -->|"otherwise"| REV["review queue<br/><small>with a proven cure where one was found</small>"]
 
     V --> EV["Evidence object<br/><small>replayable, diffable, queryable</small>"]
     REV --> EV
     EV --> QA["<b>7b · Q&amp;A agent</b><br/><small>answers grounded in receipts only</small>"]
 
-    style V fill:#0f2a1e,stroke:#35c88a,color:#e6eaf0
-    style A fill:#2a2310,stroke:#e0a83a,color:#e6eaf0
-    style U fill:#1a1f26,stroke:#6b7c94,color:#e6eaf0
-    style NS fill:#2a1712,stroke:#f0714f,color:#e6eaf0
-    style UR fill:#211a2e,stroke:#9b7ce8,color:#e6eaf0
-    style S7 fill:#101820,stroke:#3395ff,color:#e6eaf0
-    style QA fill:#101820,stroke:#3395ff,color:#e6eaf0
+    style V fill:#e7f5ee,stroke:#0a7d4e,color:#16181d
+    style A fill:#fdf3e7,stroke:#a76100,color:#16181d
+    style U fill:#f1f3f5,stroke:#6b7480,color:#16181d
+    style NS fill:#fdeee7,stroke:#c2410c,color:#16181d
+    style UR fill:#f2ecfc,stroke:#6335c4,color:#16181d
+    style S7 fill:#eaf1fd,stroke:#1461cc,color:#16181d
+    style QA fill:#eaf1fd,stroke:#1461cc,color:#16181d
 ```
 
 The ordering has one property that is easy to miss: **the gate runs before the solver, not after it.** Because the gate's output `k*` is the parameter the solver is dispatched on, triage is not a pre-check bolted onto the front of the search. It is what configures the search.
@@ -171,13 +171,78 @@ flowchart LR
     M -->|"typed, schema-validated<br/>executable assertions"| V
     V -->|"accept, or reject and say why"| OUT["the decision"]
 
-    style M fill:#101820,stroke:#3395ff,color:#e6eaf0
-    style V fill:#0f2a1e,stroke:#35c88a,color:#e6eaf0
+    style M fill:#eaf1fd,stroke:#1461cc,color:#16181d
+    style V fill:#e7f5ee,stroke:#0a7d4e,color:#16181d
 ```
+
+## The agent loop
+
+The model is not called at fixed points in a pipeline. It works a settlement.
+
+```mermaid
+flowchart TB
+    EX["a settlement that did not post"] --> T{"deterministic triage:<br/>could any action help?"}
+    T -->|"no: amounts do not distinguish,<br/>or a rival already appears,<br/>or nothing left to tighten"| SKIP["not invoked<br/><small>62% of exceptions, zero model cost</small>"]
+    T -->|"yes"| OBS["<b>observe</b><br/><small>status, pool size, collision index,<br/>twin mass, exact residual,<br/>everything already tried</small>"]
+    OBS --> CH["<b>choose one action</b><br/><small>from a closed typed vocabulary</small>"]
+    CH --> ACT["<b>act</b><br/><small>the action becomes an overlay,<br/>which is data</small>"]
+    ACT --> VER["<b>re-verify</b><br/><small>the ENTIRE stack runs again, unmodified</small>"]
+    VER --> Q{"unique reconstruction?"}
+    Q -->|no| OBS
+    Q -->|"yes, and an action<br/>cited a real record"| POST["VERIFIED<br/><small>posts, with the citation</small>"]
+    Q -->|"yes, but only because<br/>a filter was changed"| CURE["proven cure<br/><small>held; the remediation is verified,<br/>not estimated</small>"]
+
+    style SKIP fill:#f1f3f5,stroke:#6b7480,color:#16181d
+    style POST fill:#e7f5ee,stroke:#0a7d4e,color:#16181d
+    style CURE fill:#fdf3e7,stroke:#a76100,color:#16181d
+    style VER fill:#eaf1fd,stroke:#1461cc,color:#16181d
+```
+
+The action space is closed, and every action is an edit to the pipeline's **inputs**:
+
+| Action | What it does |
+|---|---|
+| `TIGHTEN_WINDOW` | narrows the value-date window |
+| `WIDEN_WINDOW` | loosens it, for a batch partly cut out |
+| `SPLIT_BY_INSTRUMENT` | restricts to the payout's own payment method |
+| `RELAX_RECONCILED` | admits records posted in a prior cycle |
+| `SEARCH_FEED` | looks in a source nobody joined, for a named class of record |
+| `PROPOSE_ADJUSTMENT` | asserts an unmodelled event |
+| `ESCALATE` | stops, deliberately, with everything tried recorded |
+
+Three things about this are worth more than the list.
+
+**Only a corroborated action may post, and that rule was learned rather than designed.** The first version let the agent's narrowing changes post if the identity closed. It produced **two wrong postings in three hundred settlements**: the agent tightened a window, the pool fell from 44 records to 40, an `AMBIGUOUS` settlement became `VERIFIED`, every check passed, and the answer was wrong because the tightening had cut real records out of the batch.
+
+The error was not arithmetic. It was in what tightening *means*:
+
+> Removing candidates cannot make the survivor unique. It makes it **unexamined**. If two reconstructions existed in the wider pool, both are still candidate explanations unless a business rule genuinely excludes one, and "the agent thought the window looked wide" is not a business rule.
+
+So narrowing actions are assertions about a merchant's settlement behaviour, and assertions need corroboration exactly as hypotheses do. `SEARCH_FEED` cites a real record by id and may post. Everything else may not, however cleanly the identity closes. Zero wrong postings, restored.
+
+**What it produces instead is arguably better than a posting.** A *proven cure*: a remediation whose effect has been computed and re-verified rather than estimated. "Tightening this window to seven hours yields exactly one reconstruction, with the identity closing to zero" is a much stronger thing to hand an analyst than "consider tightening the window", and it is still their decision.
+
+**Deciding not to call the model is part of the design.** 262 of 424 exceptions are settled by a deterministic screen with no model call at all, because the amounts genuinely do not distinguish the transactions, or a rival already appears when the pool is widened, or there is nothing left to search or tighten. Paying a model to conclude that nothing can help, across most of a queue, is the same mistake as paying it to add up a column. That screen cuts the agent budget by 62%.
+
+Measured on the 500-settlement benchmark:
+
+| | |
+|---|---:|
+| settlements held for review | 424 |
+| agent invoked on | 162 |
+| **not invoked, by triage** | **262** |
+| actions taken | 411 |
+| given a proven cure | 4 |
+| repaired into a posting | 0 |
+| wrong postings caused | **0** |
+
+Zero repairs in this run is the honest number and it is a property of the data rather than of the loop: the generator's narrowing is already well tuned, so there is little slack to recover. On adversarial case 9, where a disputes feed genuinely was never joined, the agent proposes `CHARGEBACK_DEBIT`, the system finds `cbk_000223`, the verifier re-runs unmodified, and the settlement posts with the citation attached.
+
+---
 
 Note what the five model jobs have in common: **none of them is arithmetic, and none is available to a solver.** A subset-sum verifier cannot read `NEFT-RAZORPAY SOFTWARE PVT LTD-UTR3491-CR`. It cannot look at an unexplained ₹1,240 and know that a chargeback debit is the kind of thing that produces that shape. Those are exactly the moves that turn a solver into a system that closes a loop.
 
-The one move the agent cannot make is **decide**. Whether the money is accounted for is settled by an integer identity and an exhaustive count, both of which run unmodified regardless of what the model proposed.
+The one move the agent cannot make is **decide**. Whether the money is accounted for is settled by an integer identity and an exhaustive count, both of which run unmodified regardless of what the model proposed. And an action that merely changes a filter cannot post at all, however cleanly the identity closes afterwards, because removing candidates makes the survivor unexamined rather than unique.
 
 This is testable rather than merely claimed, and the repository tests it: **the entire eleven-case suite passes on a deliberately unintelligent offline stub** that proposes hypotheses from a fixed list in a fixed order. The quality of the proposer changes how often an exception can be cleared. It cannot change whether a posting is correct, because the model is never asked whether it was right.
 
@@ -228,8 +293,8 @@ flowchart LR
     W --> DD["canonicalise, deduplicate,<br/>count exhaustively"]
     C --> DD
     DD --> OUT["witness set<br/>+ the rival count"]
-    style PR fill:#101820,stroke:#3395ff,color:#e6eaf0
-    style OUT fill:#0f2a1e,stroke:#35c88a,color:#e6eaf0
+    style PR fill:#eaf1fd,stroke:#1461cc,color:#16181d
+    style OUT fill:#e7f5ee,stroke:#0a7d4e,color:#16181d
 ```
 
 Four properties follow, and together they are why this is the right primitive.
@@ -315,9 +380,9 @@ flowchart TB
     FP -->|"too many pairs compared"| INC["reduce depth,<br/>or report inconclusive"]
     DEC -->|yes| NS["NARROWING_SENSITIVE<br/><small>constraint named</small>"]
     DEC -->|no| OK["stable"]
-    style NS fill:#2a1712,stroke:#f0714f,color:#e6eaf0
-    style OK fill:#0f2a1e,stroke:#35c88a,color:#e6eaf0
-    style FP fill:#101820,stroke:#3395ff,color:#e6eaf0
+    style NS fill:#fdeee7,stroke:#c2410c,color:#16181d
+    style OK fill:#e7f5ee,stroke:#0a7d4e,color:#16181d
+    style FP fill:#eaf1fd,stroke:#1461cc,color:#16181d
 ```
 
 Two things about this guard are worth stating.
@@ -518,7 +583,7 @@ internal/
   evidence/             the receipt, the run object, the store
   pipeline/             the seven stages, and the decision
   llm/                  the model boundary: Anthropic, cassette replay, offline stub
-  agent/                narration parser, resolution loop, Q&A
+  agent/                narration parser, action space, controller loop, Q&A
   baseline/             B0, built honestly
   bench/                the benchmark, the calibration sweep, the envelope
   server/               HTTP API and the live run stream

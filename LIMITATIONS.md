@@ -96,6 +96,22 @@ The band is scaled by the **witness** cardinality, not the pool size. A pool-wid
 
 ---
 
+## The agent posts only on corroborated actions, which caps what it can repair
+
+An action that cites a real record in a real feed may post. An action that changes a filter, a window or a constraint may not, however cleanly the accounting identity closes afterwards.
+
+That rule exists because of a measured failure rather than a principle chosen in advance. Without it, an agent able to retune narrowing produced **two wrong postings in three hundred settlements**: it tightened a value-date window, the candidate pool fell from 44 records to 40, an `AMBIGUOUS` settlement became `VERIFIED`, and the answer was wrong because the tightening had cut real records out of the batch. Every check passed, including the completeness probe, because the surviving rival differed from the found witness by more than the probe's depth bound.
+
+The consequence is a real ceiling. Most refusals are `UNDERDETERMINED`, caused by a pool that is too wide, and the agent can prove exactly what would fix them but cannot act on it. On the shipped benchmark it repairs **0** settlements into postings and produces **4** proven cures out of 424 exceptions.
+
+Zero repairs is a property of this dataset rather than of the loop: the generator's narrowing is already well tuned, so there is little slack to recover. It would be higher on real data with a misconfigured window, and it is exercised by adversarial case 9. But the honest reading is that the agent's headline contribution here is verified remediation, not auto-post rate.
+
+## The agent is not invoked on most exceptions, deliberately
+
+A deterministic screen settles 262 of 424 exceptions with no model call: the amounts do not distinguish the transactions, or a rival already appears when the pool is widened, or there is nothing left to search or tighten.
+
+This is the right trade, and it is still a trade. The screen is conservative but it is a heuristic, and a settlement it skips is one the agent never sees. A more capable model might have found something in a case the screen declared hopeless.
+
 ## The agent's contribution to recall is bounded by the data
 
 **A hypothesis can only clear an exception when it cites a real record.** Speculative hypotheses are shown to analysts and never posted, whatever the arithmetic says. So the agent's contribution to auto-post rate is bounded by how often a genuinely unjoined data source exists.

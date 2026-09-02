@@ -169,19 +169,112 @@ func (offlineProvider) resolve(user string) (map[string]any, error) {
 	return map[string]any{"hypotheses": hyps}, nil
 }
 
-// plan orders the narrowing constraints to relax. The stub returns the
-// configured default order unchanged, which is the honest no-op: it has no
-// basis on which to reorder.
+// plan chooses the next action on a settlement that did not auto-post.
+//
+// The rules are a decision table, not reasoning, and they are deliberately
+// the obvious ones: if the pool is large and the answer is underdetermined,
+// tighten the window; if a residual exists and an unjoined feed exists, look
+// in it; otherwise escalate. A real model does better than this, especially
+// on the judgement calls about when tightening will not help.
+//
+// It works at all because of where the boundary is. The stub is a bad
+// planner, and a bad planner clears fewer exceptions. It cannot cause a wrong
+// posting, because after any action it chooses the whole verification stack
+// runs again and decides for itself.
 func (offlineProvider) plan(user string) (map[string]any, error) {
-	return map[string]any{
-		"order": []string{
-			"outside_settlement_window",
-			"payment_method_mismatch",
-			"already_reconciled",
-			"currency_mismatch",
-		},
-		"rationale": "default order; the offline stub has no basis on which to reprioritise",
-	}, nil
+	status := ""
+	for _, s := range []string{"UNDERDETERMINED", "NARROWING_SENSITIVE", "AMBIGUOUS", "UNRESOLVED"} {
+		if strings.Contains(user, "VERIFIER CONCLUDED: "+s) {
+			status = s
+			break
+		}
+	}
+
+	pool := grabInt(user, `candidates after narrowing: (\d+)`)
+	window := grabFloat(user, `window currently: plus or minus (\d+(?:\.\d+)?) hours`)
+	twin := grabFloat(user, `twin mass: (\d+(?:\.\d+)?)`)
+	residual := int64(grabInt(user, `RESIDUAL_PAISE=(-?\d+)`))
+	triedTighten := strings.Contains(user, "TIGHTEN_WINDOW")
+	hasFeed := strings.Contains(user, "UNJOINED FEEDS AVAILABLE: chargeback") ||
+		strings.Contains(user, "(") && strings.Contains(user, "records) ")
+
+	act := func(kind, rationale string, extra map[string]any) (map[string]any, error) {
+		out := map[string]any{"kind": kind, "rationale": rationale}
+		for k, v := range extra {
+			out[k] = v
+		}
+		return out, nil
+	}
+
+	switch status {
+	case "NARROWING_SENSITIVE":
+		// Never try to make this post. A rival exists in the widened pool, so
+		// the answer came from a filtering decision and a human has to confirm
+		// the constraint.
+		return act("ESCALATE",
+			"a rival reconstruction exists once the pool is widened, so the answer came from filtering rather than arithmetic and needs a human to confirm the constraint", nil)
+
+	case "UNDERDETERMINED", "AMBIGUOUS":
+		if twin > 0.30 {
+			return act("ESCALATE",
+				"twin mass is high, so the amounts genuinely do not distinguish these transactions and no narrowing will help; this needs a settlement reference", nil)
+		}
+		if !triedTighten && pool > 24 && window > 4 {
+			// Halving the window roughly halves the pool, and the collision
+			// index falls far faster than linearly because it grows like
+			// C(n, k).
+			next := window / 2
+			if next < 6 {
+				next = 6
+			}
+			return act("TIGHTEN_WINDOW",
+				"the pool is large for a single settlement cycle, which suggests the value-date window is admitting more than one capture day",
+				map[string]any{"window_hours": next})
+		}
+		return act("ESCALATE",
+			"the pool cannot be narrowed further on the constraints available, so no unique reconstruction is reachable", nil)
+
+	case "UNRESOLVED":
+		if hasFeed && residual != 0 {
+			return act("SEARCH_FEED",
+				"an exact residual with an unjoined disputes feed available is most often a chargeback that was never wired into the pool",
+				map[string]any{"record_kind": "chargeback"})
+		}
+		if residual != 0 && window < 24 {
+			return act("WIDEN_WINDOW",
+				"nothing reconstructs the credit and the window is tight, so a record that belongs to this batch may have been cut out of it",
+				map[string]any{"window_hours": window * 1.75})
+		}
+		abs := residual
+		if abs < 0 {
+			abs = -abs
+		}
+		return act("PROPOSE_ADJUSTMENT",
+			"no feed explains the residual, so it is asserted as an unmodelled adjustment for an analyst to confirm; it cannot post uncited",
+			map[string]any{"hypothesis_kind": "ADJUSTMENT", "amount_paise": abs})
+	}
+
+	return act("ESCALATE", "no action in the vocabulary applies to this state", nil)
+}
+
+func grabInt(s, pattern string) int {
+	m := regexp.MustCompile(pattern).FindStringSubmatch(s)
+	if len(m) < 2 {
+		return 0
+	}
+	var v int
+	fmt.Sscanf(m[1], "%d", &v)
+	return v
+}
+
+func grabFloat(s, pattern string) float64 {
+	m := regexp.MustCompile(pattern).FindStringSubmatch(s)
+	if len(m) < 2 {
+		return 0
+	}
+	var v float64
+	fmt.Sscanf(m[1], "%f", &v)
+	return v
 }
 
 // answer responds to a question over the receipt store. The stub returns the

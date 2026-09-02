@@ -413,8 +413,8 @@ export function ReceiptView({ r }: { r: Receipt }) {
 
           {r.agent.invoked && (
             <Panel
-              title="Resolution agent"
-              hint="The model proposes. The unmodified verifier disposes. It is never asked whether it was right."
+              title="Agent"
+              hint="observe, choose one action, apply it as an edit to the inputs, re-verify with the stack unchanged"
               right={
                 <span className="tnum text-[11px] text-ink-faint">
                   {r.agent.provider} · {r.agent.iterations} iteration
@@ -422,6 +422,50 @@ export function ReceiptView({ r }: { r: Receipt }) {
                 </span>
               }
             >
+              {/* The decision trace. On a settlement that reached its status
+                  through agent action this is part of the audit trail, not
+                  debug output: an auditor is entitled to know that the window
+                  was retuned before the identity closed, and by how much. */}
+              {r.agent.steps && r.agent.steps.length > 0 && (
+                <div className="mb-3 space-y-1.5">
+                  {r.agent.steps.map((s) => (
+                    <div
+                      key={s.step}
+                      className="rounded-[3px] border px-3 py-2"
+                      style={{
+                        borderColor: s.accepted
+                          ? "color-mix(in srgb, var(--color-verified) 30%, transparent)"
+                          : "var(--color-line)",
+                        background: s.accepted
+                          ? "color-mix(in srgb, var(--color-verified) 6%, transparent)"
+                          : undefined,
+                      }}
+                    >
+                      <div className="flex flex-wrap items-baseline justify-between gap-2">
+                        <span className="tnum text-[11.5px]">
+                          <span className="text-ink-faint">{s.step}.</span>{" "}
+                          <span className="font-medium">{s.action.replace(/_/g, " ").toLowerCase()}</span>
+                        </span>
+                        <span className="tnum text-[11px] text-ink-faint">
+                          pool {s.pool_before} to {s.pool_after} · index{" "}
+                          {idx(s.collision_index_before)} to {idx(s.collision_index_after)} ·{" "}
+                          <span style={{ color: statusColor(s.result_status) }}>{s.result_status}</span>
+                        </span>
+                      </div>
+                      {s.rationale && (
+                        <p className="mt-1 text-[11.5px] leading-snug text-ink-dim">{s.rationale}</p>
+                      )}
+                      <p className="mt-0.5 text-[11px] leading-snug text-ink-faint">{s.note}</p>
+                      {s.citation && (
+                        <p className="tnum mt-0.5 text-[11px]" style={{ color: "var(--color-verified)" }}>
+                          cites {s.citation}
+                        </p>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              )}
+
               <div className="space-y-2">
                 {r.agent.hypotheses?.map((h, i) => {
                   const accepted = h.outcome?.startsWith("accepted");

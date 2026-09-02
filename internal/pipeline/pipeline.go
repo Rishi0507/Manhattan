@@ -110,6 +110,11 @@ type Engine struct {
 	// universe is the record set the current reconciliation is running over,
 	// which differs from Records only when a hypothesis overlay is applied.
 	universe []model.Record
+
+	// activeNarrow is the narrowing configuration this reconciliation actually
+	// used, so the completeness probe widens from the right baseline even when
+	// the agent retuned it.
+	activeNarrow narrow.Config
 }
 
 // New builds an engine over a dataset, computing every record's signed
@@ -174,6 +179,24 @@ type Overlay struct {
 	TargetDelta money.Paise
 	// Provenance names what produced this overlay, for the receipt.
 	Provenance string
+
+	// Narrowing overrides the business constraints for this pass.
+	//
+	// This is what lets the agent act on the thing that actually determines
+	// whether a settlement can be verified. The collision index grows like
+	// C(n, k), so pool size is the dominant term, and pool size is set by
+	// narrowing rather than by anything the solver does. An agent that can
+	// only propose missing records can repair an UNRESOLVED settlement; an
+	// agent that can also retune the window can repair an UNDERDETERMINED
+	// one, which is the larger population by far.
+	//
+	// It is still an edit to the inputs and nothing more. The gate, the
+	// solver, the completeness guards and the independent recomputation all
+	// run over the result completely unchanged, and a pool the agent tightened
+	// is subject to exactly the same neighbourhood probe as one it did not:
+	// if the tightening dropped a record that belonged, the probe finds the
+	// rival and the settlement is held as NARROWING_SENSITIVE.
+	Narrowing *narrow.Config
 }
 
 // Reconcile runs the full pipeline for one bank credit.
@@ -225,6 +248,9 @@ func (e *Engine) ReconcileWith(credit model.BankCredit, ov *Overlay) *evidence.R
 		nCfg.CycleDays = cfg.Narrow.CycleDays
 	}
 	nCfg.EnforceInstrument = merchant.InstrumentSegregated
+	if ov != nil && ov.Narrowing != nil {
+		nCfg = *ov.Narrowing
+	}
 	narrowed := narrow.Apply(records, credit, merchant, nCfg)
 	sw.mark("narrow")
 
@@ -326,6 +352,7 @@ func (e *Engine) ReconcileWith(credit model.BankCredit, ov *Overlay) *evidence.R
 	}
 
 	e.universe = records
+	e.activeNarrow = nCfg
 	e.decide(rec, sr, feas, ent, pool, narrowed, credit, merchant, kMax, scope)
 	sw.mark("prove")
 
@@ -534,12 +561,12 @@ func (e *Engine) attachWitness(rec *evidence.Receipt, pool []model.Record, w sol
 // the neighbourhood of the witness already in hand.
 func (e *Engine) neighbourhoodProbe(witness []model.Record, credit model.BankCredit, merchant model.Merchant, base narrow.Result) guards.NeighbourhoodResult {
 	cfg := e.Cfg
-	nCfg := cfg.Narrow
-	nCfg.CycleDays = merchant.SettlementCycleDays
-	if nCfg.CycleDays == 0 {
-		nCfg.CycleDays = cfg.Narrow.CycleDays
+	nCfg := e.activeNarrow
+	if nCfg.Window == 0 {
+		nCfg = cfg.Narrow
+		nCfg.CycleDays = merchant.SettlementCycleDays
+		nCfg.EnforceInstrument = merchant.InstrumentSegregated
 	}
-	nCfg.EnforceInstrument = merchant.InstrumentSegregated
 
 	inBase := map[string]bool{}
 	for _, r := range base.Pool {

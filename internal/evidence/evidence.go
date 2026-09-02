@@ -193,6 +193,31 @@ type AgentBlock struct {
 	Hypotheses []Hypothesis `json:"hypotheses,omitempty"`
 	Accepted   *Hypothesis  `json:"accepted,omitempty"`
 	Note       string       `json:"note,omitempty"`
+
+	// Steps is the agent's decision trace: what it observed, what it chose to
+	// do, and what the verifier concluded afterwards.
+	//
+	// This is not debug output. On a settlement that reached VERIFIED through
+	// agent action, an auditor is entitled to know that the value-date window
+	// was retuned before the identity closed, and by how much. A posting whose
+	// provenance includes an agent decision has to carry that decision.
+	Steps []AgentStep `json:"steps,omitempty"`
+}
+
+// AgentStep is one turn of the controller loop.
+type AgentStep struct {
+	N           int     `json:"step"`
+	Kind        string  `json:"action"`
+	Rationale   string  `json:"rationale"`
+	Observed    string  `json:"observed_status"`
+	Result      Status  `json:"result_status"`
+	PoolBefore  int     `json:"pool_before"`
+	PoolAfter   int     `json:"pool_after"`
+	IndexBefore float64 `json:"collision_index_before"`
+	IndexAfter  float64 `json:"collision_index_after"`
+	Accepted    bool    `json:"accepted"`
+	Note        string  `json:"note"`
+	Citation    string  `json:"citation,omitempty"`
 }
 
 // Hypothesis is one proposed explanation for a residual.

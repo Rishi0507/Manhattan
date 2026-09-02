@@ -191,6 +191,21 @@ export interface Hypothesis {
   outcome?: string;
 }
 
+export interface AgentStep {
+  step: number;
+  action: string;
+  rationale: string;
+  observed_status: string;
+  result_status: Status;
+  pool_before: number;
+  pool_after: number;
+  collision_index_before: number;
+  collision_index_after: number;
+  accepted: boolean;
+  note: string;
+  citation?: string;
+}
+
 export interface AgentBlock {
   invoked: boolean;
   provider?: string;
@@ -198,6 +213,7 @@ export interface AgentBlock {
   hypotheses?: Hypothesis[];
   accepted?: Hypothesis;
   note?: string;
+  steps?: AgentStep[];
 }
 
 export interface Receipt {

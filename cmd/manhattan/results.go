@@ -115,6 +115,46 @@ func renderResults(
 		b.WriteString("\n")
 	}
 
+	// ---- The agent ------------------------------------------------------
+	if sum.AgentCalls > 0 || sum.AgentSkipped > 0 {
+		fmt.Fprintf(&b, "## What the agent did\n\n")
+		fmt.Fprintf(&b, "The agent is a bounded loop over a closed action space: observe the receipt,\n")
+		fmt.Fprintf(&b, "choose one action, apply it as an edit to the pipeline's inputs, then re-run the\n")
+		fmt.Fprintf(&b, "entire verification stack unchanged over the result. It cannot reach the decision.\n\n")
+
+		fmt.Fprintf(&b, "| | |\n|---|---:|\n")
+		fmt.Fprintf(&b, "| settlements held for review | %d |\n", sum.Exceptions)
+		fmt.Fprintf(&b, "| agent invoked on | %d |\n", sum.AgentInvoked)
+		fmt.Fprintf(&b, "| **not invoked, by deterministic triage** | **%d** |\n", sum.AgentSkipped)
+		fmt.Fprintf(&b, "| actions taken | %d |\n", sum.AgentSteps)
+		fmt.Fprintf(&b, "| repaired into a posting | %d |\n", sum.AgentRepaired)
+		fmt.Fprintf(&b, "| given a proven cure | %d |\n\n", sum.AgentProvenCures)
+
+		fmt.Fprintf(&b, "The triage row is the one worth reading. About %.0f per cent of exceptions are\n",
+			100*float64(sum.AgentSkipped)/float64(max(sum.Exceptions, 1)))
+		fmt.Fprintf(&b, "settled without a model call at all, because a cheap deterministic check\n")
+		fmt.Fprintf(&b, "establishes that no action in the vocabulary could change the outcome: the\n")
+		fmt.Fprintf(&b, "amounts do not distinguish the transactions, or a rival already appears when the\n")
+		fmt.Fprintf(&b, "pool is widened, or there is nothing left to search or tighten. Paying a model to\n")
+		fmt.Fprintf(&b, "conclude that nothing can help, on most of a queue, is the same mistake as paying\n")
+		fmt.Fprintf(&b, "it to add up a column.\n\n")
+
+		fmt.Fprintf(&b, "A proven cure is the loop's most common useful output, and it is not a posting.\n")
+		fmt.Fprintf(&b, "It is a remediation whose effect has been computed and verified rather than\n")
+		fmt.Fprintf(&b, "estimated: tightening this window to seven hours yields exactly one\n")
+		fmt.Fprintf(&b, "reconstruction, with the identity closing to zero. It still does not post.\n")
+		fmt.Fprintf(&b, "Changing a filter is an assertion about the merchant's settlement behaviour\n")
+		fmt.Fprintf(&b, "rather than corroborated evidence, and removing candidates cannot make the\n")
+		fmt.Fprintf(&b, "survivor unique, only unexamined. Only an action citing a real record in a real\n")
+		fmt.Fprintf(&b, "feed may post.\n\n")
+
+		fmt.Fprintf(&b, "That rule was learned rather than designed. Without it, an agent able to retune\n")
+		fmt.Fprintf(&b, "narrowing produced two wrong postings in three hundred settlements: it tightened\n")
+		fmt.Fprintf(&b, "a window, the pool fell from 44 records to 40, an ambiguous settlement became\n")
+		fmt.Fprintf(&b, "verified, and the answer was wrong because the tightening had cut real records\n")
+		fmt.Fprintf(&b, "out of the batch.\n\n")
+	}
+
 	// ---- Segmentation ----------------------------------------------------
 	if len(sum.ByArchetype) > 0 {
 		fmt.Fprintf(&b, "## Which merchants this works for, and why\n\n")
