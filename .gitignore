@@ -1,22 +1,33 @@
-# Build output
+# Build output.
+#
+# These patterns are anchored to the repository root on purpose. An unanchored
+# "manhattan" matches the cmd/manhattan DIRECTORY as well as the binary, which
+# silently excluded the entire command-line interface from version control:
+# `git add -A` skipped it without a word, and a fresh clone had no CLI at all.
+# Anchor anything that shares a name with a directory.
 /bin/
 /dist/
-manhattan
-manhattan.exe
+/manhattan
+/manhattan.exe
 
-# Generated artifacts — every one of these is reproducible with `make demo`,
-# and checking them in would let a stale number outlive the run that made it.
+# Generated artifacts. Every one is reproducible with `./run.sh bench`, and
+# checking them in would let a stale number outlive the run that made it.
 /out/
-/web/dist/
-/web/node_modules/
-RESULTS.md
+/RESULTS.md
 
-# Local secrets
+# The dashboard's build output IS committed, under cmd/manhattan/dist, because
+# it is embedded into the Go binary. That keeps `go build ./...` working on a
+# clean clone with no Node toolchain, which is what someone evaluating this
+# with four minutes actually needs. Rebuild it with `./run.sh web`.
+/web/node_modules/
+
+# Local secrets.
 .env
 .env.local
 
-# Tooling
+# Tooling.
 .DS_Store
+Thumbs.db
 *.prof
 *.test
 __pycache__/
