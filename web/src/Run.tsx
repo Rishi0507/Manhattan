@@ -1,15 +1,16 @@
 import { useMemo, useState } from "react";
 import type { Receipt, Status, Summary } from "./types";
 import { STATUSES } from "./types";
-import { cls, idx, num, pct, rupees, rupeesShort, statusColor, statusMeaning } from "./lib";
-import { Bar, Empty, Field, Flag, Note, Panel, Stat, StatusPill, Td, Th } from "./ui";
+import { cls, idx, num, pct, rupeesShort, statusColor, statusGlyph, statusMeaning } from "./lib";
+import { Bar, Empty, Flag, Note, Panel, Row, StatusPill, SummaryBar, Td, Th } from "./ui";
 
 /**
- * The run view: what a batch produced, and every receipt in it.
+ * The run view.
  *
  * The status mix is the headline rather than an accuracy percentage, because
  * the five outcomes are the product. A viewer who reads four of them as
- * "failed" has missed the argument, so each one carries its meaning inline.
+ * "failed" has missed the argument, so the meanings are one keystroke away
+ * without occupying the screen by default.
  */
 export function Run({
   receipts,
@@ -26,6 +27,7 @@ export function Run({
 }) {
   const [filter, setFilter] = useState<Status | "ALL">("ALL");
   const [query, setQuery] = useState("");
+  const [legend, setLegend] = useState(false);
 
   const counts = useMemo(() => {
     const c: Record<string, number> = {};
@@ -40,7 +42,7 @@ export function Run({
         (filter === "ALL" || r.status === filter) &&
         (q === "" ||
           r.settlement_ref.toLowerCase().includes(q) ||
-          (r.merchant_name ?? "").toLowerCase().includes(q) ||
+          (r.merchant_archetype ?? "").toLowerCase().includes(q) ||
           r.flags.some((f) => f.toLowerCase().includes(q))),
     );
   }, [receipts, filter, query]);
@@ -48,76 +50,79 @@ export function Run({
   if (receipts.length === 0) {
     return (
       <Empty>
-        No receipts loaded. Run <code className="tnum">manhattan bench</code>, or start a run from
-        the header.
+        No receipts loaded. Run <code className="tnum">./run.sh bench</code>, or start a run from the
+        header.
       </Empty>
     );
   }
 
   const posted = counts["VERIFIED"] ?? 0;
+  const n = receipts.length;
 
   return (
-    <div className="space-y-4">
-      {/* Counters */}
-      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-        <Stat
-          label="auto-posted"
-          value={num(posted)}
-          sub={`${pct(posted / Math.max(receipts.length, 1))} of ${num(receipts.length)} settlements`}
-          tone="var(--color-verified)"
-          emphasis
-        />
-        <Stat
-          label="auto-posted wrong"
-          value={summary ? num(summary.auto_posted_wrong) : "0"}
-          sub={
-            summary
-              ? `B0, on the same inputs: ${num(summary.b0_auto_posted_wrong)}`
-              : "against ground truth the pipeline never saw"
-          }
-          tone={summary && summary.auto_posted_wrong > 0 ? "var(--color-wrong)" : "var(--color-verified)"}
-          emphasis
-        />
-        <Stat
-          label="held for review"
-          value={num(receipts.length - posted)}
-          sub="each with a named cause and a computed cure"
-        />
-        <Stat
-          label="throughput"
-          value={summary ? num(Math.round(summary.settlements_per_hour)) : "—"}
-          sub={
-            summary
-              ? `${summary.median_latency_ms.toFixed(1)} ms median, ${summary.p95_latency_ms.toFixed(0)} ms p95`
-              : "settlements per hour"
-          }
-        />
-      </div>
+    <div className="space-y-3">
+      <SummaryBar
+        items={[
+          {
+            label: "auto-posted",
+            value: num(posted),
+            sub: `${pct(posted / n)} of ${num(n)}`,
+            tone: "var(--color-verified)",
+          },
+          {
+            label: "posted wrong",
+            value: summary ? num(summary.auto_posted_wrong) : "0",
+            sub: summary ? `B0: ${num(summary.b0_auto_posted_wrong)}` : "vs ground truth",
+            tone: summary && summary.auto_posted_wrong > 0 ? "var(--color-wrong)" : "var(--color-verified)",
+          },
+          { label: "held", value: num(n - posted), sub: "each with a cure" },
+          {
+            label: "per hour",
+            value: summary ? num(Math.round(summary.settlements_per_hour)) : "—",
+            sub: summary ? `${summary.median_latency_ms.toFixed(1)} ms median` : undefined,
+          },
+          {
+            label: "cost / 1k",
+            value: summary ? `₹${summary.inr_per_1k_settlements.toFixed(0)}` : "—",
+            sub: summary ? `B0: ₹${summary.b0_inr_per_1k_settlements.toFixed(0)}` : undefined,
+          },
+          {
+            label: "peak memory",
+            value: summary ? `${Math.round(summary.peak_memory_mb)} MB` : "—",
+            sub: summary ? `p95 ${summary.p95_latency_ms.toFixed(0)} ms` : undefined,
+          },
+        ]}
+      />
 
       {streaming && progress && (
-        <div className="rounded border border-line bg-surface px-4 py-3">
-          <div className="flex items-baseline justify-between">
-            <span className="text-[12.5px] text-ink-dim">reconciling</span>
-            <span className="tnum text-[12.5px] text-ink-faint">
+        <div className="rounded-md border border-line bg-surface px-3.5 py-2">
+          <div className="flex items-baseline justify-between text-[12px]">
+            <span className="text-ink-dim">reconciling</span>
+            <span className="tnum text-ink-faint">
               {progress.done} / {progress.total}
             </span>
           </div>
-          <div className="mt-2 h-1 w-full overflow-hidden rounded-[2px] bg-raised">
+          <div className="mt-1.5 h-1 w-full overflow-hidden rounded-[2px] bg-sunken">
             <div
-              className="h-full transition-[width] duration-200"
-              style={{
-                width: `${(progress.done / Math.max(progress.total, 1)) * 100}%`,
-                background: "var(--color-accent)",
-              }}
+              className="h-full bg-accent transition-[width] duration-200"
+              style={{ width: `${(progress.done / Math.max(progress.total, 1)) * 100}%` }}
             />
           </div>
         </div>
       )}
 
-      {/* Status mix */}
+      {/* Status mix as one compact strip of filter chips. */}
       <Panel
-        title="The five outcomes"
-        subtitle="Four of them stop the money, and they are not degrees of failure. They are different findings that call for different actions."
+        title="Outcomes"
+        hint="four of the five stop the money, and none of them is a failure"
+        right={
+          <button
+            onClick={() => setLegend(!legend)}
+            className="text-[11.5px] text-ink-faint transition-colors hover:text-accent"
+          >
+            {legend ? "hide" : "what these mean"}
+          </button>
+        }
       >
         <Bar
           segments={STATUSES.map((s) => ({
@@ -125,53 +130,80 @@ export function Run({
             color: statusColor(s),
             label: `${s}: ${counts[s] ?? 0}`,
           }))}
-          height={8}
         />
-        <div className="mt-4 grid gap-3 md:grid-cols-2 xl:grid-cols-3">
-          {STATUSES.map((s) => (
-            <button
-              key={s}
-              onClick={() => setFilter(filter === s ? "ALL" : s)}
-              className={cls(
-                "rounded border px-3.5 py-3 text-left transition-colors",
-                filter === s ? "border-accent bg-raised" : "border-line hover:bg-raised/60",
-              )}
-            >
-              <div className="flex items-baseline justify-between gap-2">
-                <StatusPill status={s} size="sm" />
-                <span className="tnum text-[15px]" style={{ color: statusColor(s) }}>
+        <div className="mt-2.5 flex flex-wrap gap-1.5">
+          {STATUSES.map((s) => {
+            const active = filter === s;
+            const c = statusColor(s);
+            return (
+              <button
+                key={s}
+                onClick={() => setFilter(active ? "ALL" : s)}
+                title={statusMeaning(s)}
+                className={cls(
+                  "inline-flex items-center gap-1.5 rounded-[3px] border px-2 py-1 text-[11.5px] transition-colors",
+                  active ? "border-accent bg-accent-soft" : "border-line hover:bg-raised",
+                )}
+              >
+                <span className="tnum" style={{ color: c }} aria-hidden>
+                  {statusGlyph(s)}
+                </span>
+                <span className="text-ink-dim">{s === "NARROWING_SENSITIVE" ? "SENSITIVE" : s}</span>
+                <span className="tnum font-medium" style={{ color: c }}>
                   {counts[s] ?? 0}
                 </span>
-              </div>
-              <p className="mt-1.5 text-[11.5px] leading-snug text-ink-faint">{statusMeaning(s)}</p>
+              </button>
+            );
+          })}
+          {filter !== "ALL" && (
+            <button
+              onClick={() => setFilter("ALL")}
+              className="px-2 py-1 text-[11.5px] text-ink-faint hover:text-accent"
+            >
+              clear
             </button>
-          ))}
+          )}
         </div>
+
+        {legend && (
+          <div className="mt-3 space-y-1.5 border-t border-line-soft pt-2.5">
+            {STATUSES.map((s) => (
+              <div key={s} className="flex gap-2.5">
+                <span className="w-[92px] shrink-0">
+                  <StatusPill status={s} size="sm" />
+                </span>
+                <span className="text-[11.5px] leading-snug text-ink-dim">{statusMeaning(s)}</span>
+              </div>
+            ))}
+          </div>
+        )}
       </Panel>
 
       {/* Receipts */}
       <Panel
+        flush
         title="Receipts"
-        subtitle="Every decision, with the evidence behind it. Click a row."
+        hint={`${shown.length} shown, click for the derivation`}
         right={
           <input
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            placeholder="filter by reference, merchant or flag"
-            className="tnum w-64 rounded border border-line bg-ground px-2.5 py-1.5 text-[12px] text-ink placeholder:text-ink-faint focus:border-accent focus:outline-none"
+            placeholder="filter"
+            className="tnum w-44 rounded border border-line bg-surface px-2 py-1 text-[11.5px] text-ink placeholder:text-ink-faint focus:border-accent focus:outline-none"
           />
         }
       >
-        <div className="max-h-[560px] overflow-auto">
-          <table className="w-full">
-            <thead className="sticky top-0 bg-surface">
+        <div className="max-h-[520px] overflow-auto">
+          <table className="w-full border-separate border-spacing-0">
+            <thead>
               <tr>
-                <Th>settlement</Th>
+                <Th w="170px">settlement</Th>
                 <Th>merchant</Th>
-                <Th right>credit</Th>
-                <Th right>pool</Th>
-                <Th right>index</Th>
-                <Th>status</Th>
+                <Th right w="96px">credit</Th>
+                <Th right w="56px">pool</Th>
+                <Th right w="52px">|S|</Th>
+                <Th right w="72px">index</Th>
+                <Th w="110px">status</Th>
                 <Th>flags</Th>
               </tr>
             </thead>
@@ -180,19 +212,25 @@ export function Run({
                 <tr
                   key={r.settlement_ref}
                   onClick={() => onOpen(r)}
-                  className={cls("cursor-pointer hover:bg-raised", i >= receipts.length - 3 && streaming && "arrive")}
+                  className={cls(
+                    "cursor-pointer hover:bg-raised",
+                    streaming && i >= shown.length - 2 && "arrive",
+                  )}
                 >
-                  <Td mono className="text-ink-dim">
+                  <Td mono dim>
                     {r.settlement_ref.replace("bank_credit_", "")}
                   </Td>
-                  <Td className="text-ink-faint">{r.merchant_archetype}</Td>
+                  <Td dim>{(r.merchant_archetype ?? "").replace(/_/g, " ")}</Td>
                   <Td right mono>
                     {rupeesShort(r.target_paise)}
                   </Td>
-                  <Td right mono className="text-ink-faint">
+                  <Td right mono dim>
                     {r.pool.n}
                   </Td>
-                  <Td right mono className="text-ink-faint">
+                  <Td right mono dim>
+                    {r.witness_size || "—"}
+                  </Td>
+                  <Td right mono dim>
                     {idx(r.feasibility.collision_index_at_k_star)}
                   </Td>
                   <Td>
@@ -209,142 +247,161 @@ export function Run({
               ))}
             </tbody>
           </table>
+          {shown.length === 0 && (
+            <div className="py-10 text-center text-[12px] text-ink-faint">nothing matches</div>
+          )}
         </div>
-        {shown.length === 0 && <div className="py-8 text-center text-[12.5px] text-ink-faint">nothing matches</div>}
       </Panel>
 
-      {/* Segmentation */}
+      {/* Segmentation, the commercial claim */}
       {summary && summary.by_archetype?.length > 0 && (
         <Panel
-          title="Which merchants this works for, and why"
-          subtitle="The auto-post rate is predictable from the amount distribution alone, before any integration. That is only possible because the system knows exactly what makes it fail."
+          flush
+          title="Which merchants this works for"
+          hint="the rate is predictable from the amount distribution alone, before any integration"
         >
-          <table className="w-full">
+          <table className="w-full border-separate border-spacing-0">
             <thead>
               <tr>
                 <Th>merchant type</Th>
+                <Th right w="90px">spread</Th>
+                <Th right w="80px">twin mass</Th>
+                <Th right w="110px">auto-post</Th>
+                <Th right w="64px">wrong</Th>
+                <Th right w="90px">B0 wrong</Th>
                 <Th>expected regime</Th>
-                <Th right>spread σ</Th>
-                <Th right>twin mass</Th>
-                <Th right>auto-post</Th>
-                <Th right>wrong</Th>
-                <Th right>B0 wrong</Th>
               </tr>
             </thead>
             <tbody>
               {summary.by_archetype.map((a) => (
                 <tr key={a.archetype}>
-                  <Td className="text-ink">{a.archetype.replace(/_/g, " ")}</Td>
-                  <Td className="text-ink-faint">{a.expected_regime}</Td>
-                  <Td right mono className="text-ink-faint">
+                  <Td>{a.archetype.replace(/_/g, " ")}</Td>
+                  <Td right mono dim>
                     {rupeesShort(Math.round(a.mean_sigma_paise))}
                   </Td>
-                  <Td right mono className="text-ink-faint">
+                  <Td right mono dim>
                     {a.mean_twin_mass.toFixed(2)}
                   </Td>
-                  <Td right mono>
-                    <span style={{ color: a.auto_post_rate > 0 ? "var(--color-verified)" : "var(--color-underdetermined)" }}>
-                      {pct(a.auto_post_rate)}
+                  <Td right>
+                    <span className="inline-flex items-center gap-1.5">
+                      <span className="h-1 w-10 overflow-hidden rounded-[1px] bg-sunken">
+                        <span
+                          className="block h-full"
+                          style={{
+                            width: `${a.auto_post_rate * 100}%`,
+                            background: "var(--color-verified)",
+                          }}
+                        />
+                      </span>
+                      <span className="tnum w-8 text-right">{pct(a.auto_post_rate)}</span>
                     </span>
                   </Td>
                   <Td right mono>
-                    <span style={{ color: a.auto_posted_wrong > 0 ? "var(--color-wrong)" : "var(--color-verified)" }}>
+                    <span
+                      style={{
+                        color: a.auto_posted_wrong > 0 ? "var(--color-wrong)" : "var(--color-verified)",
+                      }}
+                    >
                       {a.auto_posted_wrong}
                     </span>
                   </Td>
                   <Td right mono>
-                    <span style={{ color: a.b0_wrong_post_rate > 0.2 ? "var(--color-wrong)" : "var(--color-ink-faint)" }}>
+                    <span
+                      style={{
+                        color: a.b0_wrong_post_rate > 0.2 ? "var(--color-wrong)" : "var(--color-ink-faint)",
+                      }}
+                    >
                       {pct(a.b0_wrong_post_rate)}
                     </span>
                   </Td>
+                  <Td dim>{a.expected_regime}</Td>
                 </tr>
               ))}
             </tbody>
           </table>
-          <div className="mt-3">
+          <div className="p-3.5">
             <Note tone="var(--color-accent)">
-              Read the last two columns against the two before them. Where amounts genuinely do not
-              distinguish transactions, Manhattan's auto-post rate falls to zero and B0's
-              wrong-posting rate climbs. Both systems are looking at the same data. One of them is
-              reacting to it.
+              Read the two wrong-posting columns against twin mass. Where amounts genuinely fail to
+              distinguish transactions, our auto-post rate falls to zero and B0's wrong-posting rate
+              climbs to 73%. Both systems see the same data. One reacts to it.
             </Note>
           </div>
         </Panel>
       )}
 
-      {/* Cost */}
+      {/* Cost, compact */}
       {summary && (
-        <Panel
-          title="What it costs to be right"
-          subtitle="Accuracy that costs ten times as much per settlement is not obviously a win, so the comparison includes the bill."
-        >
-          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-            <Field
-              label="model calls per settlement"
-              value={(summary.model_calls / Math.max(summary.settlements, 1)).toFixed(2)}
-              hint={`${summary.parse_calls} parses, ${summary.agent_calls} agent calls`}
-            />
-            <Field
-              label="exception rate"
-              value={pct(summary.exception_rate, 1)}
-              hint="only these reach the expensive agent loop"
-            />
-            <Field
-              label="input tokens per 1k"
-              value={`${(summary.input_tokens_per_1k / 1e6).toFixed(2)}M`}
-              hint={`B0: ${(summary.b0_input_tokens_per_1k / 1e6).toFixed(2)}M`}
-            />
-            <Field
-              label="cost per 1k settlements"
-              value={`₹${summary.inr_per_1k_settlements.toFixed(2)}`}
-              hint={`B0: ₹${summary.b0_inr_per_1k_settlements.toFixed(2)}`}
-              tone="var(--color-accent)"
-            />
-          </div>
-          <p className="mt-3 text-[12px] leading-relaxed text-ink-faint">
-            Both are priced at <span className="tnum text-ink-dim">{summary.priced_at_model}</span>{" "}
-            rates
-            {summary.price_is_real_spend
-              ? ""
-              : ", modelled rather than billed, because this run used the offline provider"}
-            . B0's input scales with pool size, because a matcher that reasons over the candidate
-            pool has to put the pool in the context window. Manhattan's parse call reads one line of
-            bank narration whatever the pool size, and its expensive loop runs only on exceptions.
-          </p>
-        </Panel>
-      )}
-
-      {/* Run-level gate */}
-      {summary?.narrowing_drift && summary.narrowing_drift.length > 0 && (
-        <Panel title="This run is gated">
-          {summary.narrowing_drift.map((d) => (
-            <div key={d.constraint}>
-              <p className="text-[13px] leading-relaxed text-ink">
-                The narrowing constraint{" "}
-                <span className="tnum" style={{ color: "var(--color-sensitive)" }}>
-                  {d.constraint}
-                </span>{" "}
-                dropped {pct(d.drop_rate_observed, 1)} of the record universe, against a stored
-                baseline of {pct(d.drop_rate_baseline, 1)} from{" "}
-                <span className="tnum">{d.baseline_source}</span>.
-              </p>
-              <p className="mt-2 text-[12px] leading-relaxed text-ink-faint">
-                This is a property of the batch rather than of any one settlement, so it lives on the
-                run object and holds the whole batch. Putting it on receipts would invite an analyst
-                to clear it settlement by settlement, which is exactly the wrong response. {d.note}
-              </p>
+        <div className="grid gap-3 lg:grid-cols-2">
+          <Panel title="What it costs to be right" hint="accuracy that costs 10x is not obviously a win">
+            <div className="space-y-0.5">
+              <Row
+                label="model calls per settlement"
+                value={(summary.model_calls / Math.max(summary.settlements, 1)).toFixed(2)}
+              />
+              <Row label="exception rate" value={pct(summary.exception_rate, 1)} dim />
+              <Row
+                label="input tokens per 1k"
+                value={`${(summary.input_tokens_per_1k / 1e6).toFixed(2)}M`}
+              />
+              <Row
+                label="B0 input tokens per 1k"
+                value={`${(summary.b0_input_tokens_per_1k / 1e6).toFixed(2)}M`}
+                dim
+              />
+              <Row
+                label="cost per 1k settlements"
+                value={`₹${summary.inr_per_1k_settlements.toFixed(2)}`}
+                tone="var(--color-accent)"
+                strong
+              />
+              <Row
+                label="B0 cost per 1k"
+                value={`₹${summary.b0_inr_per_1k_settlements.toFixed(2)}`}
+                dim
+              />
             </div>
-          ))}
-        </Panel>
-      )}
+            <p className="mt-2.5 text-[11.5px] leading-relaxed text-ink-faint">
+              Priced at <span className="tnum">{summary.priced_at_model}</span>
+              {summary.price_is_real_spend ? "" : ", modelled rather than billed"}. B0's input scales
+              with pool size because it must read the pool; ours reads one line of narration whatever
+              the pool size.
+            </p>
+          </Panel>
 
-      <p className="pb-2 text-center text-[11.5px] text-ink-faint">
-        Every amount above is an integer count of paise. There is no floating point anywhere in the
-        verification path; {summary ? `run ${summary.run_id}, ` : ""}
-        {receipts[0] && `seed ${receipts[0].replay_seed}`}, and the same seed reproduces the same
-        receipts byte for byte.
-      </p>
-      <div className="hidden">{rupees(0)}</div>
+          {summary.narrowing_drift && summary.narrowing_drift.length > 0 ? (
+            <Panel title="This run is gated" hint="a property of the batch, not of any settlement">
+              {summary.narrowing_drift.map((d) => (
+                <div key={d.constraint}>
+                  <p className="text-[12px] leading-relaxed text-ink">
+                    <span className="tnum" style={{ color: "var(--color-sensitive)" }}>
+                      {d.constraint}
+                    </span>{" "}
+                    dropped {pct(d.drop_rate_observed, 1)} of the record universe against a stored
+                    baseline of {pct(d.drop_rate_baseline, 1)}.
+                  </p>
+                  <p className="mt-1.5 text-[11.5px] leading-relaxed text-ink-faint">
+                    It holds the whole batch rather than appearing on receipts an analyst could clear
+                    one by one. {d.note}
+                  </p>
+                </div>
+              ))}
+            </Panel>
+          ) : (
+            <Panel title="Reproducibility" hint="a decision that cannot be reproduced cannot be audited">
+              <div className="space-y-0.5">
+                <Row label="run" value={summary.run_id} dim />
+                <Row label="seed" value={summary.seed} />
+                <Row label="provider" value={summary.provider} dim />
+                <Row label="models" value={summary.provider_models.split(" ")[0]} dim />
+              </div>
+              <p className="mt-2.5 text-[11.5px] leading-relaxed text-ink-faint">
+                Every amount is an integer count of paise, with no floating point anywhere in the
+                verification path. The same seed reproduces the same receipts byte for byte.
+              </p>
+            </Panel>
+          )}
+        </div>
+      )}
     </div>
   );
 }

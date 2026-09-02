@@ -32,16 +32,16 @@ export function Calibration({
   }
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-3">
       {buckets.length > 0 && (
         <Panel
           title="Does the system know in advance when it is about to be wrong?"
-          subtitle="Predicted on the left, measured on the right. The index is computed before any search runs."
+          hint="Predicted on the left, measured on the right. The index is computed before any search runs."
         >
-          <div className="space-y-3">
+          <div className="space-y-2.5">
             {buckets.map((b) => (
-              <div key={b.lo} className="grid grid-cols-[130px_1fr] items-center gap-4">
-                <div className="tnum text-right text-[11.5px] text-ink-faint">
+              <div key={b.lo} className="grid grid-cols-[130px_1fr] items-center gap-3">
+                <div className="tnum text-right text-[11px] text-ink-faint">
                   {idx(b.lo)} – {idx(b.hi)}
                   <div className="text-[10.5px] text-ink-faint/70">{b.n} configs</div>
                 </div>
@@ -57,7 +57,7 @@ export function Calibration({
                     <Seg v={b.sensitive} c="var(--color-sensitive)" label={`sensitive ${pct(b.sensitive)}`} />
                     <Seg v={b.unresolved} c="var(--color-unresolved)" label={`unresolved ${pct(b.unresolved)}`} />
                   </div>
-                  <div className="mt-1 flex items-center gap-4 text-[11px]">
+                  <div className="mt-1 flex items-center gap-3 text-[11px]">
                     <span style={{ color: b.wrong > 0 ? "var(--color-wrong)" : "var(--color-ink-faint)" }}>
                       Manhattan wrong postings {pct(b.wrong)}
                     </span>
@@ -70,7 +70,7 @@ export function Calibration({
             ))}
           </div>
 
-          <div className="mt-4 flex flex-wrap gap-x-5 gap-y-1 text-[11px] text-ink-faint">
+          <div className="mt-3 flex flex-wrap gap-x-5 gap-y-1 text-[11px] text-ink-faint">
             {[
               ["verified", "var(--color-verified)"],
               ["ambiguous", "var(--color-ambiguous)"],
@@ -85,7 +85,7 @@ export function Calibration({
             ))}
           </div>
 
-          <div className="mt-4">
+          <div className="mt-3">
             <Note tone="var(--color-accent)">
               As the predicted collision index rises, verified gives way to ambiguous and then to
               refusal, and the wrong-posting rate stays at zero throughout while B0's climbs. The
@@ -101,7 +101,7 @@ export function Calibration({
       {envelope.length > 0 && (
         <Panel
           title="Resource envelope, modelled against measured"
-          subtitle="Publishing a modelled number under a measured heading is the class of unverified claim this project exists to refuse, so both columns are printed."
+          hint="Publishing a modelled number under a measured heading is the class of unverified claim this project exists to refuse, so both columns are printed."
         >
           <table className="w-full">
             <thead>
@@ -143,7 +143,7 @@ export function Calibration({
               ))}
             </tbody>
           </table>
-          <p className="mt-3 text-[12px] leading-relaxed text-ink-faint">
+          <p className="mt-3 text-[11.5px] leading-relaxed text-ink-faint">
             Cost tracks the free cardinality, not the pool size. A 100-record pool at k=5 is more
             expensive than a 320-record pool at k=3, and that inversion is the signature of an
             algorithm matched to the constraint that actually binds. Every timing includes the
@@ -153,7 +153,7 @@ export function Calibration({
       )}
 
       {sweep.length > 0 && (
-        <Panel title="Full sweep" subtitle="Pool size and batch size varied independently across four merchant shapes.">
+        <Panel title="Full sweep" hint="Pool size and batch size varied independently across four merchant shapes.">
           <div className="max-h-[420px] overflow-auto">
             <table className="w-full">
               <thead className="sticky top-0 bg-surface">
@@ -244,18 +244,18 @@ function EstimatorComparison({ sweep }: { sweep: SweepPoint[] }) {
   return (
     <Panel
       title="Two estimators, and why the closed form was not enough"
-      subtitle="Mean absolute log-ratio against the exhaustively counted number of reconstructions. Zero is perfect; 1.0 is off by a factor of e."
+      hint="Mean absolute log-ratio against the exhaustively counted number of reconstructions. Zero is perfect; 1.0 is off by a factor of e."
     >
-      <div className="grid gap-4 md:grid-cols-2">
-        <div className="space-y-3">
+      <div className="grid gap-3 md:grid-cols-2">
+        <div className="space-y-2.5">
           {[
             ["measured, by sampling this pool", emp, "var(--color-verified)"],
             ["analytic, moment-matched normal", ana, "var(--color-ambiguous)"],
           ].map(([label, v, c]) => (
             <div key={label as string}>
               <div className="flex items-baseline justify-between">
-                <span className="text-[12.5px] text-ink-dim">{label as string}</span>
-                <span className="tnum text-[13px]" style={{ color: c as string }}>
+                <span className="text-[12px] text-ink-dim">{label as string}</span>
+                <span className="tnum text-[12.5px]" style={{ color: c as string }}>
                   {(v as number).toFixed(2)}
                 </span>
               </div>
@@ -268,7 +268,7 @@ function EstimatorComparison({ sweep }: { sweep: SweepPoint[] }) {
             </div>
           ))}
         </div>
-        <p className="text-[12px] leading-relaxed text-ink-faint">
+        <p className="text-[11.5px] leading-relaxed text-ink-faint">
           The closed form assumes the sums of k-subsets are locally uniform near the target, with a
           density read off a moment-matched normal. Real ticket amounts are close to lognormal, and a
           sum of three of those is nothing like a normal distribution in its body, so its true

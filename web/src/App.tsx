@@ -93,11 +93,11 @@ export default function App() {
   return (
     <div className="min-h-full">
       <header className="sticky top-0 z-20 border-b border-line bg-ground/95 backdrop-blur">
-        <div className="mx-auto max-w-[1400px] px-6">
-          <div className="flex flex-wrap items-baseline justify-between gap-x-8 gap-y-2 py-4">
+        <div className="mx-auto max-w-[1400px] px-5">
+          <div className="flex flex-wrap items-baseline justify-between gap-x-8 gap-y-2 py-3">
             <div className="flex items-baseline gap-3.5">
-              <h1 className="text-[17px] font-semibold tracking-tight text-ink">Manhattan</h1>
-              <p className="text-[12.5px] text-ink-faint">
+              <h1 className="text-[15px] font-semibold tracking-tight text-ink">Manhattan</h1>
+              <p className="text-[12px] text-ink-faint">
                 An agent that proves settlements instead of guessing them.
               </p>
             </div>
@@ -110,7 +110,7 @@ export default function App() {
               <button
                 onClick={() => void startRun()}
                 disabled={streaming}
-                className="rounded border border-line px-3 py-1.5 text-[12px] text-ink-dim transition-colors hover:border-accent hover:text-accent disabled:opacity-50"
+                className="rounded-md border border-line px-3 py-1.5 text-[11.5px] text-ink-dim transition-colors hover:border-accent hover:text-accent disabled:opacity-50"
               >
                 {streaming ? "running" : "run a batch"}
               </button>
@@ -132,9 +132,9 @@ export default function App() {
         </div>
       </header>
 
-      <main className="mx-auto max-w-[1400px] px-6 py-6">
+      <main className="mx-auto max-w-[1400px] px-5 py-4">
         {loadError && (
-          <p className="mb-4 rounded border border-line px-4 py-3 text-[12.5px]" style={{ color: "var(--color-wrong)" }}>
+          <p className="mb-3 rounded-md border border-line px-3.5 py-2.5 text-[12px]" style={{ color: "var(--color-wrong)" }}>
             {loadError}
           </p>
         )}
@@ -159,28 +159,28 @@ export default function App() {
           context a viewer was reading stays behind it. */}
       {open && (
         <div
-          className="fixed inset-0 z-30 flex justify-end bg-black/55"
+          className="fixed inset-0 z-30 flex justify-end bg-[#16181d]/25 backdrop-blur-[1px]"
           onClick={() => setOpen(null)}
           role="dialog"
           aria-modal="true"
         >
           <div
             className={cls(
-              "h-full w-full max-w-[1000px] overflow-y-auto border-l border-line bg-ground",
-              "shadow-2xl",
+              "h-full w-full max-w-[980px] overflow-y-auto border-l border-line-strong bg-ground",
+              "shadow-[-8px_0_24px_rgba(22,24,29,0.10)]",
             )}
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="sticky top-0 z-10 flex items-center justify-between border-b border-line bg-ground/95 px-5 py-3 backdrop-blur">
-              <span className="text-[12.5px] text-ink-faint">evidence object</span>
+            <div className="sticky top-0 z-10 flex items-center justify-between border-b border-line bg-ground/95 px-4 py-2 backdrop-blur">
+              <span className="text-[12px] text-ink-faint">evidence object</span>
               <button
                 onClick={() => setOpen(null)}
-                className="rounded border border-line px-2.5 py-1 text-[12px] text-ink-faint transition-colors hover:border-ink-faint hover:text-ink-dim"
+                className="rounded-md border border-line px-2.5 py-1 text-[11.5px] text-ink-faint transition-colors hover:border-ink-faint hover:text-ink-dim"
               >
                 close
               </button>
             </div>
-            <div className="p-5">
+            <div className="p-4">
               <ReceiptView r={open} />
             </div>
           </div>

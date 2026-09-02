@@ -77,6 +77,28 @@ export function statusColor(s: Status): string {
 }
 
 /**
+ * A single glyph per status, so a column of them scans without reading.
+ *
+ * Carrying status by glyph plus a muted tint, rather than by five saturated
+ * colours, keeps the table legible: the data should be the loudest thing on
+ * the screen.
+ */
+export function statusGlyph(s: Status): string {
+  switch (s) {
+    case "VERIFIED":
+      return "✓";
+    case "AMBIGUOUS":
+      return "≈";
+    case "UNDERDETERMINED":
+      return "∅";
+    case "NARROWING_SENSITIVE":
+      return "⚠";
+    case "UNRESOLVED":
+      return "?";
+  }
+}
+
+/**
  * One line on what each status means, in the words a finance lead would use.
  *
  * These are shown in the interface rather than kept in documentation because

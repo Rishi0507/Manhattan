@@ -21,10 +21,10 @@ export function ReceiptView({ r }: { r: Receipt }) {
   const tone = statusColor(r.status);
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-3">
       {/* Headline */}
-      <div className="rounded border border-line bg-surface">
-        <div className="flex flex-wrap items-start justify-between gap-4 border-b border-line-soft px-5 py-4">
+      <div className="rounded-md border border-line bg-surface">
+        <div className="flex flex-wrap items-start justify-between gap-3 border-b border-line-soft px-4 py-3">
           <div className="min-w-0">
             <div className="flex flex-wrap items-center gap-2">
               <StatusPill status={r.status} />
@@ -32,10 +32,10 @@ export function ReceiptView({ r }: { r: Receipt }) {
                 <Flag key={x} name={x} title={flagMeaning(x)} />
               ))}
             </div>
-            <div className="tnum mt-2.5 text-[28px] leading-none text-ink">{rupees(r.target_paise)}</div>
-            <div className="tnum mt-1.5 text-[12px] text-ink-faint">{r.settlement_ref}</div>
+            <div className="tnum mt-2.5 text-[24px] leading-none text-ink">{rupees(r.target_paise)}</div>
+            <div className="tnum mt-1.5 text-[11.5px] text-ink-faint">{r.settlement_ref}</div>
           </div>
-          <div className="text-right text-[12px] text-ink-faint">
+          <div className="text-right text-[11.5px] text-ink-faint">
             <div className="tnum">{r.narration}</div>
             <div className="tnum mt-0.5">
               {r.merchant_name} · {r.merchant_archetype} · value date {r.value_date}
@@ -44,20 +44,20 @@ export function ReceiptView({ r }: { r: Receipt }) {
           </div>
         </div>
 
-        <div className="space-y-2 px-5 py-4">
-          <p className="text-[13px] leading-relaxed text-ink">{r.claim}</p>
-          {r.note && <p className="text-[12.5px] leading-relaxed text-ink-faint">{r.note}</p>}
-          <p className="pt-1 text-[12px] leading-relaxed text-ink-faint">{statusMeaning(r.status)}</p>
+        <div className="space-y-2 px-4 py-3">
+          <p className="text-[12.5px] leading-relaxed text-ink">{r.claim}</p>
+          {r.note && <p className="text-[12px] leading-relaxed text-ink-faint">{r.note}</p>}
+          <p className="pt-1 text-[11.5px] leading-relaxed text-ink-faint">{statusMeaning(r.status)}</p>
         </div>
       </div>
 
-      <div className="grid gap-4 lg:grid-cols-2">
+      <div className="grid gap-3 lg:grid-cols-2">
         {/* Stage 2: narrowing */}
         <Panel
           title="Narrowing"
-          subtitle="Every excluded record is logged with the rule that excluded it. Narrowing is part of the audit trail, not preprocessing."
+          hint="Every excluded record is logged with the rule that excluded it. Narrowing is part of the audit trail, not preprocessing."
         >
-          <div className="space-y-3">
+          <div className="space-y-2.5">
             <Bar
               segments={[
                 ...dropped.map(([, v], i) => ({
@@ -109,9 +109,9 @@ export function ReceiptView({ r }: { r: Receipt }) {
         {/* Stage 4: gates */}
         <Panel
           title="Can this even be answered?"
-          subtitle="Both gates run before any search. The second one's output is the parameter the search is dispatched on."
+          hint="Both gates run before any search. The second one's output is the parameter the search is dispatched on."
         >
-          <div className="space-y-4">
+          <div className="space-y-3">
             <div className="grid grid-cols-3 gap-3">
               <Field
                 label="pool"
@@ -127,7 +127,7 @@ export function ReceiptView({ r }: { r: Receipt }) {
               />
             </div>
 
-            <div className="grid grid-cols-3 gap-3 border-t border-line-soft pt-3">
+            <div className="grid grid-cols-3 gap-3 border-t border-line-soft pt-2.5">
               <Field label="k*" value={f.k_star} hint="largest decidable free cardinality" />
               <Field
                 label="collision index"
@@ -142,7 +142,7 @@ export function ReceiptView({ r }: { r: Receipt }) {
               />
             </div>
 
-            <p className="text-[12px] leading-relaxed text-ink-faint">{f.note}</p>
+            <p className="text-[11.5px] leading-relaxed text-ink-faint">{f.note}</p>
 
             {f.collision_index_analytic_at_k_star > 0 &&
               Math.abs(
@@ -157,7 +157,7 @@ export function ReceiptView({ r }: { r: Receipt }) {
               )}
 
             {f.implied_free_cardinality !== undefined && (
-              <div className="border-t border-line-soft pt-3">
+              <div className="border-t border-line-soft pt-2.5">
                 <Field
                   label="declared batch"
                   value={`${f.declared_txn_count} of ${f.n}, free cardinality ${f.implied_free_cardinality}`}
@@ -173,7 +173,7 @@ export function ReceiptView({ r }: { r: Receipt }) {
       {u && r.solver && (
         <Panel
           title="Reconstruction and proof"
-          subtitle="Uniqueness is not a sweep bolted on after the search. It is the count the search itself produced."
+          hint="Uniqueness is not a sweep bolted on after the search. It is the count the search itself produced."
           right={
             <div className="text-right text-[11px] text-ink-faint">
               <div className="tnum">{num(r.solver.entries_left + r.solver.entries_right)} entries enumerated</div>
@@ -181,7 +181,7 @@ export function ReceiptView({ r }: { r: Receipt }) {
             </div>
           }
         >
-          <div className="grid gap-4 md:grid-cols-3">
+          <div className="grid gap-3 md:grid-cols-3">
             <Field label="witness size" value={r.witness_size} />
             <Field
               label="reconstructions found"
@@ -192,30 +192,30 @@ export function ReceiptView({ r }: { r: Receipt }) {
             <Field label="solve side" value={r.solver.solve_side || "witness"} />
           </div>
 
-          <div className="mt-4 rounded border border-line bg-raised/50 px-3.5 py-3">
-            <div className="text-[10.5px] tracking-wide text-ink-faint uppercase">scope of the claim</div>
-            <div className="tnum mt-1 text-[13px] text-ink">{u.scope}</div>
-            <div className="mt-1 text-[11.5px] text-ink-faint">
+          <div className="mt-3 rounded-md border border-line bg-raised/50 px-3 py-2">
+            <div className="lbl">scope of the claim</div>
+            <div className="tnum mt-1 text-[12.5px] text-ink">{u.scope}</div>
+            <div className="mt-1 text-[11px] text-ink-faint">
               bounded by{" "}
               {u.scope_source === "declared_txn_count"
                 ? "the settlement report's own declared transaction count"
                 : "the feasibility gate, computed from the pool alone"}
             </div>
             {u.scope_note && (
-              <p className="mt-2 text-[12px] leading-relaxed" style={{ color: "var(--color-ambiguous)" }}>
+              <p className="mt-2 text-[11.5px] leading-relaxed" style={{ color: "var(--color-ambiguous)" }}>
                 {u.scope_note}
               </p>
             )}
           </div>
 
           {r.witness && r.witness.length > 0 && (
-            <div className="mt-4">
-              <div className="mb-1.5 text-[10.5px] tracking-wide text-ink-faint uppercase">witness</div>
+            <div className="mt-3">
+              <div className="lbl mb-1">witness</div>
               <div className="flex flex-wrap gap-1">
                 {r.witness.map((id) => (
                   <span
                     key={id}
-                    className="tnum rounded-[3px] border border-line bg-raised px-1.5 py-0.5 text-[11.5px]"
+                    className="tnum rounded-[3px] border border-line bg-raised px-1.5 py-0.5 text-[11px]"
                     style={
                       r.negative_members?.includes(id)
                         ? { color: "var(--color-unresolved)", borderColor: "color-mix(in srgb, var(--color-unresolved) 30%, transparent)" }
@@ -230,17 +230,17 @@ export function ReceiptView({ r }: { r: Receipt }) {
           )}
 
           {u.alternative_witnesses && u.alternative_witnesses.length > 1 && (
-            <div className="mt-4 border-t border-line-soft pt-3">
-              <div className="mb-1.5 text-[10.5px] tracking-wide text-ink-faint uppercase">
+            <div className="mt-3 border-t border-line-soft pt-2.5">
+              <div className="lbl mb-1">
                 rival reconstructions, exhibited
               </div>
-              <p className="mb-2 text-[12px] text-ink-faint">
+              <p className="mb-2 text-[11.5px] text-ink-faint">
                 An ambiguous result shows its alternatives rather than asserting they exist. An analyst
                 may be able to choose between these on grounds the arithmetic cannot see.
               </p>
               <div className="space-y-1.5">
                 {u.alternative_witnesses.slice(0, 3).map((w, i) => (
-                  <div key={i} className="tnum rounded border border-line px-2.5 py-1.5 text-[11.5px] text-ink-dim">
+                  <div key={i} className="tnum rounded-md border border-line px-2.5 py-1.5 text-[11px] text-ink-dim">
                     {w.join("  ")}
                   </div>
                 ))}
@@ -249,7 +249,7 @@ export function ReceiptView({ r }: { r: Receipt }) {
           )}
 
           {r.solver.nearest_miss?.valid && u.matches_found === 0 && (
-            <div className="mt-4 border-t border-line-soft pt-3">
+            <div className="mt-3 border-t border-line-soft pt-2.5">
               <div className="grid grid-cols-3 gap-3">
                 <Field label="nearest achievable" value={rupees(r.solver.nearest_miss.nearest_sum_paise)} />
                 <Field label="residual" value={rupees(r.solver.nearest_miss.gap_paise)} tone={tone} />
@@ -264,7 +264,7 @@ export function ReceiptView({ r }: { r: Receipt }) {
       {r.accounting && (
         <Panel
           title="The accounting identity, re-derived"
-          subtitle="Recomputed from the raw records without reusing any value the solver touched. If the two disagree, the solver is wrong and nothing posts."
+          hint="Recomputed from the raw records without reusing any value the solver touched. If the two disagree, the solver is wrong and nothing posts."
         >
           <table className="w-full max-w-lg">
             <tbody>
@@ -309,7 +309,7 @@ export function ReceiptView({ r }: { r: Receipt }) {
               </tr>
             </tbody>
           </table>
-          <p className="mt-3 text-[12px] text-ink-faint">
+          <p className="mt-3 text-[11.5px] text-ink-faint">
             rounding mode <span className="tnum text-ink-dim">{r.rounding.mode}</span>, tolerance{" "}
             <span className="tnum text-ink-dim">{r.rounding.tolerance_paise} paise</span> per record,
             band scaled by <span className="text-ink-dim">{r.rounding.band_basis}</span>, slack
@@ -320,18 +320,18 @@ export function ReceiptView({ r }: { r: Receipt }) {
         </Panel>
       )}
 
-      <div className="grid gap-4 lg:grid-cols-2">
+      <div className="grid gap-3 lg:grid-cols-2">
         {/* Completeness */}
         <Panel
           title="Completeness guards"
-          subtitle="The dangerous failure is a wrong posting with a proof attached. These exist for that case alone."
+          hint="The dangerous failure is a wrong posting with a proof attached. These exist for that case alone."
         >
           {probe && (
-            <div className="mb-3 rounded border border-line px-3.5 py-3">
+            <div className="mb-3 rounded-md border border-line px-3 py-2">
               <div className="flex items-baseline justify-between gap-3">
-                <div className="text-[12.5px] text-ink">witness neighbourhood probe</div>
+                <div className="text-[12px] text-ink">witness neighbourhood probe</div>
                 <div
-                  className="text-[11.5px]"
+                  className="text-[11px]"
                   style={{
                     color: probe.inconclusive
                       ? "var(--color-ambiguous)"
@@ -343,7 +343,7 @@ export function ReceiptView({ r }: { r: Receipt }) {
                   {probe.inconclusive ? "inconclusive" : probe.stable ? "stable" : "rival found"}
                 </div>
               </div>
-              <p className="mt-1.5 text-[12px] leading-relaxed text-ink-faint">{probe.note}</p>
+              <p className="mt-1.5 text-[11.5px] leading-relaxed text-ink-faint">{probe.note}</p>
               <div className="tnum mt-2 text-[11px] text-ink-faint">
                 depth {probe.max_substitution_depth} of {probe.requested_substitution_depth} requested
                 · {num(probe.removal_sums_enumerated)} × {num(probe.addition_sums_enumerated)} sums ·
@@ -351,7 +351,7 @@ export function ReceiptView({ r }: { r: Receipt }) {
                 chance collisions expected
               </div>
               {probe.rival && (
-                <div className="tnum mt-2 text-[12px]" style={{ color: "var(--color-sensitive)" }}>
+                <div className="tnum mt-2 text-[11.5px]" style={{ color: "var(--color-sensitive)" }}>
                   {probe.rival.removed.join(", ")} → {probe.rival.added.join(", ")}, admitted by{" "}
                   {constraintLabel(probe.admitting_constraint ?? "")}
                 </div>
@@ -361,9 +361,9 @@ export function ReceiptView({ r }: { r: Receipt }) {
 
           <div className="space-y-2">
             {r.narrowing.completeness_checks?.map((c) => (
-              <div key={c.name} className="rounded border border-line px-3.5 py-2.5">
+              <div key={c.name} className="rounded-md border border-line px-3 py-2">
                 <div className="flex items-baseline justify-between gap-3">
-                  <span className="text-[12.5px] text-ink">{c.name.replace(/_/g, " ")}</span>
+                  <span className="text-[12px] text-ink">{c.name.replace(/_/g, " ")}</span>
                   <span
                     className="text-[11px] tracking-wide uppercase"
                     style={{
@@ -378,18 +378,18 @@ export function ReceiptView({ r }: { r: Receipt }) {
                     {c.state}
                   </span>
                 </div>
-                <p className="mt-1 text-[12px] leading-relaxed text-ink-faint">{c.detail}</p>
+                <p className="mt-1 text-[11.5px] leading-relaxed text-ink-faint">{c.detail}</p>
               </div>
             ))}
           </div>
         </Panel>
 
         {/* Fee check and agent */}
-        <div className="space-y-4">
+        <div className="space-y-3">
           {r.fee_check && (
             <Panel
               title="Fee check"
-              subtitle="Whether the money is accounted for and whether the fee applied to it was right are different questions."
+              hint="Whether the money is accounted for and whether the fee applied to it was right are different questions."
             >
               {r.fee_check.circular ? (
                 <Note tone="var(--color-underdetermined)">{r.fee_check.claim}</Note>
@@ -405,7 +405,7 @@ export function ReceiptView({ r }: { r: Receipt }) {
                       tone={r.fee_check.within_band ? "var(--color-verified)" : "var(--color-ambiguous)"}
                     />
                   </div>
-                  <p className="mt-3 text-[12px] leading-relaxed text-ink-faint">{r.fee_check.claim}</p>
+                  <p className="mt-3 text-[11.5px] leading-relaxed text-ink-faint">{r.fee_check.claim}</p>
                 </>
               )}
             </Panel>
@@ -414,7 +414,7 @@ export function ReceiptView({ r }: { r: Receipt }) {
           {r.agent.invoked && (
             <Panel
               title="Resolution agent"
-              subtitle="The model proposes. The unmodified verifier disposes. It is never asked whether it was right."
+              hint="The model proposes. The unmodified verifier disposes. It is never asked whether it was right."
               right={
                 <span className="tnum text-[11px] text-ink-faint">
                   {r.agent.provider} · {r.agent.iterations} iteration
@@ -428,7 +428,7 @@ export function ReceiptView({ r }: { r: Receipt }) {
                   return (
                     <div
                       key={i}
-                      className="rounded border px-3.5 py-2.5"
+                      className="rounded border px-3 py-2"
                       style={{
                         borderColor: accepted
                           ? "color-mix(in srgb, var(--color-verified) 35%, transparent)"
@@ -439,30 +439,30 @@ export function ReceiptView({ r }: { r: Receipt }) {
                       }}
                     >
                       <div className="flex items-baseline justify-between gap-3">
-                        <span className="tnum text-[12.5px] text-ink">
+                        <span className="tnum text-[12px] text-ink">
                           {h.kind.replace(/_/g, " ").toLowerCase()}
                         </span>
-                        <span className="tnum text-[12.5px] text-ink-dim">{rupees(h.amount_paise)}</span>
+                        <span className="tnum text-[12px] text-ink-dim">{rupees(h.amount_paise)}</span>
                       </div>
                       {h.rationale && (
-                        <p className="mt-1 text-[12px] leading-relaxed text-ink-faint">{h.rationale}</p>
+                        <p className="mt-1 text-[11.5px] leading-relaxed text-ink-faint">{h.rationale}</p>
                       )}
                       {h.source_ref ? (
-                        <p className="tnum mt-1.5 text-[11.5px]" style={{ color: "var(--color-verified)" }}>
+                        <p className="tnum mt-1.5 text-[11px]" style={{ color: "var(--color-verified)" }}>
                           cites {h.source_ref} — {h.evidence}
                         </p>
                       ) : (
-                        <p className="mt-1.5 text-[11.5px] text-ink-faint">
+                        <p className="mt-1.5 text-[11px] text-ink-faint">
                           uncited, so it can never post whatever the arithmetic says
                         </p>
                       )}
-                      <p className="mt-1 text-[11.5px] text-ink-faint">{h.outcome}</p>
+                      <p className="mt-1 text-[11px] text-ink-faint">{h.outcome}</p>
                     </div>
                   );
                 })}
               </div>
               {r.agent.note && (
-                <p className="mt-3 text-[12px] leading-relaxed text-ink-faint">{r.agent.note}</p>
+                <p className="mt-3 text-[11.5px] leading-relaxed text-ink-faint">{r.agent.note}</p>
               )}
             </Panel>
           )}
@@ -473,15 +473,15 @@ export function ReceiptView({ r }: { r: Receipt }) {
       {r.remediation && r.remediation.length > 0 && (
         <Panel
           title="What would change this"
-          subtitle="Not advice. Where possible, the collision index the named change is estimated to produce."
+          hint="Not advice. Where possible, the collision index the named change is estimated to produce."
         >
           <div className="space-y-2">
             {r.remediation.map((rm, i) => (
-              <div key={i} className="rounded border border-line px-3.5 py-2.5">
-                <div className="text-[12.5px] text-ink">{rm.action}</div>
-                <div className="mt-0.5 text-[12px] text-ink-faint">{rm.effect}</div>
+              <div key={i} className="rounded-md border border-line px-3 py-2">
+                <div className="text-[12px] text-ink">{rm.action}</div>
+                <div className="mt-0.5 text-[11.5px] text-ink-faint">{rm.effect}</div>
                 {rm.projected_collision_index !== undefined && (
-                  <div className="tnum mt-1 text-[11.5px]" style={{ color: "var(--color-accent)" }}>
+                  <div className="tnum mt-1 text-[11px]" style={{ color: "var(--color-accent)" }}>
                     projected index {idx(rm.projected_collision_index)}
                     {rm.projected_pool_n !== undefined && ` at a pool of ${rm.projected_pool_n}`}
                   </div>
@@ -512,7 +512,7 @@ export function ReceiptView({ r }: { r: Receipt }) {
             ))}
           </tbody>
         </table>
-        <p className="mt-3 text-[12px] text-ink-faint">
+        <p className="mt-3 text-[11.5px] text-ink-faint">
           There is no separate line for the uniqueness proof, because the reconstruction step
           produced the count. Policy <span className="tnum text-ink-dim">{r.policy_version}</span>,
           replay seed <span className="tnum text-ink-dim">{r.replay_seed}</span>.

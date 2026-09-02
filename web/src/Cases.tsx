@@ -28,12 +28,12 @@ export function Cases({ cases, onOpen }: { cases: CaseOutcome[]; onOpen: (r: Rec
   const met = cases.filter((c) => c.expectation_met).length;
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-3">
       <Panel
         title="Eleven adversarial cases, head to head"
-        subtitle="Both systems see identical inputs and identical narrowing. The only difference is what each is willing to conclude from them."
+        hint="Both systems see identical inputs and identical narrowing. The only difference is what each is willing to conclude from them."
         right={
-          <div className="text-right text-[11.5px]">
+          <div className="text-right text-[11px]">
             <div className="tnum text-ink-dim">
               Manhattan posted {posted}, wrong{" "}
               <span style={{ color: wrong ? "var(--color-wrong)" : "var(--color-verified)" }}>{wrong}</span>
@@ -53,28 +53,28 @@ export function Cases({ cases, onOpen }: { cases: CaseOutcome[]; onOpen: (r: Rec
             <button
               key={c.case.Number}
               onClick={() => onOpen(c.receipt)}
-              className="w-full rounded border border-line px-4 py-3 text-left transition-colors hover:bg-raised"
+              className="w-full rounded-md border border-line px-3.5 py-2.5 text-left transition-colors hover:bg-raised"
             >
               <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
                 <span className="flex items-baseline gap-2.5">
-                  <span className="tnum text-[11.5px] text-ink-faint">
+                  <span className="tnum text-[11px] text-ink-faint">
                     {String(c.case.Number).padStart(2, "0")}
                   </span>
-                  <span className="text-[13px] text-ink">{c.case.Name.replace(/_/g, " ")}</span>
+                  <span className="text-[12.5px] text-ink">{c.case.Name.replace(/_/g, " ")}</span>
                 </span>
                 <span className="tnum text-[11px] text-ink-faint">
                   pool {c.pool_n} · k* {c.k_star} · index {idx(c.collision_index)} · {c.latency_ms} ms
                 </span>
               </div>
 
-              <p className="mt-1 text-[12.5px] leading-snug text-ink-faint">{c.case.Scenario}</p>
+              <p className="mt-1 text-[12px] leading-snug text-ink-faint">{c.case.Scenario}</p>
 
               <div className="mt-2.5 grid gap-2 sm:grid-cols-2">
                 {/* B0 */}
-                <div className="rounded border border-line-soft px-3 py-2">
-                  <div className="text-[10.5px] tracking-wide text-ink-faint uppercase">B0</div>
+                <div className="rounded-md border border-line-soft px-3 py-2">
+                  <div className="lbl">B0</div>
                   <div
-                    className="mt-1 text-[12.5px]"
+                    className="mt-1 text-[12px]"
                     style={{
                       color: c.b0_posted_wrong
                         ? "var(--color-wrong)"
@@ -90,8 +90,8 @@ export function Cases({ cases, onOpen }: { cases: CaseOutcome[]; onOpen: (r: Rec
                 </div>
 
                 {/* Manhattan */}
-                <div className="rounded border border-line-soft px-3 py-2">
-                  <div className="text-[10.5px] tracking-wide text-ink-faint uppercase">Manhattan</div>
+                <div className="rounded-md border border-line-soft px-3 py-2">
+                  <div className="lbl">Manhattan</div>
                   <div className="mt-1 flex flex-wrap items-center gap-1.5">
                     <StatusPill status={c.status} size="sm" />
                     {c.flags.map((f) => (
@@ -103,7 +103,7 @@ export function Cases({ cases, onOpen }: { cases: CaseOutcome[]; onOpen: (r: Rec
 
               <p
                 className={cls(
-                  "mt-2 text-[11.5px] leading-snug",
+                  "mt-2 text-[11px] leading-snug",
                   c.expectation_met ? "text-ink-faint" : "text-ink",
                 )}
                 style={c.posted_wrong ? { color: "var(--color-wrong)" } : undefined}

@@ -49,10 +49,10 @@ export function Ask() {
   }
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-3">
       <Panel
         title="Ask the receipt store"
-        subtitle="Answers are grounded in stored evidence and nothing else. Every claim carries a receipt id and a field path."
+        hint="Answers are grounded in stored evidence and nothing else. Every claim carries a receipt id and a field path."
       >
         <form
           onSubmit={(e) => {
@@ -65,12 +65,12 @@ export function Ask() {
             value={q}
             onChange={(e) => setQ(e.target.value)}
             placeholder="Why didn't 1042 post, and what would make it?"
-            className="flex-1 rounded border border-line bg-ground px-3 py-2 text-[13px] text-ink placeholder:text-ink-faint focus:border-accent focus:outline-none"
+            className="flex-1 rounded-md border border-line bg-ground px-3 py-2 text-[12.5px] text-ink placeholder:text-ink-faint focus:border-accent focus:outline-none"
           />
           <button
             type="submit"
             disabled={busy || !q.trim()}
-            className="rounded border border-accent bg-accent/10 px-4 py-2 text-[13px] text-accent transition-colors hover:bg-accent/20 disabled:cursor-not-allowed disabled:border-line disabled:bg-transparent disabled:text-ink-faint"
+            className="rounded border border-accent bg-accent/10 px-4 py-2 text-[12.5px] text-accent transition-colors hover:bg-accent/20 disabled:cursor-not-allowed disabled:border-line disabled:bg-transparent disabled:text-ink-faint"
           >
             {busy ? "reading receipts" : "ask"}
           </button>
@@ -82,7 +82,7 @@ export function Ask() {
               key={s}
               onClick={() => void ask(s)}
               disabled={busy}
-              className="rounded-[3px] border border-line px-2.5 py-1 text-[11.5px] text-ink-faint transition-colors hover:border-ink-faint hover:text-ink-dim disabled:opacity-50"
+              className="rounded-[3px] border border-line px-2.5 py-1 text-[11px] text-ink-faint transition-colors hover:border-ink-faint hover:text-ink-dim disabled:opacity-50"
             >
               {s}
             </button>
@@ -90,7 +90,7 @@ export function Ask() {
         </div>
 
         {err && (
-          <p className="mt-3 text-[12px]" style={{ color: "var(--color-wrong)" }}>
+          <p className="mt-3 text-[11.5px]" style={{ color: "var(--color-wrong)" }}>
             {err}
           </p>
         )}
@@ -98,7 +98,7 @@ export function Ask() {
 
       {history.map((h, i) => (
         <Panel key={i} title={h.q}>
-          <p className="text-[13px] leading-relaxed whitespace-pre-wrap text-ink">{h.a.answer}</p>
+          <p className="text-[12.5px] leading-relaxed whitespace-pre-wrap text-ink">{h.a.answer}</p>
 
           {!h.a.answerable && (
             <div className="mt-3">
@@ -110,11 +110,11 @@ export function Ask() {
           )}
 
           {h.a.citations?.length > 0 && (
-            <div className="mt-4 border-t border-line-soft pt-3">
-              <div className="mb-2 text-[10.5px] tracking-wide text-ink-faint uppercase">grounded in</div>
+            <div className="mt-3 border-t border-line-soft pt-2.5">
+              <div className="lbl mb-1.5">grounded in</div>
               <div className="space-y-1">
                 {h.a.citations.map((c, j) => (
-                  <div key={j} className="tnum flex flex-wrap items-baseline gap-x-3 text-[11.5px]">
+                  <div key={j} className="tnum flex flex-wrap items-baseline gap-x-3 text-[11px]">
                     <span className="text-ink-dim">{c.receipt_id.replace("bank_credit_", "")}</span>
                     <span className="text-accent">{c.field}</span>
                     {c.value && <span className="text-ink-faint">= {c.value}</span>}

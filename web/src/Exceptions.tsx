@@ -1,7 +1,7 @@
 import { useMemo } from "react";
 import type { Receipt } from "./types";
 import { idx, num, rupeesShort, statusColor } from "./lib";
-import { Empty, Note, Panel, Stat, StatusPill, Td, Th } from "./ui";
+import { Empty, Note, Panel, StatusPill, SummaryBar, Td, Th } from "./ui";
 
 /**
  * The exception queue.
@@ -53,21 +53,23 @@ export function Exceptions({ receipts, onOpen }: { receipts: Receipt[]; onOpen: 
   }
 
   return (
-    <div className="space-y-4">
-      <div className="grid gap-3 sm:grid-cols-3">
-        <Stat label="in the queue" value={num(ex.length)} sub="each with a named cause" emphasis />
-        <Stat
-          label="cost to clear"
-          value={`₹${num(totalCost)}`}
-          sub="at the configured analyst handling time and rate"
-          emphasis
-        />
-        <Stat label="value held" value={rupeesShort(value)} sub="settlement value awaiting a decision" />
-      </div>
+    <div className="space-y-3">
+      <SummaryBar
+        items={[
+          { label: "in the queue", value: num(ex.length), sub: "each with a named cause" },
+          {
+            label: "cost to clear",
+            value: `₹${num(totalCost)}`,
+            sub: "at the configured analyst rate",
+            tone: "var(--color-accent)",
+          },
+          { label: "value held", value: rupeesShort(value), sub: "awaiting a decision" },
+        ]}
+      />
 
       <Panel
         title="Grouped by cause"
-        subtitle="Sorted by money, because that is the order the queue should be worked in."
+        hint="Sorted by money, because that is the order the queue should be worked in."
       >
         <table className="w-full">
           <thead>
@@ -100,36 +102,36 @@ export function Exceptions({ receipts, onOpen }: { receipts: Receipt[]; onOpen: 
         </table>
       </Panel>
 
-      <Panel title="The queue" subtitle="Highest cost first. Click a row for the full derivation.">
+      <Panel title="The queue" hint="Highest cost first. Click a row for the full derivation.">
         <div className="max-h-[540px] space-y-2 overflow-auto pr-1">
           {ex.slice(0, 60).map((r) => (
             <button
               key={r.settlement_ref}
               onClick={() => onOpen(r)}
-              className="w-full rounded border border-line px-3.5 py-3 text-left transition-colors hover:bg-raised"
+              className="w-full rounded-md border border-line px-3 py-2 text-left transition-colors hover:bg-raised"
             >
               <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
                 <span className="flex items-center gap-2">
                   <StatusPill status={r.status} size="sm" />
-                  <span className="tnum text-[12px] text-ink-dim">
+                  <span className="tnum text-[11.5px] text-ink-dim">
                     {r.settlement_ref.replace("bank_credit_", "")}
                   </span>
                 </span>
-                <span className="tnum text-[12px] text-ink-faint">
+                <span className="tnum text-[11.5px] text-ink-faint">
                   {rupeesShort(r.target_paise)} · pool {r.pool.n} · index{" "}
                   {idx(r.feasibility.collision_index_at_k_star)} · ₹{r.exception_cost_inr}
                 </span>
               </div>
-              <p className="mt-1.5 text-[12.5px] leading-snug text-ink-dim">{r.claim}</p>
+              <p className="mt-1.5 text-[12px] leading-snug text-ink-dim">{r.claim}</p>
               {r.remediation?.[0] && (
-                <p className="mt-1.5 text-[12px] leading-snug" style={{ color: "var(--color-accent)" }}>
+                <p className="mt-1.5 text-[11.5px] leading-snug" style={{ color: "var(--color-accent)" }}>
                   {r.remediation[0].action} — {r.remediation[0].effect}
                 </p>
               )}
             </button>
           ))}
           {ex.length > 60 && (
-            <p className="py-2 text-center text-[12px] text-ink-faint">
+            <p className="py-2 text-center text-[11.5px] text-ink-faint">
               and {ex.length - 60} more, in the same order
             </p>
           )}

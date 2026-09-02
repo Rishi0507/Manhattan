@@ -3,53 +3,64 @@
 /*
   The design brief for this interface is narrow and it comes from the product.
 
-  Manhattan's whole argument is that a reconciliation should either be proved
-  or refused, and that the difference should be legible. So the interface is
-  built to make a status readable at a glance and a derivation readable on
-  inspection, and to do nothing else. No gradients, no glass, no cards
-  floating over cards, no decorative motion. A finance analyst reading a
-  posting decision at 6pm on a quarter end is not helped by any of it.
+  Manhattan's argument is that a reconciliation should either be proved or
+  refused, and that the difference should be legible at a glance. So the
+  interface optimises for two things and ignores everything else: how fast a
+  status reads, and how fast a derivation reads once you look at it.
 
-  Two typefaces. IBM Plex Sans for prose, because it was designed for
-  technical documentation and reads cleanly at small sizes. IBM Plex Mono for
-  every number, with tabular figures, because amounts that do not align in a
-  column are amounts that get misread.
+  Consequences, in order of how much they matter:
+
+  Density over comfort. A finance analyst comparing settlements wants many
+  rows on one screen, not generous padding. Rows are 26px, body text is 12px,
+  and section prose was cut to about a third of what it was.
+
+  Light ground. Higher contrast at small sizes than any dark theme manages,
+  and it is the register a working finance tool actually sits in.
+
+  One accent. Blue is used for interaction and for nothing else. Status is
+  carried by a glyph plus a muted tint, so five statuses do not become five
+  competing saturated colours fighting the data for attention.
+
+  Tabular figures everywhere. Amounts that do not align in a column are
+  amounts that get misread.
 */
 
 @theme {
-  --font-sans: "IBM Plex Sans", ui-sans-serif, system-ui, -apple-system, sans-serif;
-  --font-mono: "IBM Plex Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+  --font-sans: "Inter", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
 
-  /* A deep, slightly blue-cast ground. Pure black is harsh on a screen a
-     person reads for an hour; a blue cast keeps the accent colours honest. */
-  --color-ground: #080a0d;
-  --color-surface: #0e1116;
-  --color-raised: #141922;
-  --color-line: #1e242e;
-  --color-line-soft: #171c25;
+  /* Surfaces. Near-white rather than pure white: a fractionally warm ground
+     is easier to read against for long stretches and keeps the borders from
+     looking like scratches. */
+  --color-ground: #fbfbfc;
+  --color-surface: #ffffff;
+  --color-raised: #f6f7f9;
+  --color-sunken: #f1f3f5;
+  --color-line: #e4e7eb;
+  --color-line-soft: #eef0f3;
+  --color-line-strong: #d3d8de;
 
-  --color-ink: #e6eaf0;
-  --color-ink-dim: #98a2b3;
-  --color-ink-faint: #5b6675;
+  /* Text. Three weights of emphasis and no more. */
+  --color-ink: #16181d;
+  --color-ink-dim: #565e6b;
+  --color-ink-faint: #868e9b;
 
-  /* Razorpay's blue, which is the right register for this context without
-     being a costume. */
-  --color-accent: #3395ff;
-  --color-accent-dim: #1c4f8f;
+  --color-accent: #1461cc;
+  --color-accent-soft: #eaf1fd;
 
-  /* One colour per status. They are deliberately not a red-to-green scale:
-     four of the five statuses stop the money, and grading them by severity
-     would imply that some refusals are failures. They are all correct answers. */
-  --color-verified: #35c88a;
-  --color-ambiguous: #e0a83a;
-  --color-underdetermined: #6b7c94;
-  --color-sensitive: #f0714f;
-  --color-unresolved: #9b7ce8;
-  --color-wrong: #ff4d4d;
+  /* Status. Chosen for equal perceived weight on white rather than as a
+     severity ramp: four of the five stop the money and none of them is a
+     failure, so grading them by alarm would misrepresent the model. */
+  --color-verified: #0a7d4e;
+  --color-ambiguous: #a76100;
+  --color-underdetermined: #6b7480;
+  --color-sensitive: #c2410c;
+  --color-unresolved: #6335c4;
+  --color-wrong: #c62222;
 }
 
 :root {
-  color-scheme: dark;
+  color-scheme: light;
 }
 
 html,
@@ -63,66 +74,77 @@ body {
   background: var(--color-ground);
   color: var(--color-ink);
   font-family: var(--font-sans);
-  font-size: 14px;
-  line-height: 1.6;
+  font-size: 13px;
+  line-height: 1.5;
   -webkit-font-smoothing: antialiased;
-  text-rendering: optimizeLegibility;
+  -moz-osx-font-smoothing: grayscale;
+  font-feature-settings: "cv05" 1, "ss03" 1;
 }
 
-/* Every numeral in this interface is tabular. Ragged decimal points in a
-   column of money are a real source of misreading. */
+/* Every numeral in this interface is tabular and monospaced. */
 .tnum {
   font-family: var(--font-mono);
   font-variant-numeric: tabular-nums;
   font-feature-settings: "tnum" 1, "zero" 1;
+  letter-spacing: -0.01em;
+}
+
+/* Small caps labels, used above every value. Letter-spaced because uppercase
+   at 10px is unreadable without it. */
+.lbl {
+  font-size: 10px;
+  line-height: 1.3;
+  letter-spacing: 0.055em;
+  text-transform: uppercase;
+  color: var(--color-ink-faint);
+  font-weight: 500;
 }
 
 ::selection {
-  background: var(--color-accent-dim);
-  color: #fff;
+  background: var(--color-accent-soft);
 }
 
-/* A thin, unobtrusive scrollbar. The default on Windows is a slab. */
 * {
   scrollbar-width: thin;
-  scrollbar-color: var(--color-line) transparent;
+  scrollbar-color: #cdd3da transparent;
 }
 *::-webkit-scrollbar {
-  width: 9px;
-  height: 9px;
+  width: 10px;
+  height: 10px;
 }
 *::-webkit-scrollbar-thumb {
-  background: var(--color-line);
+  background: #cdd3da;
   border-radius: 99px;
+  border: 3px solid transparent;
+  background-clip: padding-box;
 }
 *::-webkit-scrollbar-thumb:hover {
-  background: #2a323e;
+  background: #b6bec8;
+  background-clip: padding-box;
 }
 *::-webkit-scrollbar-track {
   background: transparent;
 }
 
-/* Focus rings that are visible without being loud. */
 :focus-visible {
-  outline: 1px solid var(--color-accent);
-  outline-offset: 2px;
+  outline: 2px solid var(--color-accent);
+  outline-offset: 1px;
+  border-radius: 2px;
 }
 
-@keyframes fade-up {
+@keyframes arrive {
   from {
-    opacity: 0;
-    transform: translateY(3px);
+    background: var(--color-accent-soft);
   }
   to {
-    opacity: 1;
-    transform: none;
+    background: transparent;
   }
 }
 
-/* Used only where a row genuinely arrives during a live run, so motion
-   carries information rather than decorating. */
+/* Used only where a row genuinely lands during a live run, so motion carries
+   information rather than decorating. */
 .arrive {
-  animation: fade-up 0.22s ease-out both;
+  animation: arrive 0.9s ease-out both;
 }
 
 @media (prefers-reduced-motion: reduce) {
