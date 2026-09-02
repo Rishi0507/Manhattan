@@ -69,7 +69,7 @@ export function Panel({
           {right && <div className="shrink-0">{right}</div>}
         </header>
       )}
-      <div className={flush ? "" : "p-4"}>{children}</div>
+      <div className={flush ? "overflow-x-auto" : "overflow-x-auto p-4"}>{children}</div>
     </section>
   );
 }
@@ -280,7 +280,7 @@ export function Fold({
         </span>
         <span className="tnum shrink-0 text-[13px] text-ink-faint">{open ? "–" : "+"}</span>
       </button>
-      {open && <div className="border-t border-line-soft p-4">{children}</div>}
+      {open && <div className="overflow-x-auto border-t border-line-soft p-4">{children}</div>}
     </section>
   );
 }

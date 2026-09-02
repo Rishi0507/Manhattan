@@ -70,7 +70,7 @@ export function ReceiptView({ r }: { r: Receipt }) {
                 { value: r.narrowing.pool_after, color: "var(--color-accent)" },
               ]}
             />
-            <table className="w-full">
+            <table className="wide w-full">
               <tbody>
                 <tr>
                   <Td>records in scope</Td>
@@ -115,7 +115,7 @@ export function ReceiptView({ r }: { r: Receipt }) {
           summary={`k* ${r.feasibility.k_star}, index ${idx(r.feasibility.collision_index_at_k_star)}`}
         >
           <div className="space-y-3">
-            <div className="grid grid-cols-3 gap-3">
+            <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
               <Field
                 label="pool"
                 value={num(r.pool.n)}
@@ -130,7 +130,7 @@ export function ReceiptView({ r }: { r: Receipt }) {
               />
             </div>
 
-            <div className="grid grid-cols-3 gap-3 border-t border-line-soft pt-2.5">
+            <div className="grid grid-cols-2 gap-3 border-t border-line-soft pt-2.5 sm:grid-cols-3">
               <Field label="k*" value={f.k_star} hint="largest decidable free cardinality" />
               <Field
                 label="collision index"
@@ -257,7 +257,7 @@ export function ReceiptView({ r }: { r: Receipt }) {
 
           {r.solver.nearest_miss?.valid && u.matches_found === 0 && (
             <div className="mt-3 border-t border-line-soft pt-2.5">
-              <div className="grid grid-cols-3 gap-3">
+              <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
                 <Field label="nearest achievable" value={rupees(r.solver.nearest_miss.nearest_sum_paise)} />
                 <Field label="residual" value={rupees(r.solver.nearest_miss.gap_paise)} tone={tone} />
                 <Field label="at cardinality" value={r.solver.nearest_miss.cardinality} />
@@ -402,7 +402,7 @@ export function ReceiptView({ r }: { r: Receipt }) {
                 <Note tone="var(--color-underdetermined)">{r.fee_check.claim}</Note>
               ) : (
                 <>
-                  <div className="grid grid-cols-3 gap-3">
+                  <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
                     <Field label="expected" value={rupees(r.fee_check.expected_mdr_paise)} />
                     <Field label="observed" value={rupees(r.fee_check.observed_mdr_paise)} />
                     <Field

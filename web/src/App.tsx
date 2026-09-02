@@ -115,14 +115,14 @@ export default function App() {
   return (
     <div className="min-h-full">
       <header className="sticky top-0 z-20 border-b border-line bg-ground/92 backdrop-blur">
-        <div className="mx-auto max-w-[1240px] px-6">
-          <div className="flex items-center justify-between gap-8 py-3">
+        <div className="mx-auto max-w-[1240px] px-4 sm:px-6">
+          <div className="flex flex-wrap items-center justify-between gap-x-6 gap-y-2 py-3">
             <button
               onClick={() => setEntered(false)}
               className="flex items-baseline gap-3 text-left"
               title="back to the overview"
             >
-              <span className="display text-[21px] leading-none font-semibold text-ink">
+              <span className="display text-[27px] leading-none font-semibold tracking-[-0.012em] text-ink sm:text-[31px]">
                 Manhattan
               </span>
               <span className="hidden text-[13.5px] text-ink-faint sm:inline">
@@ -180,7 +180,7 @@ export default function App() {
           <Landing summary={summary} cases={cases} onEnter={enter} />
         </div>
       ) : (
-        <main key={tab} className="view-in mx-auto max-w-[1240px] px-6 py-5">
+        <main key={tab} className="view-in mx-auto max-w-[1240px] px-4 py-4 sm:px-6 sm:py-5">
           {tab === "hook" && <HeadToHead cases={cases} />}
           {tab === "run" && (
             <Run
@@ -209,7 +209,7 @@ export default function App() {
         >
           <div
             className={cls(
-              "panel-in h-full w-full max-w-[980px] overflow-y-auto border-l border-line-strong bg-ground",
+              "panel-in h-full w-full max-w-[980px] overflow-y-auto border-line-strong bg-ground sm:border-l",
               "shadow-[-8px_0_28px_rgba(44,35,24,0.12)]",
             )}
             onClick={(e) => e.stopPropagation()}
@@ -223,7 +223,7 @@ export default function App() {
                 close
               </button>
             </div>
-            <div className="p-4">
+            <div className="p-3 sm:p-4">
               <ReceiptView r={open} />
             </div>
           </div>

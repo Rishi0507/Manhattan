@@ -194,7 +194,7 @@ export function Run({
         }
       >
         <div className="max-h-[520px] overflow-auto">
-          <table className="w-full border-separate border-spacing-0">
+          <table className="wide w-full border-separate border-spacing-0">
             <thead>
               <tr>
                 <Th w="170px">settlement</Th>
@@ -260,7 +260,7 @@ export function Run({
           title="Merchant segments"
           hint="auto-post rate follows the amount distribution"
         >
-          <table className="w-full border-separate border-spacing-0">
+          <table className="wide w-full border-separate border-spacing-0">
             <thead>
               <tr>
                 <Th>merchant type</Th>

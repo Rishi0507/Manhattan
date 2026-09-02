@@ -56,6 +56,15 @@ const (
 	// pool would make almost every real settlement ambiguous for a reason that
 	// carries no financial information.
 	ConstraintZeroContribution Constraint = "zero_net_contribution"
+
+	// ConstraintUnjoinedFeed marks a record that exists in a source nobody
+	// wired into the pipeline.
+	//
+	// It is not applied during narrowing, because such a record never reaches
+	// narrowing. It exists so the completeness probe can name why a rival
+	// became available, and so a receipt can say that a posting was held
+	// because of a data-availability decision rather than a business rule.
+	ConstraintUnjoinedFeed Constraint = "feed_not_joined"
 )
 
 // RelaxationOrder is the sequence in which constraints are considered for

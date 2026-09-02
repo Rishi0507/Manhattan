@@ -103,7 +103,7 @@ export function Calibration({
             exceeds a 320-record pool at k=3. Every timing includes the uniqueness proof.
           </p>
 
-          <table className="w-full">
+          <table className="wide w-full">
             <thead>
               <tr>
                 <Th right>pool</Th>
@@ -155,7 +155,7 @@ export function Calibration({
       {sweep.length > 0 && (
         <Panel title="Full sweep" hint="pool and batch size varied independently">
           <div className="max-h-[420px] overflow-auto">
-            <table className="w-full">
+            <table className="wide w-full">
               <thead className="sticky top-0 bg-surface">
                 <tr>
                   <Th>archetype</Th>

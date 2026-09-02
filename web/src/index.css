@@ -21,15 +21,16 @@
                    from the sans so section boundaries need no rules.
     Source Sans 3  everything read in quantity. Humanist, generous
                    apertures, holds up at 13px where a geometric sans blurs.
-    Source Code Pro  every numeral. Same superfamily as the sans, so the two
-                   sit together without the mismatch a mono from a different
-                   designer brings.
+    IBM Plex Mono  every numeral. Drawn for technical documentation, so the
+                   figures are narrow, evenly weighted, and unambiguous at
+                   12px: a slashed zero, a seriffed one, a tailed l. A column
+                   of amounts reads as a column, not as prose.
 */
 
 @theme {
   --font-sans: "Source Sans 3", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
   --font-display: "Newsreader", ui-serif, Georgia, "Times New Roman", serif;
-  --font-mono: "Source Code Pro", ui-monospace, SFMono-Regular, Menlo, monospace;
+  --font-mono: "IBM Plex Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
 
   /* Paper. A warm cream ground with umber-tinted rules, so nothing on the
      page is a pure neutral and the ochre accent has something to sit in. */
@@ -74,6 +75,7 @@ body,
 
 body {
   margin: 0;
+  -webkit-text-size-adjust: 100%;
   background: var(--color-ground);
   color: var(--color-ink);
   font-family: var(--font-sans);
@@ -212,6 +214,26 @@ tr {
    information rather than decorating. */
 .arrive {
   animation: arrive 0.9s ease-out both;
+}
+
+/* Small screens.
+
+   The rule is that nothing is allowed to reflow into an unreadable state.
+   A settlement table with eight columns will not fit a phone, and shrinking
+   it until it does is worse than letting it scroll, so wide tables keep a
+   floor width and scroll inside their own panel. Everything else steps down
+   one notch and stays put. */
+@media (max-width: 640px) {
+  body {
+    font-size: 14px;
+  }
+  .lbl {
+    font-size: 10px;
+    letter-spacing: 0.06em;
+  }
+  table.wide {
+    min-width: 620px;
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {

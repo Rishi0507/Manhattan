@@ -2,6 +2,7 @@ package agent
 
 import (
 	"fmt"
+	"sort"
 	"time"
 
 	"github.com/Rishi0507/manhattan/internal/evidence"
@@ -157,6 +158,67 @@ func (s Step) String() string {
 		mark, s.N, s.Action.Kind, s.PoolBefore, s.PoolAfter, s.IndexBefore, s.IndexAfter, s.Result)
 }
 
+// Candidates returns every record in the unjoined feeds that could explain
+// this settlement, for a SEARCH_FEED action.
+//
+// Returning all of them rather than the best guess is the whole correctness
+// argument for this action, and it was learned by getting it wrong. An earlier
+// version picked the largest matching record and posted if the identity then
+// closed. It produced ten wrong postings in five hundred settlements, because
+// citing a REAL record is not the same as citing the RIGHT one: where several
+// records of the same class exist, more than one can close the arithmetic, and
+// closing it with the wrong one is indistinguishable from closing it with the
+// right one by looking at the sum.
+//
+// The rest of this system already refuses to choose between reconstructions it
+// cannot tell apart. The same rule has to apply to the agent's citation: the
+// controller tries every candidate, and accepts only if exactly one produces a
+// verified result.
+func Candidates(feed []model.Record, kind model.RecordKind, credit model.BankCredit, residual money.Paise) ([]model.Record, bool) {
+	if kind == "" {
+		kind = model.KindChargeback
+	}
+	var out []model.Record
+	for i := range feed {
+		r := feed[i]
+		if r.MerchantID != credit.MerchantID || r.Kind != kind {
+			continue
+		}
+		gap := credit.ValueDate.Sub(r.EventAt)
+		if gap < 0 {
+			gap = -gap
+		}
+		if gap > 7*24*time.Hour {
+			continue
+		}
+		out = append(out, r)
+	}
+
+	// Rank by how nearly a record's contribution cancels the residual, which
+	// is the arithmetic definition of a plausible explanation rather than a
+	// guess. Ranking by size instead, as an earlier version did, put the true
+	// record outside the tested set on merchants with many disputes and let a
+	// coincidental one verify in its place.
+	sort.Slice(out, func(i, j int) bool {
+		return (out[i].Contribution + residual).Abs() < (out[j].Contribution + residual).Abs()
+	})
+
+	complete := len(out) <= maxFeedCandidates
+	if !complete {
+		out = out[:maxFeedCandidates]
+	}
+	return out, complete
+}
+
+// maxFeedCandidates bounds how many feed records are tried for one action.
+//
+// The bound is a resource limit, and the second return value reports whether
+// it bit. That distinction is load bearing: a unique verification among a
+// TRUNCATED candidate list is not a unique citation, because an untested
+// record might have verified too, and this system does not post on a
+// uniqueness it did not establish.
+const maxFeedCandidates = 40
+
 // apply turns an action into an overlay, which is the only way the agent can
 // affect anything.
 //
@@ -210,35 +272,8 @@ func (a Action) apply(base narrow.Config, merchant model.Merchant, credit model.
 			"records posted in a prior cycle admitted back into the pool", true
 
 	case ActionSearchFeed:
-		kind := model.RecordKind(a.RecordKind)
-		if kind == "" {
-			kind = model.KindChargeback
-		}
-		var best *model.Record
-		for i := range feed {
-			r := feed[i]
-			if r.MerchantID != credit.MerchantID || r.Kind != kind {
-				continue
-			}
-			gap := credit.ValueDate.Sub(r.EventAt)
-			if gap < 0 {
-				gap = -gap
-			}
-			if gap > 7*24*time.Hour {
-				continue
-			}
-			if best == nil || r.Contribution.Abs() > best.Contribution.Abs() {
-				best = &r
-			}
-		}
-		if best == nil {
-			return nil, fmt.Sprintf("no %s record exists in any unjoined feed for this merchant and window", kind), false
-		}
-		return &pipeline.Overlay{
-				Provenance:   "cited:" + best.ID,
-				ExtraRecords: []model.Record{*best},
-			},
-			fmt.Sprintf("found %s in the unjoined %s feed, contributing %s", best.ID, kind, best.Contribution), true
+		// Handled by Candidates, because one feed record is not an answer.
+		return nil, "", false
 
 	case ActionProposeAdjustment:
 		amt := money.Paise(a.AmountPaise)

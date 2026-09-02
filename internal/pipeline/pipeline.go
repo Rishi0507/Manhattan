@@ -516,10 +516,23 @@ func (e *Engine) decide(
 	// Guard 3 and 4: the declared-count cross-check and the gross-ratio check,
 	// the latter of which reports itself inactive rather than passing where it
 	// cannot carry information.
+	poolIDs := make(map[string]bool, len(pool))
+	for _, r := range pool {
+		poolIDs[r.ID] = true
+	}
+	// Records from an unjoined feed that would have been in this pool had the
+	// feed been connected. Running them through the same narrowing is what
+	// makes this the precise set rather than an approximation.
+	var unjoinedInWindow []model.Record
+	if len(e.Unjoined) > 0 {
+		unjoinedInWindow = narrow.Apply(e.Unjoined, credit, merchant, pss.narrowing).Pool
+	}
+
 	rec.Narrowing.Checks = []guards.Check{
 		guards.CardinalityCrossCheck(len(witness), credit.DeclaredTxnCount,
 			narrowed.Dropped[narrow.ConstraintZeroContribution], scope == solver.ScopeDeclared),
 		guards.GrossRatioCheck(witness, pool, e.Mode.FeesObserved(), cfg.Accounting.Policy.BandBps),
+		guards.FeedCompletenessCheck(unjoinedInWindow, poolIDs),
 	}
 
 	if !probe.Stable {
@@ -539,11 +552,19 @@ func (e *Engine) decide(
 		return
 	}
 	for _, c := range rec.Narrowing.Checks {
-		if c.State == guards.CheckFail {
-			rec.Status = evidence.StatusUnresolved
-			rec.Claim = "a completeness guard failed: " + c.Detail
-			return
+		if c.State != guards.CheckFail {
+			continue
 		}
+		rec.Status = evidence.StatusUnresolved
+		rec.Claim = "a completeness guard failed: " + c.Detail
+		if c.Name == "feed_completeness" {
+			rec.Remediation = append(rec.Remediation, evidence.Remediation{
+				Action: "join the disputes feed into the reconciliation inputs",
+				Effect: "the records are already available to this run; connecting them lets the " +
+					"search see the whole batch rather than part of it",
+			})
+		}
+		return
 	}
 
 	rec.Status = evidence.StatusVerified
@@ -598,6 +619,41 @@ func (e *Engine) neighbourhoodProbe(pss pass, witness []model.Record, credit mod
 			inBase[r.ID] = true
 			admitted[r.ID] = narrow.ConstraintWindow
 		}
+	}
+
+	// Records from a feed nobody joined are the first thing the probe widens
+	// over, and this was a real hole before it was added.
+	//
+	// The probe relaxes narrowing constraints, so it can only ever recover a
+	// record that reached narrowing in the first place. A record sitting in an
+	// unjoined disputes feed never did. Measured on the benchmark, that let
+	// five settlements post the wrong batch: the true batch contained a
+	// chargeback the pipeline had never been shown, a coincidental subset of
+	// the pool closed the identity exactly, and every guard passed because
+	// none of them could see the record that was missing.
+	//
+	// An unjoined feed is a data-availability decision, not a business rule,
+	// and it belongs in exactly the same category as an over-tight window: a
+	// choice made outside the arithmetic that the arithmetic then cannot see.
+	// So it is widened over here and named on the receipt when it admits a
+	// rival.
+	for _, r := range e.Unjoined {
+		if r.MerchantID != credit.MerchantID || inBase[r.ID] {
+			continue
+		}
+		gap := credit.ValueDate.Sub(r.EventAt)
+		if gap < 0 {
+			gap = -gap
+		}
+		if gap > 7*24*time.Hour {
+			continue
+		}
+		widened = append(widened, r)
+		inBase[r.ID] = true
+		admitted[r.ID] = narrow.ConstraintUnjoinedFeed
+	}
+	if len(e.Unjoined) > 0 {
+		tested = append(tested, narrow.ConstraintUnjoinedFeed)
 	}
 
 	for _, c := range narrow.RelaxationOrder {

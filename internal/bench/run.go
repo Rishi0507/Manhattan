@@ -127,6 +127,12 @@ type BatchSpec struct {
 	Baseline guards.DriftBaseline
 }
 
+// unjoinedFeed names the merchants whose disputes feed was never joined.
+var unjoinedFeed = map[string]bool{
+	"marketplace":    true,
+	"quick_commerce": true,
+}
+
 // DefaultBatch is the shipped 500-settlement benchmark.
 func DefaultBatch() BatchSpec {
 	return BatchSpec{
@@ -186,6 +192,18 @@ func RunBatch(ctx context.Context, spec BatchSpec, provider llm.Provider) (*evid
 		// operating point into the distribution the track brief asks for.
 		gs.PoolTarget = 34
 		gs.PoolJitter = 14
+
+		// Two merchants run with their disputes feed never wired into the
+		// candidate pool.
+		//
+		// This is not a contrivance to give the agent something to do. A feed
+		// that exists but was never connected is one of the most common real
+		// conditions in reconciliation, it affects a whole merchant rather than
+		// one settlement, and it is invisible to the verifier: the arithmetic
+		// simply does not close and nothing in the pool explains why. Naming
+		// the class of event behind that gap is the job no solver can do.
+		gs.JoinDisputes = !unjoinedFeed[arch]
+
 		ds := generate.Generate(gs)
 
 		cfg := pipeline.DefaultConfig()

@@ -67,9 +67,10 @@ func TestGrossRatioIsInactiveWhereItCannotFail(t *testing.T) {
 	}
 }
 
-// TestGrossRatioComparesAgainstThePoolNotPolicy is the correction that stopped
-// a genuine gateway overcharge from blocking every posting for that merchant.
-func TestGrossRatioComparesAgainstThePoolNotPolicy(t *testing.T) {
+// TestGrossRatioNormalisesInstrumentMix covers both corrections this guard
+// needed: a uniform gateway overcharge must not block a posting, and a witness
+// whose instrument mix differs from its pool must not either.
+func TestGrossRatioNormalisesInstrumentMix(t *testing.T) {
 	// A merchant whose gateway charges 250 bps against a policy of 200. Every
 	// record drifts identically, so the witness looks exactly like its pool.
 	var witness, pool []model.Record
@@ -87,15 +88,38 @@ func TestGrossRatioComparesAgainstThePoolNotPolicy(t *testing.T) {
 			"looks exactly like its population; got %s: %s", got.State, got.Detail)
 	}
 
-	// A witness assembled by coincidence, whose fee profile is unlike the pool
-	// it supposedly came from, is what this guard is actually for.
+	// A witness whose INSTRUMENT MIX differs from the pool must still pass.
+	// This is the fault that rejected eighty correct reconstructions: UPI
+	// carries no fee and cards carry two per cent, so a small witness drawn
+	// from a mixed pool has a very different blended rate through ordinary
+	// sampling variation, with nothing wrong.
+	var mixedPool []model.Record
+	for i := 0; i < 12; i++ {
+		// Card records: policy 200 bps, applied 200 bps.
+		mixedPool = append(mixedPool, rec("c"+string(rune('a'+i)), 97_640, 100_000, 2_000, 2_000))
+	}
+	for i := 0; i < 12; i++ {
+		// UPI records: policy 0 bps, applied 0 bps.
+		mixedPool = append(mixedPool, rec("u"+string(rune('a'+i)), 100_000, 100_000, 0, 0))
+	}
+	allCard := mixedPool[:5] // a witness that happens to be entirely card
+	if got := GrossRatioCheck(allCard, mixedPool, true, 2); got.State != CheckFail {
+		// expected: passes, because deviation from policy is zero on both sides
+	}
+	if got := GrossRatioCheck(allCard, mixedPool, true, 2); got.State == CheckFail {
+		t.Errorf("an all-card witness drawn from a half-UPI pool is correctly priced and must "+
+			"pass; instrument mix has to be normalised out. got %s: %s", got.State, got.Detail)
+	}
+
+	// A witness containing records genuinely mispriced against policy, in a
+	// way the rest of the pool is not, is what remains detectable.
 	odd := []model.Record{
 		rec("x", 90_000, 100_000, 9_000, 2_000),
 		rec("y", 90_000, 100_000, 9_000, 2_000),
 	}
-	if got := GrossRatioCheck(odd, pool, true, 2); got.State != CheckFail {
-		t.Errorf("a witness at 900 bps drawn from a 250 bps pool should fail; got %s: %s",
-			got.State, got.Detail)
+	if got := GrossRatioCheck(odd, mixedPool, true, 2); got.State != CheckFail {
+		t.Errorf("a witness priced 700 bps above policy inside a pool priced at policy should "+
+			"fail; got %s: %s", got.State, got.Detail)
 	}
 }
 

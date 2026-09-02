@@ -10,6 +10,7 @@ import (
 	"github.com/Rishi0507/manhattan/internal/llm"
 	"github.com/Rishi0507/manhattan/internal/model"
 	"github.com/Rishi0507/manhattan/internal/money"
+	"github.com/Rishi0507/manhattan/internal/narrow"
 	"github.com/Rishi0507/manhattan/internal/pipeline"
 )
 
@@ -171,14 +172,92 @@ func (c *Controller) Work(
 		}
 		tried[a.Kind]++
 
-		ov, note, ok := a.apply(eng.Cfg.Narrow, eng.Merchants[credit.MerchantID], credit, eng.Unjoined)
-		if !ok {
-			step.Note = "not applicable: " + note
-			steps = append(steps, step)
-			continue
-		}
+		var (
+			ov    *pipeline.Overlay
+			note  string
+			ok    bool
+			trial *evidence.Receipt
+		)
 
-		trial := eng.ReconcileWith(credit, ov)
+		if a.Kind == ActionSearchFeed {
+			// Every candidate of the named class is tried, and the action
+			// succeeds only if exactly one of them verifies. Two records that
+			// both close the identity are two explanations, and this system
+			// does not choose between explanations it cannot tell apart.
+			var residual money.Paise
+			if best.Solver != nil && best.Solver.NearestMiss != nil && best.Solver.NearestMiss.Valid {
+				residual = best.Solver.NearestMiss.Sum - best.TargetPaise
+			}
+			cands, complete := Candidates(eng.Unjoined, model.RecordKind(a.RecordKind), credit, residual)
+			if len(cands) == 0 {
+				step.Note = fmt.Sprintf(
+					"not applicable: no %s record exists in any unjoined feed for this merchant and window",
+					a.RecordKind)
+				steps = append(steps, step)
+				continue
+			}
+			var verified []model.Record
+			var first *evidence.Receipt
+			for _, cand := range cands {
+				t := eng.ReconcileWith(credit, overlayForRecord(cand))
+				if t.Status.Postable() {
+					verified = append(verified, cand)
+					if first == nil {
+						first = t
+						ov = overlayForRecord(cand)
+					}
+				}
+			}
+			switch len(verified) {
+			case 0:
+				step.Note = fmt.Sprintf(
+					"searched %d %s record(s) in the unjoined feed; none makes the identity close",
+					len(cands), a.RecordKind)
+				steps = append(steps, step)
+				continue
+			case 1:
+				if !complete {
+					// The candidate list was truncated, so an untested record
+					// might also have verified. One verification out of a
+					// partial search is not a unique citation.
+					step.Note = fmt.Sprintf(
+						"%s reconciles this credit, but the feed holds more records of this class than "+
+							"could be tested, so the citation cannot be shown to be the only one",
+						verified[0].ID)
+					step.Result = evidence.StatusAmbiguous
+					steps = append(steps, step)
+					continue
+				}
+				trial = first
+				note = fmt.Sprintf("found %s in the unjoined %s feed, contributing %s",
+					verified[0].ID, verified[0].Kind, verified[0].Contribution)
+				ok = true
+			default:
+				step.Note = fmt.Sprintf(
+					"%d different %s records each make the identity close, so the citation is not "+
+						"unique and none of them can be posted on",
+					len(verified), a.RecordKind)
+				step.Result = evidence.StatusAmbiguous
+				steps = append(steps, step)
+				best.Remediation = append(best.Remediation, evidence.Remediation{
+					Action: fmt.Sprintf("join the %s feed and identify which record belongs to this settlement",
+						a.RecordKind),
+					Effect: fmt.Sprintf(
+						"%d records in that feed each reconcile this credit exactly; the arithmetic cannot choose between them",
+						len(verified)),
+				})
+				continue
+			}
+		} else {
+			ov, note, ok = a.apply(eng.Cfg.Narrow, eng.Merchants[credit.MerchantID], credit, eng.Unjoined)
+			if !ok {
+				step.Note = "not applicable: " + note
+				steps = append(steps, step)
+				continue
+			}
+			trial = eng.ReconcileWith(credit, ov)
+		}
+		_ = ok
 		step.PoolAfter = trial.Pool.N
 		step.IndexAfter = trial.Feasibility.IndexAtKStar
 		step.Result = trial.Status
@@ -289,11 +368,19 @@ func triage(r *evidence.Receipt, eng *pipeline.Engine) (string, bool) {
 	}
 
 	// A rival appears as soon as the pool is widened, so the answer came from
-	// filtering rather than arithmetic. Retuning the filter further is exactly
-	// the wrong response and a human has to confirm the constraint.
+	// filtering rather than arithmetic. Retuning the filter further is the
+	// wrong response and a human has to confirm the constraint.
+	//
+	// The exception is a rival admitted by a feed nobody joined. That is not a
+	// filter to confirm, it is a source to connect, and searching it is exactly
+	// what the agent is for.
 	if r.Status == evidence.StatusNarrowingSensitive {
-		return "a rival reconstruction exists in the widened pool, so this needs a human to " +
-			"confirm the constraint rather than further automated narrowing", false
+		fromFeed := r.Narrowing.Neighbourhood != nil &&
+			r.Narrowing.Neighbourhood.Culprit == narrow.ConstraintUnjoinedFeed
+		if !fromFeed {
+			return "a rival reconstruction exists in the widened pool, so this needs a human to " +
+				"confirm the constraint rather than further automated narrowing", false
+		}
 	}
 
 	// Beyond those, invoke the agent only where the situation actually calls

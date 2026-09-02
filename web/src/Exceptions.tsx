@@ -71,7 +71,7 @@ export function Exceptions({ receipts, onOpen }: { receipts: Receipt[]; onOpen: 
         title="Grouped by cause"
         hint="ordered by cost"
       >
-        <table className="w-full">
+        <table className="wide w-full">
           <thead>
             <tr>
               <Th>cause</Th>

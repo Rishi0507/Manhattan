@@ -29,16 +29,16 @@ export function Landing({
   const n = summary?.settlements ?? 0;
 
   return (
-    <div className="mx-auto max-w-[1080px] px-6">
+    <div className="mx-auto max-w-[1080px] px-4 sm:px-6">
       {/* ---- Hero ---------------------------------------------------- */}
-      <section className="pt-20 pb-16">
+      <section className="pt-12 pb-12 sm:pt-20 sm:pb-16">
         <p className="lbl">Razorpay AI Buildathon · Track 04 · AI Finance Controller</p>
 
-        <h1 className="display mt-5 max-w-[19ch] text-[54px] leading-[1.06] font-medium tracking-[-0.015em] text-ink">
+        <h1 className="display mt-5 max-w-[19ch] text-[34px] leading-[1.08] font-medium tracking-[-0.015em] text-ink sm:text-[44px] lg:text-[54px]">
           An agent that proves settlements instead of guessing them.
         </h1>
 
-        <p className="mt-6 max-w-[60ch] text-[17px] leading-relaxed text-ink-dim">
+        <p className="mt-6 max-w-[60ch] text-[15.5px] leading-relaxed text-ink-dim sm:text-[17px]">
           A gateway settlement arrives as a single credit representing hundreds of payments, fees,
           taxes, refunds and chargebacks. Manhattan reconstructs it exactly and proves no rival
           reconstruction exists, or states which property it could not establish.
@@ -67,7 +67,7 @@ export function Landing({
             {num(n)} settlements · six merchant types · identical inputs, identical filters
           </p>
 
-          <div className="mt-7 grid gap-10 md:grid-cols-[1fr_auto_1fr] md:gap-6">
+          <div className="mt-7 grid gap-8 md:grid-cols-[1fr_auto_1fr] md:gap-6">
             <Side
               name="B0"
               caption="a confidence matcher, built honestly and given every advantage"
@@ -100,9 +100,9 @@ export function Landing({
 
       {/* ---- How ------------------------------------------------------ */}
       <section className="py-14">
-        <h2 className="display text-[28px] leading-tight font-medium">Why matching fails</h2>
+        <h2 className="display text-[23px] leading-tight font-medium sm:text-[28px]">Why matching fails</h2>
 
-        <div className="mt-8 grid gap-x-10 gap-y-9 md:grid-cols-3">
+        <div className="mt-8 grid gap-x-10 gap-y-8 sm:grid-cols-2 md:grid-cols-3">
           <Step
             n="01"
             title="Adding up is not proof"
@@ -124,10 +124,10 @@ export function Landing({
       {/* ---- The hook case -------------------------------------------- */}
       {hero && (
         <section className="border-t border-line py-14">
-          <div className="grid items-start gap-10 lg:grid-cols-[1.1fr_1fr]">
+          <div className="grid items-start gap-8 lg:grid-cols-[1.1fr_1fr] lg:gap-10">
             <div>
               <p className="lbl">the case worth seeing</p>
-              <h2 className="display mt-3 text-[28px] leading-tight font-medium">A filter set two hours too tight</h2>
+              <h2 className="display mt-3 text-[23px] leading-tight font-medium sm:text-[28px]">A filter set two hours too tight</h2>
               <p className="mt-4 max-w-[54ch] text-[15px] leading-relaxed text-ink-dim">
                 One payment belonging to this batch was dropped by the value-date window. A payment
                 outside the batch carrying an identical amount took its place. Every arithmetic check
@@ -143,7 +143,7 @@ export function Landing({
 
             <div className="rounded-md border border-line bg-surface p-5">
               <p className="lbl">the credit</p>
-              <p className="tnum mt-1.5 text-[30px] leading-none">
+              <p className="tnum mt-1.5 text-[25px] leading-none sm:text-[30px]">
                 {rupees(hero.receipt.target_paise)}
               </p>
               <p className="tnum mt-2 text-[12.5px] text-ink-faint">{hero.receipt.narration}</p>
@@ -164,7 +164,7 @@ export function Landing({
       {/* ---- Segmentation --------------------------------------------- */}
       {summary && summary.by_archetype?.length > 0 && (
         <section className="border-t border-line py-14">
-          <h2 className="display text-[28px] leading-tight font-medium">Predicting suitability before integration</h2>
+          <h2 className="display text-[23px] leading-tight font-medium sm:text-[28px]">Predicting suitability before integration</h2>
           <p className="mt-4 max-w-[68ch] text-[15px] leading-relaxed text-ink-dim">
             A single pass over historical settlement amounts yields the spread and the proportion
             that repeats, which determine the expected outcome.
@@ -176,7 +176,7 @@ export function Landing({
               .sort((a, b) => b.auto_post_rate - a.auto_post_rate)
               .map((a) => (
                 <div key={a.archetype} className="flex items-center gap-4">
-                  <span className="w-40 shrink-0 text-[14px] text-ink-dim">
+                  <span className="w-24 shrink-0 text-[13px] text-ink-dim sm:w-40 sm:text-[14px]">
                     {a.archetype.replace(/_/g, " ")}
                   </span>
                   <span className="h-2 flex-1 overflow-hidden rounded-[2px] bg-sunken">
@@ -192,7 +192,7 @@ export function Landing({
                   <span className="tnum w-12 shrink-0 text-right text-[14px]">
                     {pct(a.auto_post_rate)}
                   </span>
-                  <span className="tnum w-24 shrink-0 text-right text-[12.5px] text-ink-faint">
+                  <span className="tnum hidden w-24 shrink-0 text-right text-[12.5px] text-ink-faint sm:block">
                     B0 {pct(a.b0_wrong_post_rate)} wrong
                   </span>
                 </div>
@@ -248,17 +248,17 @@ function Side({
       <p className="display text-[19px] font-medium">{name}</p>
       <p className="mt-1 max-w-[38ch] text-[13.5px] leading-snug text-ink-faint">{caption}</p>
 
-      <div className="mt-5 flex items-baseline gap-8">
+      <div className="mt-5 flex flex-wrap items-baseline gap-x-8 gap-y-4">
         <div>
           <p className="lbl">auto-posted</p>
-          <p className="tnum mt-1 text-[34px] leading-none">{num(posted)}</p>
+          <p className="tnum mt-1 text-[27px] leading-none sm:text-[34px]">{num(posted)}</p>
           <p className="tnum mt-1 text-[12.5px] text-ink-faint">
             {total > 0 ? pct(posted / total) : "—"}
           </p>
         </div>
         <div>
           <p className="lbl">of those, wrong</p>
-          <p className="tnum mt-1 text-[34px] leading-none" style={{ color: tone }}>
+          <p className="tnum mt-1 text-[27px] leading-none sm:text-[34px]" style={{ color: tone }}>
             {num(wrong)}
           </p>
           <p className="tnum mt-1 text-[12.5px] text-ink-faint">
