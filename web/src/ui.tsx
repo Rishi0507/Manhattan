@@ -1,4 +1,4 @@
-import type { ReactNode } from "react";
+import { useState, type ReactNode } from "react";
 import type { Status } from "./types";
 import { cls, shortFlag, statusColor, statusGlyph } from "./lib";
 
@@ -234,6 +234,52 @@ export function Td({
     >
       {children}
     </td>
+  );
+}
+
+/**
+ * A panel that starts closed.
+ *
+ * The receipt is a complete derivation and every part of it matters to
+ * someone, which is exactly why showing all of it at once was wrong: a reader
+ * arriving at a settlement wants the verdict and the reason, and only then
+ * the machinery that produced them. The detail is one click away rather than
+ * absent, and the summary line means a reader can tell whether opening it is
+ * worth their time.
+ */
+export function Fold({
+  title,
+  summary,
+  children,
+  tone,
+  defaultOpen,
+}: {
+  title: ReactNode;
+  summary?: ReactNode;
+  children: ReactNode;
+  tone?: string;
+  defaultOpen?: boolean;
+}) {
+  const [open, setOpen] = useState(!!defaultOpen);
+  return (
+    <section className="rounded-md border border-line bg-surface">
+      <button
+        onClick={() => setOpen(!open)}
+        aria-expanded={open}
+        className="flex w-full items-center justify-between gap-4 px-4 py-2.5 text-left"
+      >
+        <span className="flex min-w-0 items-baseline gap-2.5">
+          <span className="display text-[16px] font-medium text-ink">{title}</span>
+          {summary && (
+            <span className="truncate text-[12.5px]" style={{ color: tone ?? "var(--color-ink-faint)" }}>
+              {summary}
+            </span>
+          )}
+        </span>
+        <span className="tnum shrink-0 text-[13px] text-ink-faint">{open ? "–" : "+"}</span>
+      </button>
+      {open && <div className="border-t border-line-soft p-4">{children}</div>}
+    </section>
   );
 }
 

@@ -106,15 +106,26 @@ type Engine struct {
 	// never reads it. Only the resolution agent searches it, and only to find
 	// a citation for a hypothesis the verifier has already been handed.
 	Unjoined []model.Record
+}
 
-	// universe is the record set the current reconciliation is running over,
-	// which differs from Records only when a hypothesis overlay is applied.
+// pass carries the state of one reconciliation.
+//
+// These were fields on the Engine, which was a latent data race: the HTTP
+// server can serve a run while a batch streams, and two concurrent
+// reconciliations would have overwritten each other's record universe and
+// narrowing configuration. The symptom would have been a completeness probe
+// widening from the wrong baseline on an unrelated settlement, which is
+// exactly the kind of fault that produces a wrong posting and no error.
+//
+// An Engine is now immutable after construction and Reconcile is a pure
+// function of its arguments.
+type pass struct {
+	// universe is the record set this reconciliation runs over, which differs
+	// from Engine.Records only when a hypothesis overlay is applied.
 	universe []model.Record
-
-	// activeNarrow is the narrowing configuration this reconciliation actually
-	// used, so the completeness probe widens from the right baseline even when
-	// the agent retuned it.
-	activeNarrow narrow.Config
+	// narrowing is the configuration actually used, so the completeness probe
+	// widens from the right baseline even when the agent retuned it.
+	narrowing narrow.Config
 }
 
 // New builds an engine over a dataset, computing every record's signed
@@ -134,7 +145,7 @@ func New(ds *model.Dataset, cfg Config) *Engine {
 	for _, m := range ds.Merchants {
 		ms[m.ID] = m
 	}
-	eng := &Engine{Cfg: cfg, Records: recs, ByID: byID, Merchants: ms, Mode: ds.Mode, universe: recs}
+	eng := &Engine{Cfg: cfg, Records: recs, ByID: byID, Merchants: ms, Mode: ds.Mode}
 
 	// Records from feeds that were never joined are kept to one side. They are
 	// invisible to the pipeline and searchable only by the resolution agent.
@@ -351,9 +362,8 @@ func (e *Engine) ReconcileWith(credit model.BankCredit, ov *Overlay) *evidence.R
 		rec.Solver.NearestMiss = &m
 	}
 
-	e.universe = records
-	e.activeNarrow = nCfg
-	e.decide(rec, sr, feas, ent, pool, narrowed, credit, merchant, kMax, scope)
+	pss := pass{universe: records, narrowing: nCfg}
+	e.decide(pss, rec, sr, feas, ent, pool, narrowed, credit, merchant, kMax, scope)
 	sw.mark("prove")
 
 	e.finish(rec, sw, credit, pool, sr)
@@ -374,6 +384,7 @@ func (e *Engine) chooseScope(credit model.BankCredit, feas feasibility.Report) (
 
 // decide turns a solver result into a status, applying every guard in order.
 func (e *Engine) decide(
+	pss pass,
 	rec *evidence.Receipt,
 	sr *solver.Result,
 	feas feasibility.Report,
@@ -499,7 +510,7 @@ func (e *Engine) decide(
 
 	// Guard 2: pool completeness. This is the dangerous case, so it runs on
 	// every candidate posting rather than on a sample.
-	probe := e.neighbourhoodProbe(witness, credit, merchant, narrowed)
+	probe := e.neighbourhoodProbe(pss, witness, credit, merchant, narrowed)
 	rec.Narrowing.Neighbourhood = &probe
 
 	// Guard 3 and 4: the declared-count cross-check and the gross-ratio check,
@@ -559,9 +570,9 @@ func (e *Engine) attachWitness(rec *evidence.Receipt, pool []model.Record, w sol
 
 // neighbourhoodProbe widens the pool one constraint at a time and searches
 // the neighbourhood of the witness already in hand.
-func (e *Engine) neighbourhoodProbe(witness []model.Record, credit model.BankCredit, merchant model.Merchant, base narrow.Result) guards.NeighbourhoodResult {
+func (e *Engine) neighbourhoodProbe(pss pass, witness []model.Record, credit model.BankCredit, merchant model.Merchant, base narrow.Result) guards.NeighbourhoodResult {
 	cfg := e.Cfg
-	nCfg := e.activeNarrow
+	nCfg := pss.narrowing
 	if nCfg.Window == 0 {
 		nCfg = cfg.Narrow
 		nCfg.CycleDays = merchant.SettlementCycleDays
@@ -580,7 +591,7 @@ func (e *Engine) neighbourhoodProbe(witness []model.Record, credit model.BankCre
 	widened := append([]model.Record{}, base.Pool...)
 	tested := []narrow.Constraint{narrow.ConstraintWindow}
 
-	wide := narrow.Apply(e.universe, credit, merchant, nCfg.WithWindow(nCfg.Window+cfg.ProbeWindowWidening))
+	wide := narrow.Apply(pss.universe, credit, merchant, nCfg.WithWindow(nCfg.Window+cfg.ProbeWindowWidening))
 	for _, r := range wide.Pool {
 		if !inBase[r.ID] {
 			widened = append(widened, r)
@@ -594,7 +605,7 @@ func (e *Engine) neighbourhoodProbe(witness []model.Record, credit model.BankCre
 			continue // the window is already covered; merchant is never relaxed
 		}
 		tested = append(tested, c)
-		rel := narrow.Apply(e.universe, credit, merchant, nCfg.WithRelaxed(c))
+		rel := narrow.Apply(pss.universe, credit, merchant, nCfg.WithRelaxed(c))
 		for _, r := range rel.Pool {
 			if !inBase[r.ID] {
 				widened = append(widened, r)

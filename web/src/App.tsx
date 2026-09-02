@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import type { CaseOutcome, EnvelopePoint, Receipt, Summary, SweepPoint } from "./types";
 import { api, cls } from "./lib";
 import { Tabs } from "./ui";
+import { Landing } from "./Landing";
 import { HeadToHead } from "./HeadToHead";
 import { Run } from "./Run";
 import { Cases } from "./Cases";
@@ -12,7 +13,17 @@ import { ReceiptView } from "./ReceiptView";
 
 type Tab = "hook" | "run" | "cases" | "exceptions" | "calibration" | "ask";
 
+/**
+ * The shell.
+ *
+ * A landing page comes first and the six tabs stay out of sight until someone
+ * enters. Six labelled destinations on first paint is the fastest way to make
+ * a viewer feel behind, and the argument this project makes needs about
+ * fifteen seconds of undivided attention before any of the destinations mean
+ * anything.
+ */
 export default function App() {
+  const [entered, setEntered] = useState(false);
   const [tab, setTab] = useState<Tab>("hook");
   const [receipts, setReceipts] = useState<Receipt[]>([]);
   const [summary, setSummary] = useState<Summary | null>(null);
@@ -65,11 +76,14 @@ export default function App() {
         setReceipts([]);
         setStreaming(true);
         setProgress({ done: 0, total: ev.total });
+        setEntered(true);
         setTab("run");
       } else if (ev.type === "settlement" && ev.receipt) {
         const rec = ev.receipt;
-        setReceipts((prev) => (prev.some((p) => p.settlement_ref === rec.settlement_ref) ? prev : [...prev, rec]));
-        setProgress({ done: ev.done, total: ev.total });
+        setReceipts((prev) =>
+          prev.some((p) => p.settlement_ref === rec.settlement_ref) ? prev : [...prev, rec],
+        );
+        setProgress((p) => (p ? { done: ev.done, total: ev.total } : p));
       } else if (ev.type === "done") {
         setStreaming(false);
         setProgress(null);
@@ -88,78 +102,105 @@ export default function App() {
     }
   }, []);
 
-  const exceptionCount = useMemo(() => receipts.filter((r) => r.status !== "VERIFIED").length, [receipts]);
+  const exceptionCount = useMemo(
+    () => receipts.filter((r) => r.status !== "VERIFIED").length,
+    [receipts],
+  );
+
+  const enter = useCallback((t: Tab) => {
+    setEntered(true);
+    setTab(t);
+  }, []);
 
   return (
     <div className="min-h-full">
-      <header className="sticky top-0 z-20 border-b border-line bg-ground/95 backdrop-blur">
-        <div className="mx-auto max-w-[1400px] px-5">
-          <div className="flex flex-wrap items-baseline justify-between gap-x-8 gap-y-2 py-3">
-            <div className="flex items-baseline gap-4">
-              <h1 className="display text-[22px] leading-none font-semibold text-ink">Manhattan</h1>
-              <p className="text-[14px] text-ink-faint">
-                An agent that proves settlements instead of guessing them.
-              </p>
-            </div>
+      <header className="sticky top-0 z-20 border-b border-line bg-ground/92 backdrop-blur">
+        <div className="mx-auto max-w-[1240px] px-6">
+          <div className="flex items-center justify-between gap-8 py-3">
+            <button
+              onClick={() => setEntered(false)}
+              className="flex items-baseline gap-3 text-left"
+              title="back to the overview"
+            >
+              <span className="display text-[21px] leading-none font-semibold text-ink">
+                Manhattan
+              </span>
+              <span className="hidden text-[13.5px] text-ink-faint sm:inline">
+                proves settlements instead of guessing them
+              </span>
+            </button>
+
             <div className="flex items-center gap-3">
               {provider && (
-                <span className="tnum text-[12px] text-ink-faint" title="which language model backs this run">
+                <span
+                  className="tnum hidden text-[12px] text-ink-faint sm:inline"
+                  title="which language model backs this run"
+                >
                   {provider}
                 </span>
               )}
               <button
                 onClick={() => void startRun()}
                 disabled={streaming}
-                className="rounded-md border border-line px-3 py-1.5 text-[12.5px] text-ink-dim transition-colors hover:border-accent hover:text-accent disabled:opacity-50"
+                className="rounded-md border border-line-strong px-3 py-1.5 text-[13px] text-ink-dim transition-colors hover:border-accent hover:text-accent disabled:opacity-50"
               >
                 {streaming ? "running" : "run a batch"}
               </button>
             </div>
           </div>
 
-          <Tabs<Tab>
-            active={tab}
-            onChange={setTab}
-            tabs={[
-              { id: "hook", label: "Head to head" },
-              { id: "run", label: "Run", badge: receipts.length || undefined },
-              { id: "cases", label: "Adversarial cases", badge: cases.length || undefined },
-              { id: "exceptions", label: "Exception queue", badge: exceptionCount || undefined },
-              { id: "calibration", label: "Calibration" },
-              { id: "ask", label: "Ask" },
-            ]}
-          />
+          {entered && (
+            <Tabs<Tab>
+              active={tab}
+              onChange={setTab}
+              tabs={[
+                { id: "hook", label: "Head to head" },
+                { id: "run", label: "Run", badge: receipts.length || undefined },
+                { id: "cases", label: "Cases", badge: cases.length || undefined },
+                { id: "exceptions", label: "Exceptions", badge: exceptionCount || undefined },
+                { id: "calibration", label: "Calibration" },
+                { id: "ask", label: "Ask" },
+              ]}
+            />
+          )}
         </div>
       </header>
 
-      <main className="mx-auto max-w-[1400px] px-5 py-4">
-        {loadError && (
-          <p className="mb-3 rounded-md border border-line px-4 py-2.5 text-[13px]" style={{ color: "var(--color-wrong)" }}>
-            {loadError}
-          </p>
-        )}
+      {loadError && (
+        <p
+          className="mx-auto mt-4 max-w-[1240px] rounded-md border border-line px-4 py-2.5 text-[13px]"
+          style={{ color: "var(--color-wrong)" }}
+        >
+          {loadError}
+        </p>
+      )}
 
-        {tab === "hook" && <HeadToHead cases={cases} />}
-        {tab === "run" && (
-          <Run
-            receipts={receipts}
-            summary={summary}
-            onOpen={setOpen}
-            streaming={streaming}
-            progress={progress}
-          />
-        )}
-        {tab === "cases" && <Cases cases={cases} onOpen={setOpen} />}
-        {tab === "exceptions" && <Exceptions receipts={receipts} onOpen={setOpen} />}
-        {tab === "calibration" && <Calibration sweep={sweep} envelope={envelope} />}
-        {tab === "ask" && <Ask />}
-      </main>
+      {!entered ? (
+        <Landing summary={summary} cases={cases} onEnter={enter} />
+      ) : (
+        <main className="mx-auto max-w-[1240px] px-6 py-5">
+          {tab === "hook" && <HeadToHead cases={cases} />}
+          {tab === "run" && (
+            <Run
+              receipts={receipts}
+              summary={summary}
+              onOpen={setOpen}
+              streaming={streaming}
+              progress={progress}
+            />
+          )}
+          {tab === "cases" && <Cases cases={cases} onOpen={setOpen} />}
+          {tab === "exceptions" && <Exceptions receipts={receipts} onOpen={setOpen} />}
+          {tab === "calibration" && <Calibration sweep={sweep} envelope={envelope} />}
+          {tab === "ask" && <Ask />}
+        </main>
+      )}
 
       {/* The evidence object, in a drawer rather than a new page, so the
           context a viewer was reading stays behind it. */}
       {open && (
         <div
-          className="fixed inset-0 z-30 flex justify-end bg-[#16181d]/25 backdrop-blur-[1px]"
+          className="fixed inset-0 z-30 flex justify-end bg-[#2c2318]/25 backdrop-blur-[1px]"
           onClick={() => setOpen(null)}
           role="dialog"
           aria-modal="true"
@@ -167,15 +208,15 @@ export default function App() {
           <div
             className={cls(
               "h-full w-full max-w-[980px] overflow-y-auto border-l border-line-strong bg-ground",
-              "shadow-[-8px_0_24px_rgba(22,24,29,0.10)]",
+              "shadow-[-8px_0_28px_rgba(44,35,24,0.12)]",
             )}
             onClick={(e) => e.stopPropagation()}
           >
             <div className="sticky top-0 z-10 flex items-center justify-between border-b border-line bg-ground/95 px-4 py-2 backdrop-blur">
-              <span className="text-[13px] text-ink-faint">evidence object</span>
+              <span className="lbl">evidence object</span>
               <button
                 onClick={() => setOpen(null)}
-                className="rounded-md border border-line px-2.5 py-1.5 text-[11.5px] text-ink-faint transition-colors hover:border-ink-faint hover:text-ink-dim"
+                className="rounded-md border border-line px-2.5 py-1 text-[12.5px] text-ink-faint transition-colors hover:border-ink-faint hover:text-ink-dim"
               >
                 close
               </button>

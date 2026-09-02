@@ -1,6 +1,6 @@
 import type { Receipt } from "./types";
 import { constraintLabel, flagMeaning, idx, num, rupees, statusColor, statusMeaning } from "./lib";
-import { Bar, Field, Flag, Note, Panel, StatusPill, Td, Th } from "./ui";
+import { Bar, Field, Flag, Fold, Note, Panel, StatusPill, Td, Th } from "./ui";
 
 /**
  * The evidence object, rendered.
@@ -53,9 +53,9 @@ export function ReceiptView({ r }: { r: Receipt }) {
 
       <div className="grid gap-3 lg:grid-cols-2">
         {/* Stage 2: narrowing */}
-        <Panel
+        <Fold
           title="Narrowing"
-          hint="Every excluded record is logged with the rule that excluded it. Narrowing is part of the audit trail, not preprocessing."
+          summary={`${r.narrowing.pool_before} to ${r.narrowing.pool_after} candidates`}
         >
           <div className="space-y-2.5">
             <Bar
@@ -104,12 +104,12 @@ export function ReceiptView({ r }: { r: Receipt }) {
               </Note>
             )}
           </div>
-        </Panel>
+        </Fold>
 
         {/* Stage 4: gates */}
-        <Panel
+        <Fold
           title="Can this even be answered?"
-          hint="Both gates run before any search. The second one's output is the parameter the search is dispatched on."
+          summary={`k* ${r.feasibility.k_star}, index ${idx(r.feasibility.collision_index_at_k_star)}`}
         >
           <div className="space-y-3">
             <div className="grid grid-cols-3 gap-3">
@@ -166,20 +166,16 @@ export function ReceiptView({ r }: { r: Receipt }) {
               </div>
             )}
           </div>
-        </Panel>
+        </Fold>
       </div>
 
       {/* Stage 5 and 6 */}
       {u && r.solver && (
-        <Panel
+        <Fold
           title="Reconstruction and proof"
-          hint="Uniqueness is not a sweep bolted on after the search. It is the count the search itself produced."
-          right={
-            <div className="text-right text-[12px] text-ink-faint">
-              <div className="tnum">{num(r.solver.entries_left + r.solver.entries_right)} entries enumerated</div>
-              <div className="tnum">{(r.solver.memory_bytes / 1048576).toFixed(0)} MB</div>
-            </div>
-          }
+          summary={`${r.witness_size} records, ${u.matches_found} match${
+            u.matches_found === 1 ? "" : "es"
+          }, ${num(r.solver.entries_left + r.solver.entries_right)} subsets enumerated`}
         >
           <div className="grid gap-3 md:grid-cols-3">
             <Field label="witness size" value={r.witness_size} />
@@ -257,7 +253,7 @@ export function ReceiptView({ r }: { r: Receipt }) {
               </div>
             </div>
           )}
-        </Panel>
+        </Fold>
       )}
 
       {/* Accounting */}
@@ -322,9 +318,9 @@ export function ReceiptView({ r }: { r: Receipt }) {
 
       <div className="grid gap-3 lg:grid-cols-2">
         {/* Completeness */}
-        <Panel
+        <Fold
           title="Completeness guards"
-          hint="The dangerous failure is a wrong posting with a proof attached. These exist for that case alone."
+          summary={probe ? (probe.stable ? "stable" : probe.inconclusive ? "inconclusive" : "rival found") : undefined}
         >
           {probe && (
             <div className="mb-3 rounded-md border border-line px-3.5 py-2.5">
@@ -382,7 +378,7 @@ export function ReceiptView({ r }: { r: Receipt }) {
               </div>
             ))}
           </div>
-        </Panel>
+        </Fold>
 
         {/* Fee check and agent */}
         <div className="space-y-3">
@@ -537,7 +533,7 @@ export function ReceiptView({ r }: { r: Receipt }) {
       )}
 
       {/* Timings */}
-      <Panel title="Where the time went">
+      <Fold title="Where the time went">
         <table className="w-full max-w-md">
           <thead>
             <tr>
@@ -561,7 +557,7 @@ export function ReceiptView({ r }: { r: Receipt }) {
           produced the count. Policy <span className="tnum text-ink-dim">{r.policy_version}</span>,
           replay seed <span className="tnum text-ink-dim">{r.replay_seed}</span>.
         </p>
-      </Panel>
+      </Fold>
     </div>
   );
 }
