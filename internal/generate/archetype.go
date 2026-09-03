@@ -46,8 +46,16 @@ type Archetype struct {
 	// SettlementCycleDays is the T+n this merchant settles on.
 	SettlementCycleDays  int
 	InstrumentSegregated bool
-	// ExpectedRegime is a human label, reported alongside measured results
-	// so the prediction and the observation sit side by side.
+	// ExpectedRegime names the mechanism that decides this merchant's
+	// settlements, reported beside the measured auto-post rate.
+	//
+	// It describes WHY the rate lands where it does, not what the rate is. An
+	// earlier version predicted the rate in words, the code improved, and the
+	// labels quietly stopped matching the column beside them: quick commerce
+	// was still labelled "refused" while posting 22 per cent. A label that can
+	// silently go stale against a generated number is a liability in a
+	// document whose argument is that its numbers are not typed, so these now
+	// say only what is structurally true of the amount distribution.
 	ExpectedRegime string
 }
 
@@ -72,7 +80,7 @@ var Archetypes = []Archetype{
 			model.InstrumentUPI: 0.15, model.InstrumentEMI: 0.10,
 		},
 		SettlementCycleDays: 2,
-		ExpectedRegime:      "verifies readily",
+		ExpectedRegime:      "wide ticket spread; amounts separate cleanly",
 	},
 	{
 		Name: "marketplace", Shape: ShapeLognormal,
@@ -83,7 +91,7 @@ var Archetypes = []Archetype{
 			model.InstrumentNetbanking: 0.12, model.InstrumentWallet: 0.08,
 		},
 		SettlementCycleDays: 2,
-		ExpectedRegime:      "verifies readily",
+		ExpectedRegime:      "amounts separate; a disputes feed is unjoined",
 	},
 	{
 		Name: "d2c_ecommerce", Shape: ShapeLognormal,
@@ -94,7 +102,7 @@ var Archetypes = []Archetype{
 			model.InstrumentWallet: 0.10, model.InstrumentNetbanking: 0.05,
 		},
 		SettlementCycleDays: 2,
-		ExpectedRegime:      "contested; narrowing decides",
+		ExpectedRegime:      "narrow spread; narrowing decides",
 	},
 	{
 		Name: "utility_billpay", Shape: ShapeDenominated,
@@ -107,7 +115,7 @@ var Archetypes = []Archetype{
 			model.InstrumentUPI: 0.70, model.InstrumentNetbanking: 0.20, model.InstrumentCard: 0.10,
 		},
 		SettlementCycleDays: 1,
-		ExpectedRegime:      "contested; entropy gate often fires",
+		ExpectedRegime:      "repeated price points; entropy gate refuses",
 	},
 	{
 		Name: "subscription_saas", Shape: ShapeDenominated,
@@ -118,7 +126,7 @@ var Archetypes = []Archetype{
 			model.InstrumentCard: 0.70, model.InstrumentUPI: 0.30,
 		},
 		SettlementCycleDays: 2,
-		ExpectedRegime:      "entropy gate refuses first",
+		ExpectedRegime:      "three price points; entropy gate refuses",
 	},
 	{
 		Name: "quick_commerce", Shape: ShapeLognormal,
@@ -128,7 +136,7 @@ var Archetypes = []Archetype{
 			model.InstrumentUPI: 0.82, model.InstrumentCard: 0.12, model.InstrumentWallet: 0.06,
 		},
 		SettlementCycleDays: 1,
-		ExpectedRegime:      "refused; needs a settlement reference",
+		ExpectedRegime:      "tight spread; a disputes feed is unjoined",
 	},
 }
 

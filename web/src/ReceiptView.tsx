@@ -112,7 +112,7 @@ export function ReceiptView({ r }: { r: Receipt }) {
         {/* Stage 4: gates */}
         <Fold
           title="Feasibility"
-          summary={`k* ${r.feasibility.k_star}, index ${idx(r.feasibility.collision_index_at_k_star)}`}
+          summary={`${idx(r.feasibility.collision_index_at_k_star)} coincidences expected`}
         >
           <div className="space-y-3">
             <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
@@ -130,18 +130,13 @@ export function ReceiptView({ r }: { r: Receipt }) {
               />
             </div>
 
-            <div className="grid grid-cols-2 gap-3 border-t border-line-soft pt-2.5 sm:grid-cols-3">
-              <Field label="k*" value={f.k_star} hint="largest decidable free cardinality" />
+            <div className="grid grid-cols-2 gap-3 border-t border-line-soft pt-2.5">
+              <Field label="k*" value={f.k_star} hint="largest decidable batch size" />
               <Field
                 label="collision index"
                 value={idx(f.collision_index_at_k_star)}
                 hint={`refuses above ${f.threshold_underdetermined}`}
                 tone={f.collision_index_at_k_star > f.threshold_underdetermined ? "var(--color-underdetermined)" : undefined}
-              />
-              <Field
-                label="analytic index"
-                value={idx(f.collision_index_analytic_at_k_star)}
-                hint="what the closed form says"
               />
             </div>
 
@@ -171,8 +166,8 @@ export function ReceiptView({ r }: { r: Receipt }) {
               <div className="border-t border-line-soft pt-2.5">
                 <Field
                   label="declared batch"
-                  value={`${f.declared_txn_count} of ${f.n}, free cardinality ${f.implied_free_cardinality}`}
-                  hint={`index at that cardinality: ${idx(f.collision_index_at_implied)}`}
+                  value={`${f.declared_txn_count} of ${f.n}`}
+                  hint={`${idx(f.collision_index_at_implied)} coincidences expected at that size`}
                 />
               </div>
             )}
@@ -186,7 +181,7 @@ export function ReceiptView({ r }: { r: Receipt }) {
           title="Reconstruction"
           summary={`${r.witness_size} records, ${u.matches_found} match${
             u.matches_found === 1 ? "" : "es"
-          }, ${num(r.solver.entries_left + r.solver.entries_right)} subsets enumerated`}
+          }`}
         >
           <div className="grid gap-3 md:grid-cols-3">
             <Field label="witness size" value={r.witness_size} />
@@ -351,11 +346,12 @@ export function ReceiptView({ r }: { r: Receipt }) {
                 </div>
               </div>
               <p className="mt-1.5 text-[12.5px] leading-relaxed text-ink-faint">{probe.note}</p>
-              <div className="tnum mt-2 text-[12px] text-ink-faint">
-                depth {probe.max_substitution_depth} of {probe.requested_substitution_depth} requested
-                · {num(probe.removal_sums_enumerated)} × {num(probe.addition_sums_enumerated)} sums ·
-                pool widened to {probe.widened_pool_n} · {probe.expected_spurious_collisions.toExponential(1)}{" "}
-                chance collisions expected
+              <div className="mt-2 text-[12px] text-ink-faint">
+                Pool widened to <span className="tnum">{probe.widened_pool_n}</span>, swapping up to{" "}
+                <span className="tnum">{probe.max_substitution_depth}</span> record
+                {probe.max_substitution_depth === 1 ? "" : "s"} at a time. A search this wide expects{" "}
+                <span className="tnum">{probe.expected_spurious_collisions.toExponential(1)}</span>{" "}
+                rivals by chance alone.
               </div>
               {probe.rival && (
                 <div className="tnum mt-2 text-[12.5px]" style={{ color: "var(--color-sensitive)" }}>

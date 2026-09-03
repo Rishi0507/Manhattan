@@ -120,6 +120,13 @@ func runBench(ctx context.Context, args []string) error {
 		return err
 	}
 
+	// README.md and LIMITATIONS.md are regenerated in the same command that
+	// produced the numbers, so the three documents cannot disagree. Leaving
+	// this as a separate step is what let them drift apart once already.
+	if err := renderNarrativeDocs(ctx, summary, cases, sweep, envelope, store, provider); err != nil {
+		return err
+	}
+
 	printCaseTable(cases)
 	fmt.Print(doc)
 	fmt.Fprintf(os.Stderr, "\nwrote %s and %s/{receipts.ndjson,run.json,summary.json,cases.json,sweep.json,envelope.json}\n",

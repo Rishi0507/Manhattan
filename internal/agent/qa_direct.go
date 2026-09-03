@@ -53,8 +53,58 @@ func Direct(store *evidence.Store, question string) (Answer, bool) {
 	case matches(q, "how many", "post") || matches(q, "auto-post", "rate") ||
 		matches(q, "status", "mix") || matches(q, "how many", "verified"):
 		return statusMix(all, store.Run()), true
+
+	case asksAboutPeople(q):
+		return notRecorded(q), true
 	}
 	return Answer{}, false
+}
+
+// asksAboutPeople matches questions about who did something.
+//
+// Nobody did anything. There is no human in this pipeline: no approval step,
+// no reviewer field, no assignee, no maker-checker. A receipt records what the
+// system decided and the evidence it decided on, and that is the whole of it.
+func asksAboutPeople(q string) bool {
+	who := strings.Contains(q, "who ") || strings.Contains(q, "which analyst") ||
+		strings.Contains(q, "which user") || strings.Contains(q, "whom")
+	act := strings.Contains(q, "approv") || strings.Contains(q, "sign") ||
+		strings.Contains(q, "review") || strings.Contains(q, "authoris") ||
+		strings.Contains(q, "authoriz") || strings.Contains(q, "assign") ||
+		strings.Contains(q, "posted it") || strings.Contains(q, "decided")
+	return who && act
+}
+
+// notRecorded declines, and says exactly why.
+//
+// This is the most important answer this agent gives, and it is deterministic
+// on purpose. An assistant over a finance system that answers every question
+// is not grounded in the data; it is grounded in the willingness of a language
+// model to produce fluent text. The failure is silent, it is confident, and it
+// is worse than no answer because somebody will act on it.
+//
+// So the decline names the field that would have held the answer, says that
+// the field does not exist, and states what the receipts do record instead. A
+// user who reads this knows what to go and look at. A user who reads an
+// invented analyst name does not know anything at all, and does not know that
+// they do not.
+func notRecorded(_ string) Answer {
+	return Answer{
+		Answerable: false,
+		Text: "The receipts do not record this and I will not infer it.\n\n" +
+			"There is no approval, reviewer or assignee field on a receipt, because there is " +
+			"no human step in this pipeline to record. A settlement is decided by an integer " +
+			"identity and an exhaustive uniqueness count, and the receipt carries the evidence " +
+			"for that decision rather than a person's name.\n\n" +
+			"What a receipt does record, and what I can answer from: the status and the claim " +
+			"behind it, the witness and every rival reconstruction, the narrowing waterfall " +
+			"with a reason per dropped record, both collision-index estimators, every " +
+			"completeness check and its verdict, the agent's decision trace where it acted, " +
+			"the computed remediation, and the exception cost.",
+		Citations: []Citation{
+			{ReceiptID: "schema", Field: "no approval, reviewer or assignee field exists"},
+		},
+	}
 }
 
 func matches(q string, terms ...string) bool {

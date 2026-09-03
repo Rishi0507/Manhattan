@@ -1,0 +1,46 @@
+{
+  "run_id": "run_20260903_0358",
+  "settlements": 498,
+  "flags": null,
+  "status_counts": {
+    "AMBIGUOUS": 109,
+    "NARROWING_SENSITIVE": 3,
+    "UNDERDETERMINED": 208,
+    "UNRESOLVED": 17,
+    "VERIFIED": 161
+  },
+  "flag_counts": {
+    "AMOUNT_ENTROPY_INSUFFICIENT": 166,
+    "LATTICE_CORRECTED": 68,
+    "RESOLVED_BY_HYPOTHESIS": 18,
+    "SIGNED_ITEMS_PRESENT": 222
+  },
+  "auto_posted": 161,
+  "auto_posted_wrong": 0,
+  "exceptions": 337,
+  "throughput": {
+    "wall_clock_s": 18.4820405,
+    "settlements_per_hour": 97002.27634497393,
+    "median_latency_ms": 13.442,
+    "p95_latency_ms": 100.895,
+    "peak_memory_mb": 118.67072296142578
+  },
+  "cost": {
+    "model_calls": 794,
+    "parse_calls": 498,
+    "agent_calls": 296,
+    "exception_rate": 0.6767068273092369,
+    "input_tokens": 395088,
+    "output_tokens": 33512,
+    "inr": 0,
+    "inr_per_1k_settlements": 497.1187148594378
+  },
+  "aggregate_drop_rates": {
+    "already_reconciled": 0.08495612033444187,
+    "mid_mismatch": 0.1341173953013056,
+    "outside_settlement_window": 0.7716401321521453,
+    "zero_net_contribution": 0.00002838694462580548
+  },
+  "replay_seed": 20260826,
+  "policy_version": "fees_2026_08"
+}

@@ -220,8 +220,14 @@ export function OutcomeBands({
   height?: number;
 }) {
   const { setTip, node } = useTip();
-  const pad = { l: 92, r: 120, t: 8, b: 26 };
-  const w = 640;
+  // The left gutter has to hold the widest band label, and those are two
+  // formatted indices with "to" between them. At 640 viewBox units and 10px
+  // type that is about 118 units for a label like "5.5e-4 to 0.001", so 132
+  // leaves margin. An earlier 92 clipped the first character of every row,
+  // which is the kind of defect that only shows up once real data widens the
+  // labels past the fixture that was used to lay them out.
+  const pad = { l: 132, r: 118, t: 8, b: 26 };
+  const w = 700;
   const h = Math.max(height, bands.length * 30 + pad.t + pad.b);
   const iw = w - pad.l - pad.r;
   const rowH = (h - pad.t - pad.b) / Math.max(bands.length, 1);
@@ -236,7 +242,7 @@ export function OutcomeBands({
           let x = pad.l;
           return (
             <g key={i}>
-              <text x={pad.l - 10} y={y + barH / 2 + 4} textAnchor="end" fontSize="11" fill={AXIS} className="tnum">
+              <text x={pad.l - 10} y={y + barH / 2 + 4} textAnchor="end" fontSize="10" fill={AXIS} className="tnum">
                 {idx(band.lo)} to {idx(band.hi)}
               </text>
               {band.parts.map((p, j) => {
@@ -270,7 +276,7 @@ export function OutcomeBands({
               <text
                 x={pad.l + iw + 10}
                 y={y + barH / 2 + 4}
-                fontSize="11"
+                fontSize="10"
                 className="tnum"
                 fill={band.b0Wrong > 0.15 ? "#a93226" : AXIS}
               >

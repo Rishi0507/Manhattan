@@ -1,0 +1,8 @@
+flowchart TB
+  A["200 transactions"] --> L["left half<br/>100 items"]
+  A --> R["right half<br/>100 items"]
+  L --> LS["list every sum<br/>the left half can make"]
+  R --> RS["list every sum<br/>the right half can make"]
+  LS --> M["sort both lists,<br/>walk them towards each other<br/>looking for pairs that add to the target"]
+  RS --> M
+  M --> O["the subsets that work"]

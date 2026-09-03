@@ -1,0 +1,48 @@
+flowchart TB
+    subgraph SRC["Four sources, which disagree"]
+        PG["PG settlement report<br/><small>payments, fees, tax, counts</small>"]
+        BANK["Bank statement<br/><small>free-text narration, one credit</small>"]
+        OMS["OMS / ledger<br/><small>orders, gross, GL account</small>"]
+        DIS["Disputes feed<br/><small>chargebacks, dispute fees</small>"]
+    end
+
+    PG --> S1
+    BANK --> S1
+    OMS --> S1
+    DIS --> S1
+
+    S1["<b>1 · Parse</b><br/>agent reads narration into typed fields"]
+    S2["<b>2 · Narrow</b><br/>deterministic business constraints<br/><small>every excluded record logged with its reason</small>"]
+    S3["<b>3 · Contribute</b><br/>signed net contribution per record<br/><small>exact integer paise under declared policy</small>"]
+    S4["<b>4 · Gate</b><br/>amount entropy, then feasibility<br/><small>outputs k*, the search's own dispatch parameter</small>"]
+    S5["<b>5 · Reconstruct</b><br/>cardinality-dispatched meet-in-the-middle<br/><small>witness and complement, one enumeration</small>"]
+    S6["<b>6 · Prove</b><br/>count rivals, guard completeness, re-derive the identity"]
+
+    S1 --> S2 --> S3 --> S4 --> S5 --> S6
+    S6 --> D{"decision"}
+
+    D -->|"unique, complete, closes"| V["VERIFIED<br/><small>post with evidence</small>"]
+    D -->|"rivals exist"| A["AMBIGUOUS<br/><small>both exhibited</small>"]
+    D -->|"combinatorially hopeless"| U["UNDERDETERMINED<br/><small>remediation computed</small>"]
+    D -->|"a filter decided it"| NS["NARROWING_SENSITIVE<br/><small>constraint named</small>"]
+    D -->|"nothing reconstructs it"| UR["UNRESOLVED"]
+
+    A --> S7
+    U --> S7
+    NS --> S7
+    UR --> S7["<b>7 · Agent</b><br/>observe, choose one action, act, re-verify<br/><small>bounded; only a cited action may post</small>"]
+
+    S7 -->|"a real record was cited<br/>and the identity closes uniquely"| V
+    S7 -->|"otherwise"| REV["review queue<br/><small>with a proven cure where one was found</small>"]
+
+    V --> EV["Evidence object<br/><small>replayable, diffable, queryable</small>"]
+    REV --> EV
+    EV --> QA["<b>7b · Q&amp;A agent</b><br/><small>answers grounded in receipts only</small>"]
+
+    style V fill:#e7f5ee,stroke:#0a7d4e,color:#16181d
+    style A fill:#fdf3e7,stroke:#a76100,color:#16181d
+    style U fill:#f1f3f5,stroke:#6b7480,color:#16181d
+    style NS fill:#fdeee7,stroke:#c2410c,color:#16181d
+    style UR fill:#f2ecfc,stroke:#6335c4,color:#16181d
+    style S7 fill:#eaf1fd,stroke:#1461cc,color:#16181d
+    style QA fill:#eaf1fd,stroke:#1461cc,color:#16181d

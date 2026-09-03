@@ -155,7 +155,7 @@ export function Tabs<T extends string>({
   onChange: (id: T) => void;
 }) {
   return (
-    <div className="-mb-px flex gap-0.5 overflow-x-auto" role="tablist">
+    <div className="tabstrip -mb-px flex gap-0.5 overflow-x-auto" role="tablist">
       {tabs.map((t) => (
         <button
           key={t.id}
@@ -278,9 +278,22 @@ export function Fold({
             </span>
           )}
         </span>
-        <span className="tnum shrink-0 text-[13px] text-ink-faint">{open ? "–" : "+"}</span>
+        <svg
+          className="fold-mark shrink-0 text-ink-faint"
+          data-open={open}
+          width="10"
+          height="10"
+          viewBox="0 0 10 10"
+          aria-hidden
+        >
+          <path d="M3 1.5 L7 5 L3 8.5" fill="none" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" />
+        </svg>
       </button>
-      {open && <div className="overflow-x-auto border-t border-line-soft p-4">{children}</div>}
+      <div className="fold-body" data-open={open}>
+        <div>
+          <div className="overflow-x-auto border-t border-line-soft p-4">{children}</div>
+        </div>
+      </div>
     </section>
   );
 }

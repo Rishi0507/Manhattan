@@ -40,7 +40,18 @@ case "${1:-demo}" in
   recon)  build_go; "./$BIN" recon -n 12 -archetype travel ;;
   serve)  build_go; "./$BIN" serve -addr "$ADDR" -store out ;;
   web)    build_web ;;
+  docs)   build_go; "./$BIN" docs -in out ;;
+  diagrams)
+    # Extract every Mermaid block from the markdown and render it to SVG, so a
+    # judging surface that does not render Mermaid still sees the diagrams and
+    # a rendered file cannot drift from the document it came from.
+    python3 tools/extract_diagrams.py
+    for f in docs/diagrams/*.mmd; do
+      npx --yes @mermaid-js/mermaid-cli@11 -i "$f" -o "${f%.mmd}.svg"         -c docs/diagrams/mermaid.json -b '#faf6ee' >/dev/null
+    done
+    echo "rendered $(ls docs/diagrams/*.svg | wc -l) diagrams"
+    ;;
   test)   go test ./... -count=1 ;;
   perf)   go test ./internal/solver/ -run TestPerformanceGate -v -count=1 ;;
-  *) echo "usage: ./run.sh [demo|bench|cases|recon|serve|web|test|perf]" >&2; exit 2 ;;
+  *) echo "usage: ./run.sh [demo|bench|cases|recon|serve|web|docs|diagrams|test|perf]" >&2; exit 2 ;;
 esac

@@ -1,0 +1,16 @@
+flowchart LR
+    BANK[("bank statement<br/>one credit")] -.->|"Leg A"| PG
+    PG[("PG settlement report<br/>payments, fees")] -->|"Leg B"| OMS[("OMS / ledger<br/>orders")]
+    PG -.->|"Leg C"| POL[["fee policy config"]]
+
+    LA["<b>Leg A</b> one to many<br/>reference often missing<br/><small>narrowing, then exact reconstruction</small>"]
+    LB["<b>Leg B</b> one to one, keyed<br/><small>deterministic join; unmatched rows become orphans</small>"]
+    LC["<b>Leg C</b> not a join at all<br/><small>independent recomputation and comparison</small>"]
+
+    BANK --- LA
+    OMS --- LB
+    POL --- LC
+
+    style LA fill:#101820,stroke:#3395ff,color:#e6eaf0
+    style LB fill:#0f2a1e,stroke:#35c88a,color:#e6eaf0
+    style LC fill:#2a2310,stroke:#e0a83a,color:#e6eaf0

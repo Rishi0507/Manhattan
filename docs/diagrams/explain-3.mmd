@@ -1,0 +1,9 @@
+flowchart TB
+  F["settlement did not resolve"] --> T{"is this worth<br/>working on?"}
+  T -->|"no, the amounts are<br/>too uniform"| SK["skip, deterministically"]
+  T -->|yes| O["describe the state<br/>to the model"]
+  O --> A["model picks one of<br/>seven actions"]
+  A --> AP["apply it and re-run<br/>the full proof"]
+  AP --> C{"better?"}
+  C -->|yes| K["keep it, record what<br/>was done and why"]
+  C -->|no| B["discard, try again<br/>or give up"]

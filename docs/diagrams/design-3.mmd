@@ -1,0 +1,12 @@
+flowchart TB
+    W["verified witness S<br/><small>sum already equals T</small>"] --> Q{"is there a rival<br/>in a wider pool?"}
+    P["pool widened one<br/>constraint at a time"] --> Q
+    Q --> J["S' = (S \ A) ∪ B<br/><small>hits T exactly when Σ B = Σ A</small><br/>so the whole search is a join"]
+    J --> FP{"would a collision<br/>here be surprising?"}
+    FP -->|"expected chance hits ≤ 0.05"| DEC{"found one?"}
+    FP -->|"too many pairs compared"| INC["reduce depth,<br/>or report inconclusive"]
+    DEC -->|yes| NS["NARROWING_SENSITIVE<br/><small>constraint named</small>"]
+    DEC -->|no| OK["stable"]
+    style NS fill:#fdeee7,stroke:#c2410c,color:#16181d
+    style OK fill:#e7f5ee,stroke:#0a7d4e,color:#16181d
+    style FP fill:#eaf1fd,stroke:#1461cc,color:#16181d

@@ -1,0 +1,16 @@
+flowchart TB
+    EX["a settlement that did not post"] --> T{"deterministic triage:<br/>could any action help?"}
+    T -->|"no: amounts do not distinguish,<br/>or a rival already appears,<br/>or nothing left to tighten"| SKIP["not invoked<br/><small>zero model cost</small>"]
+    T -->|"yes"| OBS["<b>observe</b><br/><small>status, pool size, collision index,<br/>twin mass, exact residual,<br/>everything already tried</small>"]
+    OBS --> CH["<b>choose one action</b><br/><small>from a closed typed vocabulary</small>"]
+    CH --> ACT["<b>act</b><br/><small>the action becomes an overlay,<br/>which is data</small>"]
+    ACT --> VER["<b>re-verify</b><br/><small>the ENTIRE stack runs again, unmodified</small>"]
+    VER --> Q{"unique reconstruction?"}
+    Q -->|no| OBS
+    Q -->|"yes, and an action<br/>cited a real record"| POST["VERIFIED<br/><small>posts, with the citation</small>"]
+    Q -->|"yes, but only because<br/>a filter was changed"| CURE["proven cure<br/><small>held; the remediation is verified,<br/>not estimated</small>"]
+
+    style SKIP fill:#f1f3f5,stroke:#6b7480,color:#16181d
+    style POST fill:#e7f5ee,stroke:#0a7d4e,color:#16181d
+    style CURE fill:#fdf3e7,stroke:#a76100,color:#16181d
+    style VER fill:#eaf1fd,stroke:#1461cc,color:#16181d

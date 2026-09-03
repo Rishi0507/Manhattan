@@ -3,6 +3,7 @@ package bench
 import (
 	"context"
 	"fmt"
+	"math"
 	"runtime"
 	"sort"
 	"time"
@@ -89,6 +90,39 @@ type Summary struct {
 	PricedAt    string `json:"priced_at_model"`
 	PriceIsReal bool   `json:"price_is_real_spend"`
 
+	// B0Sweep is B0's wrong-posting rate as a function of its posting
+	// threshold, with the shipped operating point and the best-F1 point marked.
+	//
+	// This exists because the headline result rests on a number produced by a
+	// component in this repository, and "wrong on 59 per cent of its postings"
+	// is not a figure anybody should accept on assertion. The sweep shows
+	// there is no threshold at which the baseline is both useful and safe,
+	// which is a stronger claim than the single operating point and is the
+	// one actually being made.
+	B0Sweep []B0ThresholdPoint `json:"b0_threshold_sweep"`
+
+	// B0Features names what the baseline scores on, so its confidence is
+	// auditable rather than a black box the comparison happens to favour.
+	B0Features []string `json:"b0_features"`
+
+	// Cost is the derivation behind the two rupee figures rather than the
+	// figures alone. A cost claim with no arithmetic behind it is the exact
+	// class of unverified assertion this project exists to refuse.
+	Cost CostBasis `json:"cost_basis"`
+
+	// Pools records the record counts the run actually operated over, which
+	// is what the track's fifty-record floor is measured against.
+	Pools PoolStats `json:"pool_stats"`
+
+	// ExceptionCostINR totals the per-receipt exception cost across the whole
+	// held queue, so the refusal has a price attached rather than only a
+	// principle.
+	ExceptionCostINR int `json:"exception_cost_inr_total"`
+
+	// TopExceptions is the actual backlog, sorted by cost, so the honest
+	// exception list the track asks for is exhibited rather than argued for.
+	TopExceptions []ExceptionRow `json:"top_exceptions"`
+
 	// ByArchetype is the segmentation that turns a mediocre aggregate
 	// auto-post rate into a useful statement.
 	//
@@ -97,6 +131,76 @@ type Summary struct {
 	// integration, roughly what fraction of a given merchant's settlements it
 	// expects to post, because it knows exactly what makes the method fail.
 	ByArchetype []ArchetypeResult `json:"by_archetype"`
+}
+
+// B0ThresholdPoint is the baseline's behaviour at one posting threshold.
+type B0ThresholdPoint struct {
+	Threshold float64 `json:"threshold"`
+	Posted    int     `json:"posted"`
+	Right     int     `json:"right"`
+	Wrong     int     `json:"wrong"`
+	Precision float64 `json:"precision"`
+	Recall    float64 `json:"recall"`
+	F1        float64 `json:"f1"`
+	// BestF1 marks the threshold a team tuning this baseline would choose,
+	// and Shipped marks the one it ships with.
+	BestF1  bool `json:"best_f1"`
+	Shipped bool `json:"shipped_operating_point"`
+}
+
+// CostBasis is every input to the cost-per-thousand figures.
+type CostBasis struct {
+	Model            string  `json:"model"`
+	InputUSDPerMTok  float64 `json:"input_usd_per_mtok"`
+	OutputUSDPerMTok float64 `json:"output_usd_per_mtok"`
+	CacheReadUSD     float64 `json:"cache_read_usd_per_mtok"`
+	CacheWriteUSD    float64 `json:"cache_write_usd_per_mtok"`
+	USDToINR         float64 `json:"usd_to_inr"`
+
+	UncachedInput int `json:"uncached_input_tokens"`
+	CachedInput   int `json:"cached_input_tokens"`
+	CacheWrite    int `json:"cache_write_tokens"`
+	Output        int `json:"output_tokens"`
+	Calls         int `json:"calls"`
+	// CacheHitRate is cache reads over all input tokens. On a replay run it
+	// is zero, which prices every token at the uncached rate and therefore
+	// overstates the live cost rather than flattering it.
+	CacheHitRate float64 `json:"cache_hit_rate"`
+
+	// The baseline's token model, stated so it can be argued with.
+	B0Input          int     `json:"b0_input_tokens"`
+	B0Output         int     `json:"b0_output_tokens"`
+	B0PerRecord      int     `json:"b0_tokens_per_record"`
+	B0Overhead       int     `json:"b0_tokens_overhead"`
+	B0MeanPoolN      float64 `json:"b0_mean_narrowed_pool"`
+	B0TokensPerCall  float64 `json:"b0_input_tokens_per_settlement"`
+	ManhattanPerCall float64 `json:"manhattan_input_tokens_per_settlement"`
+}
+
+// PoolStats is the shape of the data the run operated over.
+type PoolStats struct {
+	TotalRecords    int     `json:"total_records_generated"`
+	RawMin          int     `json:"universe_min"`
+	RawMax          int     `json:"universe_max"`
+	RawMean         float64 `json:"universe_mean"`
+	NarrowedMin     int     `json:"narrowed_min"`
+	NarrowedMax     int     `json:"narrowed_max"`
+	NarrowedMean    float64 `json:"narrowed_mean"`
+	LargestBatch    int     `json:"largest_declared_batch"`
+	SettlementCount int     `json:"settlements"`
+}
+
+// ExceptionRow is one line of the held queue as an operator would see it.
+type ExceptionRow struct {
+	Ref         string  `json:"settlement_ref"`
+	Archetype   string  `json:"archetype"`
+	Status      string  `json:"status"`
+	CostINR     int     `json:"exception_cost_inr"`
+	PoolN       int     `json:"pool_n"`
+	Cause       string  `json:"cause"`
+	Remediation string  `json:"remediation"`
+	AgentTouch  bool    `json:"agent_worked_it"`
+	Index       float64 `json:"collision_index"`
 }
 
 // ArchetypeResult is one merchant shape's measured outcome.
@@ -170,6 +274,18 @@ func RunBatch(ctx context.Context, spec BatchSpec, provider llm.Provider) (*evid
 	aggDrops := map[narrow.Constraint]int{}
 	aggUniverse := 0
 
+	// Every B0 decision as a (confidence, was-it-right) pair, so the threshold
+	// sweep is computed from the same decisions the headline uses rather than
+	// from a second run that might differ.
+	type b0point struct {
+		conf    float64
+		correct bool
+	}
+	var b0points []b0point
+	var b0PoolTotal int
+	ps := PoolStats{RawMin: 1 << 30, NarrowedMin: 1 << 30}
+	archOf := map[string]string{}
+
 	var m0 runtime.MemStats
 	runtime.ReadMemStats(&m0)
 	peak := m0.HeapAlloc
@@ -210,6 +326,7 @@ func RunBatch(ctx context.Context, spec BatchSpec, provider llm.Provider) (*evid
 		cfg.RunID = spec.RunID
 		cfg.Seed = gs.Seed
 		eng := pipeline.New(ds, cfg)
+		ps.TotalRecords += len(eng.Records) + len(eng.Unjoined)
 
 		parser := agent.NewParser(provider)
 		controller := agent.NewController(provider)
@@ -314,6 +431,21 @@ func RunBatch(ctx context.Context, spec BatchSpec, provider llm.Provider) (*evid
 			b0 := baseline.Match(pool, credit.Amount, credit.DeclaredTxnCount, baseline.DefaultConfig())
 			b0Latencies = append(b0Latencies, float64(time.Since(b0start).Microseconds())/1000)
 			b0Tokens += b0.TokensIn
+			b0PoolTotal += len(pool)
+			b0points = append(b0points, b0point{conf: b0.Confidence, correct: b0.Correct(truth)})
+			archOf[rec.SettlementRef] = arch
+
+			ps.SettlementCount++
+			ps.RawMin = minInt(ps.RawMin, rec.Narrowing.Before)
+			ps.RawMax = maxInt(ps.RawMax, rec.Narrowing.Before)
+			ps.RawMean += float64(rec.Narrowing.Before)
+			ps.NarrowedMin = minInt(ps.NarrowedMin, len(pool))
+			ps.NarrowedMax = maxInt(ps.NarrowedMax, len(pool))
+			ps.NarrowedMean += float64(len(pool))
+			if credit.DeclaredTxnCount != nil && *credit.DeclaredTxnCount > ps.LargestBatch {
+				ps.LargestBatch = *credit.DeclaredTxnCount
+			}
+
 			if b0.Posted {
 				sum.B0Posted++
 				archB0++
@@ -383,6 +515,87 @@ func RunBatch(ctx context.Context, spec BatchSpec, provider llm.Provider) (*evid
 		// input is the whole candidate pool, which is not.
 		b0Usage := llm.Usage{InputTokens: b0Tokens, OutputTokens: 120 * sum.Settlements}
 		sum.B0INRPer1k = float64(llm.CostMicrosINR(priceModel, b0Usage)) / 1e6 * per1k
+
+		rate := llm.Rates[priceModel]
+		sum.Cost = CostBasis{
+			Model:            priceModel,
+			InputUSDPerMTok:  rate.InputPerMTok,
+			OutputUSDPerMTok: rate.OutputPerMTok,
+			CacheReadUSD:     rate.CacheReadPerMTok,
+			CacheWriteUSD:    rate.CacheWritePerMTok,
+			USDToINR:         llm.USDToINR,
+			UncachedInput:    usage.InputTokens,
+			CachedInput:      usage.CacheReadTokens,
+			CacheWrite:       usage.CacheWriteTokens,
+			Output:           usage.OutputTokens,
+			Calls:            usage.Calls,
+			B0Input:          b0Tokens,
+			B0Output:         120 * sum.Settlements,
+			B0PerRecord:      baseline.TokensPerRecord,
+			B0Overhead:       baseline.TokensOverhead,
+			B0MeanPoolN:      float64(b0PoolTotal) / float64(sum.Settlements),
+			B0TokensPerCall:  float64(b0Tokens) / float64(sum.Settlements),
+			ManhattanPerCall: float64(usage.InputTokens) / float64(sum.Settlements),
+		}
+		if tot := usage.InputTokens + usage.CacheReadTokens; tot > 0 {
+			sum.Cost.CacheHitRate = float64(usage.CacheReadTokens) / float64(tot)
+		}
+
+		ps.RawMean /= float64(sum.Settlements)
+		ps.NarrowedMean /= float64(sum.Settlements)
+		sum.Pools = ps
+
+		// B0 at every threshold its scoring function can produce, plus the
+		// round values in between, so the curve has no gaps a reader could
+		// suspect were chosen.
+		var thresholds []float64
+		for t := 0.10; t <= 1.001; t += 0.05 {
+			thresholds = append(thresholds, math.Round(t*100)/100)
+		}
+		bestF1, bestAt := -1.0, -1
+		for _, t := range thresholds {
+			pt := B0ThresholdPoint{Threshold: t}
+			for _, p := range b0points {
+				if p.conf >= t {
+					pt.Posted++
+					if p.correct {
+						pt.Right++
+					} else {
+						pt.Wrong++
+					}
+				}
+			}
+			if pt.Posted > 0 {
+				pt.Precision = float64(pt.Right) / float64(pt.Posted)
+			}
+			if sum.Settlements > 0 {
+				pt.Recall = float64(pt.Right) / float64(sum.Settlements)
+			}
+			if pt.Precision+pt.Recall > 0 {
+				pt.F1 = 2 * pt.Precision * pt.Recall / (pt.Precision + pt.Recall)
+			}
+			if math.Abs(t-baseline.DefaultConfig().Threshold) < 1e-9 {
+				pt.Shipped = true
+			}
+			if pt.F1 > bestF1 {
+				bestF1, bestAt = pt.F1, len(sum.B0Sweep)
+			}
+			sum.B0Sweep = append(sum.B0Sweep, pt)
+		}
+		if bestAt >= 0 {
+			sum.B0Sweep[bestAt].BestF1 = true
+		}
+		sum.B0Features = baseline.Features()
+
+		// The held queue, priced and sorted, which is the deliverable the
+		// track actually asks for.
+		for _, r := range store.All() {
+			if r.Status == evidence.StatusVerified {
+				continue
+			}
+			sum.ExceptionCostINR += r.ExceptionCostINR
+		}
+		sum.TopExceptions = topExceptions(store, archOf, 15)
 	}
 
 	// Run-level drift, which gates the batch rather than any one receipt.
@@ -444,3 +657,59 @@ func AttributableTruth(truth []string, eng *pipeline.Engine) []string {
 }
 
 var _ = model.KindPayment
+
+func minInt(a, b int) int {
+	if a < b {
+		return a
+	}
+	return b
+}
+
+func maxInt(a, b int) int {
+	if a > b {
+		return a
+	}
+	return b
+}
+
+// topExceptions renders the held queue the way an operations lead would work
+// it: most expensive first, each row carrying the cause and the computed
+// remediation rather than a status code.
+//
+// The track asks for an honest exception list, and a count of exceptions is
+// not one. This is the list.
+func topExceptions(store *evidence.Store, archOf map[string]string, n int) []ExceptionRow {
+	var rows []ExceptionRow
+	for _, r := range store.All() {
+		if r.Status == evidence.StatusVerified {
+			continue
+		}
+		row := ExceptionRow{
+			Ref:        r.SettlementRef,
+			Archetype:  archOf[r.SettlementRef],
+			Status:     string(r.Status),
+			CostINR:    r.ExceptionCostINR,
+			PoolN:      r.Pool.N,
+			Cause:      r.Claim,
+			AgentTouch: r.Agent.Invoked,
+			Index:      r.Feasibility.IndexAtKStar,
+		}
+		if len(r.Remediation) > 0 {
+			row.Remediation = r.Remediation[0].Action
+			if r.Remediation[0].ProjectedIndex != nil {
+				row.Remediation += fmt.Sprintf(" (projected index %.3g)", *r.Remediation[0].ProjectedIndex)
+			}
+		}
+		rows = append(rows, row)
+	}
+	sort.SliceStable(rows, func(i, j int) bool {
+		if rows[i].CostINR != rows[j].CostINR {
+			return rows[i].CostINR > rows[j].CostINR
+		}
+		return rows[i].Ref < rows[j].Ref
+	})
+	if len(rows) > n {
+		rows = rows[:n]
+	}
+	return rows
+}

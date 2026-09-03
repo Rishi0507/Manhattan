@@ -1,0 +1,15 @@
+sequenceDiagram
+    participant V as Verifier
+    participant A as Agent
+    participant F as Unjoined feeds
+
+    V->>V: exhaustive search over k(S) at most 7
+    Note over V: no reconstruction.<br/>the nearest achievable sum<br/>is 1038851 paise away
+    V->>A: here is the exact residual,<br/>its sign and its cardinality
+    A->>A: what class of event<br/>produces a gap of this shape?
+    A-->>V: CHARGEBACK_DEBIT, add_item<br/>typed, from a closed vocabulary
+    V->>F: search for records of that class<br/>deterministic, and not the model's to do
+    F-->>V: cbk_000223, disputes feed
+    V->>V: apply it, re-run the ENTIRE stack unmodified<br/>entropy, feasibility, enumeration, guards, identity
+    Note over V: closes exactly, uniquely,<br/>and the hypothesis cites a real record
+    V->>V: VERIFIED, RESOLVED_BY_HYPOTHESIS, cites cbk_000223

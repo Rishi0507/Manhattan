@@ -38,6 +38,8 @@ func main() {
 		err = runAsk(ctx, args)
 	case "serve":
 		err = runServe(ctx, args)
+	case "docs":
+		err = runDocs(ctx, args)
 	case "help", "-h", "--help":
 		usage()
 		return
@@ -61,6 +63,7 @@ func usage() {
   manhattan recon    reconcile one generated batch and print the receipts
   manhattan ask      ask a question of the receipt store
   manhattan serve    serve the dashboard and the API
+  manhattan docs     re-render README.md and LIMITATIONS.md from a saved run
 
 Every command takes --help.
 

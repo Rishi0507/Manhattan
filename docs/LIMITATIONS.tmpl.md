@@ -10,9 +10,9 @@ State these before anyone asks. Every one is a design decision with a reason, an
 
 No solver improvement changes this. It is not a limitation of meet-in-the-middle, of the implementation, or of the hardware. It is what the arithmetic permits.
 
-**The measured consequence is a bounded auto-post rate.** On the shipped 498-settlement benchmark Manhattan auto-posts 32% overall, against B0's 77%. B0's figure carries 226 wrong postings and Manhattan's carries 0, which is the comparison that matters, but the ceiling is real and belongs here rather than buried: **this system posts less, and there are settlements it will never post.**
+**The measured consequence is a bounded auto-post rate.** On the shipped {{ .S.Settlements }}-settlement benchmark Manhattan auto-posts {{ pct .D.PostRate }} overall, against B0's {{ pct .D.B0PostRate }}. B0's figure carries {{ .S.B0PostedWrong }} wrong postings and Manhattan's carries {{ .S.AutoPostedWrong }}, which is the comparison that matters, but the ceiling is real and belongs here rather than buried: **this system posts less, and there are settlements it will never post.**
 
-**Auto-post rate depends on the merchant, not on the algorithm.** Measured across the 6 archetypes it runs from 77% (travel, wide ticket spread) down to 0% (subscription SaaS, three repeated price points). The segmentation makes this a sales input rather than an excuse, but the underlying fact stands.
+**Auto-post rate depends on the merchant, not on the algorithm.** Measured across the {{ len .S.ByArchetype }} archetypes it runs from {{ range .S.ByArchetype }}{{ if eq .Archetype "travel" }}{{ rate .AutoPostRate }} (travel, wide ticket spread){{ end }}{{ end }} down to {{ range .S.ByArchetype }}{{ if eq .Archetype "subscription_saas" }}{{ rate .AutoPostRate }} (subscription SaaS, three repeated price points){{ end }}{{ end }}. The segmentation makes this a sales input rather than an excuse, but the underlying fact stands.
 
 ---
 
@@ -38,7 +38,7 @@ Manhattan now measures the density by sampling subset sums from the actual pool.
 
 **On one lognormal pool**, the fixture in `internal/feasibility/empirical_test.go`, checked against exhaustive enumeration of every 3-subset: the sampled estimator scores **0.09** mean absolute log-ratio against the counted truth, the analytic form **0.72**.
 
-**Across the whole calibration sweep**, 56 configurations spanning every archetype, pool size and batch size: the sampled estimator scores **1.93**, the analytic form **2.75**. Both are far worse than on the single pool, because the sweep deliberately includes regimes neither model was built for, among them pools whose true rival count runs into the thousands.
+**Across the whole calibration sweep**, {{ .D.SweptConfigs }} configurations spanning every archetype, pool size and batch size: the sampled estimator scores **{{ f2 .D.EmpiricalLogRatio }}**, the analytic form **{{ f2 .D.AnalyticLogRatio }}**. Both are far worse than on the single pool, because the sweep deliberately includes regimes neither model was built for, among them pools whose true rival count runs into the thousands.
 
 The swept numbers are the ones to quote about the system; the single-pool pair describes one fixture and nothing more. The ordering is what the design rests on and it holds in both: the sampled estimator is closer to the counted truth than the closed form, everywhere it has been measured. Both are carried on every receipt.
 
@@ -108,15 +108,15 @@ An action that cites a real record in a real feed may post. An action that chang
 
 That rule exists because of a measured failure rather than a principle chosen in advance. Without it, an agent able to retune narrowing produced **two wrong postings in three hundred settlements**: it tightened a value-date window, the candidate pool fell from 44 records to 40, an `AMBIGUOUS` settlement became `VERIFIED`, and the answer was wrong because the tightening had cut real records out of the batch. Every check passed, including the completeness probe, because the surviving rival differed from the found witness by more than the probe's depth bound.
 
-The consequence is a real ceiling, and it is a ceiling on the mechanism rather than a shortfall in the result. Most refusals are `UNDERDETERMINED`, caused by a pool that is too wide, and the agent can prove exactly what would fix them but is not permitted to act on it. On the shipped benchmark it repairs **18** settlements into postings and produces **5** proven cures, out of the 355 that entered the loop.
+The consequence is a real ceiling, and it is a ceiling on the mechanism rather than a shortfall in the result. Most refusals are `UNDERDETERMINED`, caused by a pool that is too wide, and the agent can prove exactly what would fix them but is not permitted to act on it. On the shipped benchmark it repairs **{{ .S.AgentRepaired }}** settlements into postings and produces **{{ .S.AgentProvenCures }}** proven cures, out of the {{ .D.ExceptionsEntered }} that entered the loop.
 
-Read the repair count as a measurement of the data, not of the loop. **Every one of the 18 repairs cited a record sitting in a feed nobody had joined**, because that is the only class of action allowed to post. The agent's contribution to recall is therefore exactly as large as the amount of genuinely missing data in the inputs and not one settlement larger. On a dataset with well-configured narrowing and every feed connected, the correct number of repairs is zero, and the loop returning zero there would be the loop working.
+Read the repair count as a measurement of the data, not of the loop. **Every one of the {{ .S.AgentRepaired }} repairs cited a record sitting in a feed nobody had joined**, because that is the only class of action allowed to post. The agent's contribution to recall is therefore exactly as large as the amount of genuinely missing data in the inputs and not one settlement larger. On a dataset with well-configured narrowing and every feed connected, the correct number of repairs is zero, and the loop returning zero there would be the loop working.
 
-The 5 proven cures are the other half of the output and they never post, by design. A cure is a remediation whose effect has been computed and re-verified rather than estimated. Handing an analyst *tightening this window to seven hours yields exactly one reconstruction, with the identity closing to zero* is stronger than handing them a bare residual, and it is still their decision to make.
+The {{ .S.AgentProvenCures }} proven cures are the other half of the output and they never post, by design. A cure is a remediation whose effect has been computed and re-verified rather than estimated. Handing an analyst *tightening this window to seven hours yields exactly one reconstruction, with the identity closing to zero* is stronger than handing them a bare residual, and it is still their decision to make.
 
 ## The agent is not invoked on most exceptions, deliberately
 
-A deterministic screen settles 203 of the 355 exceptions that enter the loop with no model call at all, which is 57% of them: the amounts do not distinguish the transactions, or a rival already appears when the pool is widened, or there is nothing left to search or tighten.
+A deterministic screen settles {{ .S.AgentSkipped }} of the {{ .D.ExceptionsEntered }} exceptions that enter the loop with no model call at all, which is {{ pct .D.TriagePct }} of them: the amounts do not distinguish the transactions, or a rival already appears when the pool is widened, or there is nothing left to search or tighten.
 
 This is the right trade, and it is still a trade. The screen is conservative but it is a heuristic, and a settlement it skips is one the agent never sees. A more capable model might have found something in a case the screen declared hopeless.
 
@@ -136,19 +136,19 @@ Every published timing assumes the flat, array-shaped enumeration: parallel prim
 
 This is a real dependency and it is asserted by a test rather than hoped for.
 
-Memory grows with `C(n/2, at most k*)`. It is bounded across the accept region and guarded by a configured ceiling checked *before* allocation, but a merchant with pools above roughly 1,000 candidates at `k = 3` sits near it: **714 MB** at the top of the measured envelope.
+Memory grows with `C(n/2, at most k*)`. It is bounded across the accept region and guarded by a configured ceiling checked *before* allocation, but a merchant with pools above roughly 1,000 candidates at `k = 3` sits near it: **{{ i .D.PeakEnvelopeMB }} MB** at the top of the measured envelope.
 
-Two memory figures appear in this repository and they measure different things. **119 MB** is the peak across the whole 498-settlement batch, whose narrowed pools run from 19 to 49 candidates. **714 MB** is the top of the resource envelope, which deliberately probes a 1,000-candidate pool that no merchant in the benchmark has. Neither figure is wrong. Quoting the first one as a ceiling would be.
+Two memory figures appear in this repository and they measure different things. **{{ i .S.PeakMemoryMB }} MB** is the peak across the whole {{ .S.Settlements }}-settlement batch, whose narrowed pools run from {{ .S.Pools.NarrowedMin }} to {{ .S.Pools.NarrowedMax }} candidates. **{{ i .D.PeakEnvelopeMB }} MB** is the top of the resource envelope, which deliberately probes a 1,000-candidate pool that no merchant in the benchmark has. Neither figure is wrong. Quoting the first one as a ceiling would be.
 
 ---
 
 ## No live model run at batch scale
 
-Every published figure comes from the deterministic offline path (`offline-stub`, parse=replay resolve=replay answer=replay). The live Anthropic path is implemented, schema-forced and cassette-recording, and it runs. What has not been done is a full 498-settlement batch against the live API.
+Every published figure comes from the deterministic offline path (`{{ .S.Provider }}`, {{ .S.ProviderModels }}). The live Anthropic path is implemented, schema-forced and cassette-recording, and it runs. What has not been done is a full {{ .S.Settlements }}-settlement batch against the live API.
 
 Two consequences, stated rather than glossed.
 
-**The cost figures are modelled, not billed.** Measured token counts priced at published rates. The direction of that error is known: the replay path reports no cache reads, so every input token is priced at the uncached rate, and a live run caching the byte-identical parse system block would come in under the 497 INR per thousand published here.
+**The cost figures are modelled, not billed.** Measured token counts priced at published rates. The direction of that error is known: the replay path reports no cache reads, so every input token is priced at the uncached rate, and a live run caching the byte-identical parse system block would come in under the {{ i .D.INRPer1k }} INR per thousand published here.
 
 **No delta is published for what a capable model buys over the stub.** The offline stub proposes from a fixed list in a fixed order. It cannot change whether a posting is correct, because the model is never asked whether it was right, and the eleven-case suite passing on it is a statement about the verifier rather than about the stub. But how many more exceptions a real model would clear is unmeasured, and putting a number on it would be exactly the class of unverified claim this document exists to prevent.
 
@@ -160,7 +160,7 @@ The pathology mix reflects documented Razorpay settlement mechanics: paise-denom
 
 **Real merchant data will contain things the generator does not model.** Every accuracy figure in this repository should be read as a statement about the system's behaviour on a distribution chosen to be plausible, not as a measurement of the Indian merchant base.
 
-The exception economics are modelled too. The 2,400 INR cost of unwinding one wrong posting is an assumption, printed wherever it is used so a reader can substitute their own, and the 112,221 INR held-queue total rests on a configured analyst handling time.
+The exception economics are modelled too. The {{ n .D.RemediationEachINR }} INR cost of unwinding one wrong posting is an assumption, printed wherever it is used so a reader can substitute their own, and the {{ n .D.ExceptionCostINR }} INR held-queue total rests on a configured analyst handling time.
 
 The archetype table is likewise modelled. The spread and twin-mass values come from configured ticket distributions chosen to be plausible for each merchant type. It describes how the estimator behaves across distribution shapes over stated assumptions. It is not market data and must not be presented as such.
 
@@ -178,4 +178,4 @@ Being able to name what was left out, why, and exactly which population it would
 
 ---
 
-*This document is generated from run `run_20260903_0358`, seed `20260826`, by `manhattan bench`. Its source is `docs/LIMITATIONS.tmpl.md`. No figure in it is typed by hand, so it cannot come to describe a run other than the one that produced [RESULTS.md](RESULTS.md) and [README.md](README.md).*
+*This document is generated from run `{{ .S.RunID }}`, seed `{{ .S.Seed }}`, by `manhattan bench`. Its source is `docs/LIMITATIONS.tmpl.md`. No figure in it is typed by hand, so it cannot come to describe a run other than the one that produced [RESULTS.md](RESULTS.md) and [README.md](README.md).*

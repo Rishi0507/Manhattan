@@ -11,7 +11,7 @@ git clone <this repo> && cd manhattan
 ./run.sh demo          # or:  .\run.ps1 demo    or:  make demo
 ```
 
-No API key required. **Every number in this file, in [RESULTS.md](RESULTS.md) and in [LIMITATIONS.md](LIMITATIONS.md) is emitted by that command.** None of the three is typed by hand; all three are rendered from the same run, in the same command, so they cannot drift apart. This one is generated from run `run_20260903_0358`, seed `20260826`.
+No API key required. **Every number in this file, in [RESULTS.md](RESULTS.md) and in [LIMITATIONS.md](LIMITATIONS.md) is emitted by that command.** None of the three is typed by hand; all three are rendered from the same run, in the same command, so they cannot drift apart. This one is generated from run `{{ .S.RunID }}`, seed `{{ .S.Seed }}`.
 
 ### Track compliance, stated first
 
@@ -19,11 +19,11 @@ The brief asks for one finance-ops loop closed across a batch of 50 or more synt
 
 | requirement | what this run did |
 |---|---|
-| 50+ record batch | **22,150 records** across **498 settlements**, pools reaching **3809 records** before narrowing and **49** after |
+| 50+ record batch | **{{ n .S.Pools.TotalRecords }} records** across **{{ .S.Settlements }} settlements**, pools reaching **{{ .S.Pools.RawMax }} records** before narrowing and **{{ .S.Pools.NarrowedMax }}** after |
 | one loop, closed | bank credit to posted ledger entry, or to a named exception, end to end |
-| match rate reported | **161 of 498** auto-posted, 32%, with **0 wrong** |
-| exceptions it could not resolve | **337**, each with a named cause, a computed remedy and a price. [The list is below.](#the-exception-list-is-the-deliverable) |
-| throughput | **97002 settlements per hour**, 13.4 ms median, peak 119 MB |
+| match rate reported | **{{ .S.AutoPosted }} of {{ .S.Settlements }}** auto-posted, {{ pct .D.PostRate }}, with **{{ .S.AutoPostedWrong }} wrong** |
+| exceptions it could not resolve | **{{ .S.Exceptions }}**, each with a named cause, a computed remedy and a price. [The list is below.](#the-exception-list-is-the-deliverable) |
+| throughput | **{{ i .S.PerHour }} settlements per hour**, {{ f1 .S.MedianLatencyMS }} ms median, peak {{ i .S.PeakMemoryMB }} MB |
 
 ---
 
@@ -59,100 +59,93 @@ Finding one subset that sums correctly is easy and nearly worthless: subsets gro
 
 ## The measured result
 
-498 settlements across 6 merchant archetypes. B0 is a deliberately competent confidence matcher given identical inputs and identical narrowing; it is what most tooling in this space reduces to once the marketing is removed.
+{{ .S.Settlements }} settlements across {{ len .S.ByArchetype }} merchant archetypes. B0 is a deliberately competent confidence matcher given identical inputs and identical narrowing; it is what most tooling in this space reduces to once the marketing is removed.
 
-| 498 settlements | Manhattan | B0 |
+| {{ .S.Settlements }} settlements | Manhattan | B0 |
 |---|---:|---:|
-| `VERIFIED` | **161** | |
-| `AMBIGUOUS` | 109 | |
-| `UNDERDETERMINED` | 208 | |
-| `NARROWING_SENSITIVE` | 3 | |
-| `UNRESOLVED` | 17 | 114 |
+| `VERIFIED` | **{{ .D.StatusVerified }}** | |
+| `AMBIGUOUS` | {{ .D.StatusAmbiguous }} | |
+| `UNDERDETERMINED` | {{ .D.StatusUnderdetermined }} | |
+| `NARROWING_SENSITIVE` | {{ .D.StatusNarrowing }} | |
+| `UNRESOLVED` | {{ .D.StatusUnresolved }} | {{ .S.B0Unresolved }} |
 | | | |
-| **auto-posted** | **161** (32%) | **384** (77%) |
-| **auto-posted WRONG** | **0** | **226** (59% of its postings) |
-| held for review | 337 | 114 |
-| median latency | 13.4 ms | 3.6 ms |
-| throughput | 97002 / hour | |
-| input tokens per 1k | 0.79 M | 1.58 M |
-| cost per 1k settlements | 497 INR | 959 INR |
+| **auto-posted** | **{{ .S.AutoPosted }}** ({{ pct .D.PostRate }}) | **{{ .S.B0Posted }}** ({{ pct .D.B0PostRate }}) |
+| **auto-posted WRONG** | **{{ .S.AutoPostedWrong }}** | **{{ .S.B0PostedWrong }}** ({{ pct .D.B0WrongOfPosted }} of its postings) |
+| held for review | {{ .S.Exceptions }} | {{ .S.B0Unresolved }} |
+| median latency | {{ f1 .S.MedianLatencyMS }} ms | {{ f1 .S.B0MedianMS }} ms |
+| throughput | {{ i .S.PerHour }} / hour | |
+| input tokens per 1k | {{ f2 (div .S.AxiomTokPer1k 1e6) }} M | {{ f2 (div .S.B0TokensPer1k 1e6) }} M |
+| cost per 1k settlements | {{ i .D.INRPer1k }} INR | {{ i .D.B0INRPer1k }} INR |
 
-The five statuses are above the headline on purpose. `AMBIGUOUS` at 109 and `UNDERDETERMINED` at 208 are real, sized populations rather than rhetoric: 317 settlements where rivals were found or proved to exist. A tool reporting those as matches is reporting a coin flip.
+The five statuses are above the headline on purpose. `AMBIGUOUS` at {{ .D.StatusAmbiguous }} and `UNDERDETERMINED` at {{ .D.StatusUnderdetermined }} are real, sized populations rather than rhetoric: {{ add .D.StatusAmbiguous .D.StatusUnderdetermined }} settlements where rivals were found or proved to exist. A tool reporting those as matches is reporting a coin flip.
 
-**Manhattan posts fewer, and that is an operating point rather than a concession.** B0's 384 postings contain 226 errors nobody can identify, so all 384 have to be checked and the coverage was worth nothing. 161 postings with 0 errors is 161 a finance team never touches.
+**Manhattan posts fewer, and that is an operating point rather than a concession.** B0's {{ .S.B0Posted }} postings contain {{ .S.B0PostedWrong }} errors nobody can identify, so all {{ .S.B0Posted }} have to be checked and the coverage was worth nothing. {{ .S.AutoPosted }} postings with {{ .S.AutoPostedWrong }} errors is {{ .S.AutoPosted }} a finance team never touches.
 
-**Throughput** is measured end to end: 498 settlements in 18.5 seconds of wall clock, including the agent loop, B0 running alongside, and receipt serialisation. That divides to 37.1 ms per settlement against a 13.4 ms median, and the gap is not an error: the median is *pipeline* time for one settlement, while wall clock also carries generation, the baseline, the agent's re-verification passes and I/O. Both are printed rather than the flattering one.
+**Throughput** is measured end to end: {{ .S.Settlements }} settlements in {{ f1 .S.WallClockS }} seconds of wall clock, including the agent loop, B0 running alongside, and receipt serialisation. That divides to {{ f1 .D.MsPerSettlement }} ms per settlement against a {{ f1 .S.MedianLatencyMS }} ms median, and the gap is not an error: the median is *pipeline* time for one settlement, while wall clock also carries generation, the baseline, the agent's re-verification passes and I/O. Both are printed rather than the flattering one.
 
 <details>
 <summary><b>The cost row, derived</b></summary>
 
-Priced at published `claude-opus-5` rates, `modelled: no model was billed on this run, so measured token counts are priced at what the live path would have cost`.
+Priced at published `{{ .S.Cost.Model }}` rates, `{{ if .S.PriceIsReal }}actual spend{{ else }}modelled: no model was billed on this run, so measured token counts are priced at what the live path would have cost{{ end }}`.
 
 | | |
 |---|---:|
-| input, uncached | 395,088 tok @ $5.00/Mtok |
-| input, cache reads | 0 tok @ $0.50/Mtok |
-| cache writes | 0 tok @ $6.25/Mtok |
-| output | 33,512 tok @ $25.00/Mtok |
-| model calls | 794 over 498 settlements |
-| cache hit rate | 0.0% |
-| USD to INR | 88 |
-| **Manhattan** | **$5.65 = 497 INR per 1k** |
-| **B0** | **$10.90 = 959 INR per 1k** |
+| input, uncached | {{ n .S.Cost.UncachedInput }} tok @ ${{ f2 .S.Cost.InputUSDPerMTok }}/Mtok |
+| input, cache reads | {{ n .S.Cost.CachedInput }} tok @ ${{ f2 .S.Cost.CacheReadUSD }}/Mtok |
+| cache writes | {{ n .S.Cost.CacheWrite }} tok @ ${{ f2 .S.Cost.CacheWriteUSD }}/Mtok |
+| output | {{ n .S.Cost.Output }} tok @ ${{ f2 .S.Cost.OutputUSDPerMTok }}/Mtok |
+| model calls | {{ n .S.Cost.Calls }} over {{ .S.Settlements }} settlements |
+| cache hit rate | {{ pct1 (mul .S.Cost.CacheHitRate 100) }} |
+| USD to INR | {{ i .S.Cost.USDToINR }} |
+| **Manhattan** | **${{ f2 .D.USDPer1k }} = {{ i .D.INRPer1k }} INR per 1k** |
+| **B0** | **${{ f2 .D.B0USDPer1k }} = {{ i .D.B0INRPer1k }} INR per 1k** |
 
-The cache hit rate is 0.0% because a replay run reports no cache reads, so every input token here is priced at the **uncached** rate. A live run caches the parse system block, byte-identical across every settlement, so the real figure is below the one published. The claim is made against Manhattan deliberately.
+The cache hit rate is {{ pct1 (mul .S.Cost.CacheHitRate 100) }} because a replay run reports no cache reads, so every input token here is priced at the **uncached** rate. A live run caches the parse system block, byte-identical across every settlement, so the real figure is below the one published. The claim is made against Manhattan deliberately.
 
-**B0's token model, since it decides the comparison.** 200 tokens of instruction plus 40 per candidate record, over a mean narrowed pool of 34.5, giving 1580 input tokens per settlement against Manhattan's 793. Forty tokens covers one candidate rendered as an id, an amount, a timestamp, an instrument and a kind.
+**B0's token model, since it decides the comparison.** {{ .S.Cost.B0Overhead }} tokens of instruction plus {{ .S.Cost.B0PerRecord }} per candidate record, over a mean narrowed pool of {{ f1 .S.Cost.B0MeanPoolN }}, giving {{ i .S.Cost.B0TokensPerCall }} input tokens per settlement against Manhattan's {{ i .D.InputPerSettl }}. Forty tokens covers one candidate rendered as an id, an amount, a timestamp, an instrument and a kind.
 
-That is low on purpose. **B0 is handed Manhattan's narrowing for free**, so it reads a few dozen records rather than the 3678.4 in the mean unnarrowed universe. Without that narrowing it would pay roughly 147335 tokens per settlement and the gap reported here would be several times wider. A cost advantage argued from a handicapped baseline is not an advantage.
+That is low on purpose. **B0 is handed Manhattan's narrowing for free**, so it reads a few dozen records rather than the {{ f1 .S.Pools.RawMean }} in the mean unnarrowed universe. Without that narrowing it would pay roughly {{ i .D.UnnarrowedTokens }} tokens per settlement and the gap reported here would be several times wider. A cost advantage argued from a handicapped baseline is not an advantage.
 
 </details>
 
 ### The baseline, published so it can be attacked
 
-226 wrong out of 384 posted is 59%, and nobody who has built a fuzzy matcher should accept that on assertion. So here is everything B0 scores on:
+{{ .S.B0PostedWrong }} wrong out of {{ .S.B0Posted }} posted is {{ pct .D.B0WrongOfPosted }}, and nobody who has built a fuzzy matcher should accept that on assertion. So here is everything B0 scores on:
 
-- exact integer hit on the target contribution sum (confidence 0.90)
-- near hit within 1 basis point of the target (0.72)
-- near hit within 1 per cent of the target (0.45)
-- no hit found within the node budget (0.15)
-- cardinality agrees with the settlement report's declared count (+0.05)
-
-It posts above a threshold of 0.80, the value such tools typically ship with. **[RESULTS.md](RESULTS.md#the-baseline-across-every-threshold) sweeps that threshold across the same 498 decisions.** Two points from it:
+{{ range .S.B0Features }}- {{ . }}
+{{ end }}
+It posts above a threshold of {{ f2 .D.B0Shipped.Threshold }}, the value such tools typically ship with. **[RESULTS.md](RESULTS.md#the-baseline-across-every-threshold) sweeps that threshold across the same {{ .S.Settlements }} decisions.** Two points from it:
 
 | | threshold | posted | wrong | precision | F1 |
 |---|---:|---:|---:|---:|---:|
-| shipped | 0.80 | 384 | 226 | 41% | 0.36 |
-| best F1, where a team tuning it would land | 0.95 | 289 | 143 | 51% | 0.37 |
+| shipped | {{ f2 .D.B0Shipped.Threshold }} | {{ .D.B0Shipped.Posted }} | {{ .D.B0Shipped.Wrong }} | {{ rate .D.B0Shipped.Precision }} | {{ f2 .D.B0Shipped.F1 }} |
+| best F1, where a team tuning it would land | {{ f2 .D.B0Best.Threshold }} | {{ .D.B0Best.Posted }} | {{ .D.B0Best.Wrong }} | {{ rate .D.B0Best.Precision }} | {{ f2 .D.B0Best.F1 }} |
 
-The curve is the argument, not the operating point. **Tuned to its own best F1, B0 still posts 143 wrong out of 289.** Its precision never exceeds 51% anywhere on the curve, because the confidence score measures *how good the match looks*, not *whether it is the only one*, and those come apart exactly where the money is. Raising the threshold does not find the rivals; it posts fewer things without knowing which.
+The curve is the argument, not the operating point. **Tuned to its own best F1, B0 still posts {{ .D.B0Best.Wrong }} wrong out of {{ .D.B0Best.Posted }}.** Its precision never exceeds {{ rate .D.B0Best.Precision }} anywhere on the curve, because the confidence score measures *how good the match looks*, not *whether it is the only one*, and those come apart exactly where the money is. Raising the threshold does not find the rivals; it posts fewer things without knowing which.
 
 And one number falls out of the sweep that settles the comparison:
 
-> **At no threshold does B0 produce more correct postings than Manhattan.** Its maximum is 158 right answers, at threshold 0.10, against Manhattan's 161. Every extra posting the baseline appears to offer is a wrong one, and it cannot tell you which.
+> **At no threshold does B0 produce more correct postings than Manhattan.** Its maximum is {{ .D.B0MaxRight }} right answers, at threshold {{ f2 .D.B0MaxRightAt }}, against Manhattan's {{ .S.AutoPosted }}. Every extra posting the baseline appears to offer is a wrong one, and it cannot tell you which.
 
-That is why Manhattan's 0 means something. The baseline is not trading accuracy for coverage; it has no more coverage of the truth to trade.
+That is why Manhattan's {{ .S.AutoPostedWrong }} means something. The baseline is not trading accuracy for coverage; it has no more coverage of the truth to trade.
 
 ### The rate is predictable before integration
 
 | merchant type | expected regime | spread sigma (paise) | twin mass | auto-post | wrong | B0 posts | B0 wrong |
 |---|---|---:|---:|---:|---:|---:|---:|
-| travel | wide ticket spread; amounts separate cleanly | 3.32e+06 | 0.00 | **77%** | 0 | 71% | 4% |
-| marketplace | amounts separate; a disputes feed is unjoined | 7.59e+05 | 0.00 | **48%** | 0 | 69% | 28% |
-| d2c_ecommerce | narrow spread; narrowing decides | 1.74e+05 | 0.00 | **47%** | 0 | 90% | 31% |
-| utility_billpay | repeated price points; entropy gate refuses | 4.29e+04 | 0.78 | **0%** | 0 | 75% | 73% |
-| subscription_saas | three price points; entropy gate refuses | 6.52e+04 | 0.95 | **0%** | 0 | 73% | 72% |
-| quick_commerce | tight spread; a disputes feed is unjoined | 1.89e+04 | 0.00 | **22%** | 0 | 84% | 64% |
+{{- range .S.ByArchetype }}
+| {{ .Archetype }} | {{ .ExpectedRegime }} | {{ f3g .MeanSigmaPaise }} | {{ f2 .MeanTwinMass }} | **{{ rate .AutoPostRate }}** | {{ .AutoPostedWrong }} | {{ rate .B0PostRate }} | {{ rate .B0WrongRate }} |
+{{- end }}
 
 Read the right-hand columns against the left. Where amounts genuinely fail to distinguish transactions, Manhattan's auto-post rate falls to zero and B0's wrong-posting rate climbs. Both systems see the same data. One reacts to it.
 
 This is also the commercial claim: one pass over a merchant's historical settlement amounts yields the spread and the twin mass, which yield the collision index, which yields the expected status mix, before any integration.
 
-**[RESULTS.md](RESULTS.md) carries the calibration that backs it**: the collision-index band table, the two-estimator comparison, and the full 96-configuration sweep. That section answers the track's measured-accuracy bar and is the thing separating this from a solver demo, because it says whether the system knows in advance when it is about to be wrong.
+**[RESULTS.md](RESULTS.md) carries the calibration that backs it**: the collision-index band table, the two-estimator comparison, and the full {{ len .Sweep }}-configuration sweep. That section answers the track's measured-accuracy bar and is the thing separating this from a solver demo, because it says whether the system knows in advance when it is about to be wrong.
 
 ### Two cross-checks nobody arranged
 
-Counters incremented in different packages, for different reasons, that agree anyway. `RESOLVED_BY_HYPOTHESIS` is **18** and the agent repaired **18** settlements, matching exactly as they must, since every repair carries that flag and nothing else sets it. `AMOUNT_ENTROPY_INSUFFICIENT` is **166**, exactly the 2 zero-auto-post archetypes at 83 settlements each. Free evidence that the instrumentation agrees with itself, and it would have caught a miscount in either direction.
+Counters incremented in different packages, for different reasons, that agree anyway. `RESOLVED_BY_HYPOTHESIS` is **{{ .D.HypothesisFlag }}** and the agent repaired **{{ .S.AgentRepaired }}** settlements{{ if .D.AgentRepairedCrossFlag }}, matching exactly as they must, since every repair carries that flag and nothing else sets it{{ else }}, which differ and is a defect being tracked{{ end }}. `AMOUNT_ENTROPY_INSUFFICIENT` is **{{ .D.EntropyFlag }}**, exactly the {{ .D.EntropyArchCount }} zero-auto-post archetypes at {{ .D.PerArchetype }} settlements each. Free evidence that the instrumentation agrees with itself, and it would have caught a miscount in either direction.
 
 ---
 
@@ -221,7 +214,7 @@ One property is easy to miss: **the gate runs before the solver, not after it.**
 | | |
 |---|---|
 | ![head to head](docs/screenshots/02-head-to-head.jpg) | **Head to head.** One credit, identical inputs to both systems. B0 proposes six records at 0.95 confidence and posts, and is wrong. Manhattan finds a witness, closes the identity to zero, then widens the pool and finds a rival, so it holds. |
-| ![calibration](docs/screenshots/03-calibration.jpg) | **Calibration.** Outcome mix against the collision index predicted *before* any search ran. Verified gives way to ambiguous and then to refusal as the index climbs, and the wrong-posting rate stays at zero across every band while B0's reaches 41%. |
+| ![calibration](docs/screenshots/03-calibration.jpg) | **Calibration.** Outcome mix against the collision index predicted *before* any search ran. Verified gives way to ambiguous and then to refusal as the index climbs, and the wrong-posting rate stays at zero across every band while B0's reaches {{ pct .D.TopBandB0Wrong }}. |
 | ![receipt](docs/screenshots/04-receipt.jpg) | **A receipt.** The full derivation for one settlement: the narrowing waterfall with a reason per dropped record, both collision-index estimators plotted against the refusal threshold, the witness, the completeness checks and the identity. |
 | ![mobile](docs/screenshots/05-mobile.png) | **At 390px.** Every view is usable on a phone. Wide tables scroll inside their own panel rather than compressing to nothing. |
 
@@ -243,12 +236,11 @@ Flags are **orthogonal** to status: a settlement can be `VERIFIED` and carry `FE
 
 | flag | settlements |
 |---|---:|
-| `SIGNED_ITEMS_PRESENT` | 222 |
-| `AMOUNT_ENTROPY_INSUFFICIENT` | 166 |
-| `LATTICE_CORRECTED` | 68 |
-| `RESOLVED_BY_HYPOTHESIS` | 18 |
+{{- range .D.FlagRows }}
+| `{{ .Flag }}` | {{ .Count }} |
+{{- end }}
 
-
+{{ if not .D.TwinSwapInCases }}`TWIN_SWAP` does not appear in this batch and does in adversarial case 5, which is not a contradiction: the batch generator draws merchant amount distributions that rarely produce an exact twin *inside a witness*, while case 5 constructs one deliberately. A flag absent from a run is not a flag that cannot fire, which is why the case suite exists separately from the batch.{{ end }}
 
 ---
 
@@ -265,19 +257,19 @@ The track asks for an agent. What distinguishes this one is not that a model is 
 The counts do not read as a partition and a reader who tries will conclude something is broken, so here they are in the order they happen:
 
 ```
-355  settlements entered the loop as unresolved
-203  settled by deterministic triage, with no model call        (57%)
-152  reached the agent                                          (43%)
-296  actions taken
- 18  repaired into a posting, each citing a real record
-  5  given a proven cure: verified remedy, deliberately not posted
-337  remain held for review
-  0  wrong postings caused
+{{ .D.ExceptionsEntered }}  settlements entered the loop as unresolved
+{{ printf "%3d" .S.AgentSkipped }}  settled by deterministic triage, with no model call        ({{ pct .D.TriagePct }})
+{{ printf "%3d" .S.AgentInvoked }}  reached the agent                                          ({{ pct .D.AgentPct }})
+{{ printf "%3d" .S.AgentSteps }}  actions taken
+{{ printf "%3d" .S.AgentRepaired }}  repaired into a posting, each citing a real record
+{{ printf "%3d" .S.AgentProvenCures }}  given a proven cure: verified remedy, deliberately not posted
+{{ printf "%3d" .S.Exceptions }}  remain held for review
+  {{ printf "%d" .S.AutoPostedWrong }}  wrong postings caused
 ```
 
-355 in, 18 out as postings, 337 held. That is where the missing 18 went.
+{{ .D.ExceptionsEntered }} in, {{ .S.AgentRepaired }} out as postings, {{ .S.Exceptions }} held. That is where the missing {{ .S.AgentRepaired }} went.
 
-**57% of the queue is settled without a model call at all**, because a cheap deterministic check establishes that no action in the vocabulary could change the outcome: the amounts do not distinguish the transactions, or a rival already appears when the pool is widened, or there is nothing left to search or tighten. Paying a model to conclude that nothing can help, across most of a queue, is the same mistake as paying it to add up a column.
+**{{ pct .D.TriagePct }} of the queue is settled without a model call at all**, because a cheap deterministic check establishes that no action in the vocabulary could change the outcome: the amounts do not distinguish the transactions, or a rival already appears when the pool is widened, or there is nothing left to search or tighten. Paying a model to conclude that nothing can help, across most of a queue, is the same mistake as paying it to add up a column.
 
 ### The action space is closed
 
@@ -299,7 +291,7 @@ So narrowing actions are assertions about a merchant's settlement behaviour, and
 
 ### The loop closed, end to end
 
-This is adversarial case 9 and it is what the 18 repairs look like. A chargeback exists in a disputes feed nobody wired into the candidate pool, so nothing reconstructs the credit.
+This is adversarial case 9 and it is what the {{ .S.AgentRepaired }} repairs look like. A chargeback exists in a disputes feed nobody wired into the candidate pool, so nothing reconstructs the credit.
 
 The verifier searches under `k(S)` at most 7 and finds nothing, with the nearest achievable sum 1038851 paise away. It hands the agent the exact residual, its sign and its cardinality. The agent answers `CHARGEBACK_DEBIT, add_item`, typed, from a closed vocabulary. The verifier searches the unjoined feed itself, finds `cbk_000223`, applies it, and re-runs the entire stack unmodified. It closes exactly and uniquely, and the hypothesis cites a real record, so it posts as `VERIFIED / RESOLVED_BY_HYPOTHESIS / cites cbk_000223`.
 
@@ -307,7 +299,7 @@ The division of labour is the point. The agent contributes the judgement about *
 
 The eleven-case suite passes on a deliberately unintelligent offline stub proposing from a fixed list in a fixed order. The quality of the proposer changes how often an exception clears; it cannot change whether a posting is correct.
 
-**Adversarial cases: 11 of 11 expectations met, Manhattan wrong postings 0, B0 wrong postings 2.** Full table in [RESULTS.md](RESULTS.md).
+**Adversarial cases: {{ .D.AdversarialMet }} of {{ .D.AdversarialTotal }} expectations met, Manhattan wrong postings {{ .D.CasesManhattanWrong }}, B0 wrong postings {{ .D.AdversarialB0Wrong }}.** Full table in [RESULTS.md](RESULTS.md).
 
 ---
 
@@ -315,30 +307,27 @@ The eleven-case suite passes on a deliberately unintelligent offline stub propos
 
 Most systems treat the exception list as an apology. Every entry here carries a status distinguishing *two answers exist and here they both are* from *ten million answers exist* from *a filter decided this*; a named cause traceable to a specific gate, constraint or residual; a **computed** remediation; and a price. Which means the queue can be sorted by cost and worked in the order that clears the most money per hour.
 
-The head of the queue, sorted by cost, as an operations lead would work it. **[The full top 15 is in RESULTS.md](RESULTS.md#the-exception-queue); all 337 are in `out/receipts.ndjson`.**
+The head of the queue, sorted by cost, as an operations lead would work it. **[The full top {{ len .S.TopExceptions }} is in RESULTS.md](RESULTS.md#the-exception-queue); all {{ .S.Exceptions }} are in `out/receipts.ndjson`.**
 
 | settlement | merchant | status | cost | cause | computed remedy |
 |---|---|---|---:|---|---|
-| `bank_credit_2026_08_02_1000` | quick_commerce | `UNDERDETERMINED` | 333 | the pool holds 17 distinct contribution values across 38... | supply the settlement reference |
-| `bank_credit_2026_08_03_1000` | subscription_saas | `UNDERDETERMINED` | 333 | the pool holds 6 distinct contribution values across 48... | supply the settlement reference |
-| `bank_credit_2026_08_03_1001` | quick_commerce | `UNDERDETERMINED` | 333 | the pool holds 18 distinct contribution values across 48... | supply the settlement reference |
-| `bank_credit_2026_08_03_1001` | quick_commerce | `UNDERDETERMINED` | 333 | this batch is claimed to be 7 records of a 45-record... | supply the settlement reference, or the... |
-| `bank_credit_2026_08_04_1001` | subscription_saas | `UNRESOLVED` | 333 | a completeness guard failed: the report declares 9... | none available |
-| `bank_credit_2026_08_04_1001` | subscription_saas | `AMBIGUOUS` | 333 | 2 distinct reconstructions of this credit exist within... | none available |
+{{- range first 6 .S.TopExceptions }}
+| `{{ .Ref }}` | {{ .Archetype }} | `{{ .Status }}` | {{ .CostINR }} | {{ clip .Cause 58 }} | {{ if .Remediation }}{{ clip .Remediation 48 }}{{ else }}none available{{ end }} |
+{{- end }}
 
 ### What refusing is worth
 
 | | |
 |---|---:|
-| the whole held queue, at configured analyst handling time | **112,221 INR** |
-| B0's 226 wrong postings, at 2,400 INR each to unwind | **542,400 INR** |
-| difference | **430,179 INR in Manhattan's favour, per 498 settlements** |
+| the whole held queue, at configured analyst handling time | **{{ n .D.ExceptionCostINR }} INR** |
+| B0's {{ .S.B0PostedWrong }} wrong postings, at {{ n .D.RemediationEachINR }} INR each to unwind | **{{ n .D.WrongPostingCostINR }} INR** |
+| difference | **{{ n .D.NetINR }} INR in Manhattan's favour, per {{ .S.Settlements }} settlements** |
 
-The 2,400 INR is an assumption, printed so it can be replaced. It is roughly two hours of a mid-level finance analyst at Indian metro rates: noticing the error, usually at month end and from a reconciliation difference rather than from the posting itself; finding which credit it belonged to; reversing the journal; re-posting; explaining the movement to whoever signs the accounts. It excludes any case that reaches an auditor.
+The {{ n .D.RemediationEachINR }} INR is an assumption, printed so it can be replaced. It is roughly two hours of a mid-level finance analyst at Indian metro rates: noticing the error, usually at month end and from a reconciliation difference rather than from the posting itself; finding which credit it belonged to; reversing the journal; re-posting; explaining the movement to whoever signs the accounts. It excludes any case that reaches an auditor.
 
-Substitute your own figure; the arithmetic is one multiplication. The conclusion survives a wide range, because B0 only comes out ahead if unwinding a wrong posting costs under 497 INR, which is well under an hour of analyst time for an error nobody knows about yet.
+Substitute your own figure; the arithmetic is one multiplication. The conclusion survives a wide range, because B0 only comes out ahead if unwinding a wrong posting costs under {{ i .D.BreakEvenINR }} INR, which is well under an hour of analyst time for an error nobody knows about yet.
 
-So 32% is not a philosophical position. It is the cheaper one.
+So {{ pct .D.PostRate }} is not a philosophical position. It is the cheaper one.
 
 ---
 
@@ -346,49 +335,14 @@ So 32% is not a philosophical position. It is the cheaper one.
 
 The receipt store is queryable, and the Q&A agent answers only from stored evidence. Three exchanges from this run, verbatim:
 
-
-> **Q. which constraint dropped the most records?**
+{{ range .D.QATranscript }}
+> **Q. {{ .Question }}**
 >
-> outside the value-date window removed the most, at 1,413,512 records across 498 settlements, which is 77.2% of everything narrowing looked at.
-> 
-> The full breakdown:
->   outside the value-date window       1,413,512  (77.2%)
->   a different merchant                  245,680  (13.4%)
->   already posted in a prior cycle       155,625  (8.5%)
->   nets to exactly zero                       52  (0.0%)
-> 
-> This matters more than it...
+{{ indent "> " (clip .Answer 420) }}
 >
-> `deterministic, no model call`
-> `aggregated across the store · narrowing.dropped.outside_settlement_window = 1,413,512`
-> `aggregated across the store · narrowing.dropped.mid_mismatch = 245,680`
-
-> **Q. what is the backlog costing us?**
->
-> The queue holds 337 settlements worth ₹75,53,147.36, and clearing it costs about INR 112,221 at the configured analyst handling time.
-> 
-> By cause, most expensive first:
->   UNDERDETERMINED         208 settlements   INR   69,264
->   AMBIGUOUS               109 settlements   INR   36,297
->   UNRESOLVED               17 settlements   INR    5,661
->   NARROWING_SENSITIVE       3 settlements   INR      999
-> 
-> Every row carries a...
->
-> `deterministic, no model call`
-> `aggregated across the store · exception_cost_inr = 112,221`
-
-> **Q. which analyst approved settlement 5502?**
->
-> The receipts do not record this and I will not infer it.
-> 
-> There is no approval, reviewer or assignee field on a receipt, because there is no human step in this pipeline to record. A settlement is decided by an integer identity and an exhaustive uniqueness count, and the receipt carries the evidence for that decision rather than a person's name.
-> 
-> What a receipt does record, and what I can answer from: the status and...
->
-> `deterministic, no model call`
-> `schema · no approval, reviewer or assignee field exists`
-
+> `{{ .Path }}`{{ range first 2 .Citations }}
+> `{{ . }}`{{ end }}
+{{ end }}
 The third is why any of them are shown. **An agent that answers every question is not grounded in anything.** The receipts record what the system decided and why. They do not record who approved anything, because no human approval step exists in this pipeline, so declining is the correct answer and it is the whole thesis in one exchange.
 
 ---
@@ -409,7 +363,7 @@ The model reads unstructured bank narrations, names the class of event behind a 
 
 Structured output uses **strict forced tool use**: the schema is the only tool, `additionalProperties` is closed, every field is required, and the model must call it. Three providers ship: the live Anthropic API when `ANTHROPIC_API_KEY` is set, recording to a cassette; cassette replay with no network, byte for byte; and a deterministic offline stub when neither is available.
 
-**This run used `offline-stub` (parse=replay resolve=replay answer=replay).** Live-path parity is not yet demonstrated at batch scale; see [LIMITATIONS.md](LIMITATIONS.md#no-live-model-run-at-batch-scale). To run it:
+**This run used `{{ .S.Provider }}` ({{ .S.ProviderModels }}).** Live-path parity is not yet demonstrated at batch scale; see [LIMITATIONS.md](LIMITATIONS.md#no-live-model-run-at-batch-scale). To run it:
 
 ```bash
 export ANTHROPIC_API_KEY=sk-ant-...

@@ -1,0 +1,4284 @@
+[
+  {
+    "case": {
+      "Number": 1,
+      "Name": "clean_positive_only",
+      "Scenario": "50 candidates, no signed items, a five-record batch",
+      "ExpectB0": "posts, correct",
+      "ExpectAxiom": "VERIFIED",
+      "Why": "the base case; it should look boring, and a system that cannot do this is not worth discussing",
+      "Spec": {
+        "Seed": 1001,
+        "Archetype": "travel",
+        "Settlements": 6,
+        "BatchSize": 5,
+        "BatchJitter": 0,
+        "PoolJitter": 0,
+        "PoolTarget": 40,
+        "ChargebackRate": 0,
+        "RefundRate": 0,
+        "FullRefundShare": 0.25,
+        "AdjustmentRate": 0.02,
+        "Mode": "report_present_mapping_withheld",
+        "DeclareTxnCount": true,
+        "JoinDisputes": true,
+        "FeeDriftBps": 0,
+        "Policy": {
+          "version": "fees_2026_08",
+          "mdr_bps_by_instrument": {
+            "card": 200,
+            "emi": 265,
+            "netbanking": 190,
+            "upi": 0,
+            "wallet": 210
+          },
+          "gst_bps": 1800,
+          "fee_rounding": "half_up",
+          "tax_rounding": "half_up",
+          "refund_returns_mdr": false,
+          "dispute_fee_paise": 2500,
+          "fee_band_bps": 2
+        },
+        "Start": "2026-08-20T00:00:00Z",
+        "Pathology": "clean"
+      },
+      "WindowHours": 0,
+      "InferredRounding": false,
+      "GateScope": false
+    },
+    "status": "VERIFIED",
+    "flags": [],
+    "posted": true,
+    "posted_wrong": false,
+    "pool_n": 40,
+    "k_star": 12,
+    "collision_index": 6.993192879457462,
+    "latency_ms": 17,
+    "receipt": {
+      "settlement_ref": "bank_credit_2026_08_25_1003",
+      "run_id": "case_01_clean_positive_only",
+      "merchant_id": "mid_travel",
+      "merchant_name": "Meridian Travel Pvt Ltd",
+      "merchant_archetype": "travel",
+      "status": "VERIFIED",
+      "flags": [],
+      "data_mode": "report_present_mapping_withheld",
+      "narration": "UPI/CREDIT/360482/RAZORPAY/SETTLE/NA",
+      "target_paise": 12130539,
+      "value_date": "2026-08-25",
+      "pool": {
+        "n": 40,
+        "contribution_sigma_paise": 3057264.0251185037,
+        "signed_items": 0,
+        "total_contribution_paise": 169755257
+      },
+      "amount_entropy": {
+        "distinct_contribution_values": 40,
+        "twin_class_count": 0,
+        "twin_mass": 0,
+        "twin_mass_threshold": 0.3,
+        "lattice_gcd_paise": 1,
+        "pass": true
+      },
+      "feasibility": {
+        "n": 40,
+        "contribution_sigma_paise": 3057264.0251185037,
+        "lattice_gcd_paise": 1,
+        "k_star": 12,
+        "collision_index_at_k_star": 6.993192879457462,
+        "collision_index_estimator": "empirical_subset_sampling",
+        "collision_index_analytic_at_k_star": 210.45234949013528,
+        "cumulative_index_at_k_star": 19.306652381730274,
+        "threshold_underdetermined": 10,
+        "lattice_correction_applied": false,
+        "decision": "enumerate",
+        "declared_txn_count": 5,
+        "implied_free_cardinality": 5,
+        "collision_index_at_implied": 0.017508873029399234,
+        "predicted_entries": 1821192,
+        "predicted_bytes": 32781456,
+        "memory_ceiling_bytes": 1073741824,
+        "curve": [
+          {
+            "k": 1,
+            "subsets": 40,
+            "collision_index": 6.385979412323483e-7,
+            "collision_index_analytic": 0.000005219598662382052
+          },
+          {
+            "k": 2,
+            "subsets": 780,
+            "collision_index": 0.000048854991007035856,
+            "collision_index_analytic": 0.00007197086538023034
+          },
+          {
+            "k": 3,
+            "subsets": 9880,
+            "collision_index": 0.0006794358681151134,
+            "collision_index_analytic": 0.0007443435631186578
+          },
+          {
+            "k": 4,
+            "subsets": 91390,
+            "collision_index": 0.006391524934864873,
+            "collision_index_analytic": 0.005962739021938696
+          },
+          {
+            "k": 5,
+            "subsets": 658008,
+            "collision_index": 0.017508873029399234,
+            "collision_index_analytic": 0.038399298581219134
+          },
+          {
+            "k": 6,
+            "subsets": 3838380,
+            "collision_index": 0.04032934575134466,
+            "collision_index_analytic": 0.20447935302384568
+          },
+          {
+            "k": 7,
+            "subsets": 18643560,
+            "collision_index": 0.10890689323198137,
+            "collision_index_analytic": 0.9195110329443946
+          },
+          {
+            "k": 8,
+            "subsets": 76904685,
+            "collision_index": 0.45106099586299214,
+            "collision_index_analytic": 3.5480107251564226
+          },
+          {
+            "k": 9,
+            "subsets": 273438880,
+            "collision_index": 1.0284863774212782,
+            "collision_index_analytic": 11.893676769093718
+          },
+          {
+            "k": 10,
+            "subsets": 847660528,
+            "collision_index": 5.838962483895548,
+            "collision_index_analytic": 34.97833076007688
+          },
+          {
+            "k": 11,
+            "subsets": 2311801440,
+            "collision_index": 4.821084078688343,
+            "collision_index_analytic": 90.95599040179542
+          },
+          {
+            "k": 12,
+            "subsets": 5586853480,
+            "collision_index": 6.993192879457462,
+            "collision_index_analytic": 210.45234949013528
+          }
+        ],
+        "note": "contested band: an estimated 19.31 subsets hit this target across the searched region, so an ambiguous outcome is a normal and correct result here"
+      },
+      "solver": {
+        "method": "cardinality_restricted_meet_in_the_middle",
+        "k_max": 5,
+        "k_max_source": "declared_txn_count",
+        "split": [
+          20,
+          20
+        ],
+        "entries_left": 21700,
+        "entries_right": 21700,
+        "entry_encoding": "int64 sum + uint32 colex rank, 12 bytes",
+        "memory_bytes": 706848,
+        "memory_ceiling_bytes": 1073741824,
+        "probed_targets": [
+          "T",
+          "pool_total_minus_T"
+        ],
+        "solve_side": "witness",
+        "dedup_applied": false,
+        "dedup_removed": 0,
+        "nearest_miss": {
+          "nearest_sum_paise": 12130501,
+          "gap_paise": 38,
+          "cardinality": 5,
+          "valid": true
+        }
+      },
+      "uniqueness": {
+        "method": "exhaustive_enumeration_count",
+        "scope": "all subsets with k(S) \u003c= 5",
+        "scope_source": "declared_txn_count",
+        "scope_note": "the region was bounded by the report's declared transaction count, not by the gate; the gate would have searched k(S) \u003c= 12, where an estimated 19.31 subsets hit this target",
+        "k_max_if_gate_derived": 12,
+        "scope_complete": true,
+        "matches_found": 1,
+        "rivals_found": 0,
+        "counted_after_dedup": false,
+        "count_saturated": false,
+        "alternative_witnesses": null,
+        "cumulative_index_in_searched_region": 0.02462932742132749
+      },
+      "witness": [
+        "pay_000289",
+        "pay_000291",
+        "pay_000293",
+        "pay_000295",
+        "pay_000297"
+      ],
+      "witness_size": 5,
+      "accounting": {
+        "gross_paise": 12417463,
+        "mdr_paise": 243156,
+        "gst_on_mdr_paise": 43768,
+        "refunds_paise": 0,
+        "chargebacks_paise": 0,
+        "adjustments_paise": 0,
+        "reconstructed_paise": 12130539,
+        "target_paise": 12130539,
+        "residual_paise": 0,
+        "slack_allowed_paise": 0,
+        "slack_consumed_paise": 0,
+        "closes": true,
+        "negative_items": 0
+      },
+      "rounding": {
+        "mode": "declared",
+        "tolerance_paise": 0,
+        "band_basis": "cardinality",
+        "slack_allowed_paise": 0,
+        "slack_consumed_paise": 0
+      },
+      "narrowing": {
+        "pool_before": 288,
+        "pool_after": 40,
+        "dropped": {
+          "already_reconciled": 18,
+          "mid_mismatch": 30,
+          "outside_settlement_window": 200
+        },
+        "window_hours": 14,
+        "constraints_applied": [
+          "mid_mismatch",
+          "currency_mismatch",
+          "outside_settlement_window",
+          "already_reconciled",
+          "zero_net_contribution"
+        ],
+        "neighbourhood_probe": {
+          "method": "witness_neighbourhood_join",
+          "stable": true,
+          "max_substitution_depth": 2,
+          "requested_substitution_depth": 2,
+          "removal_sums_enumerated": 16,
+          "addition_sums_enumerated": 7022,
+          "widened_pool_n": 123,
+          "original_pool_n": 10,
+          "constraints_tested": [
+            "outside_settlement_window",
+            "payment_method_mismatch",
+            "already_reconciled",
+            "currency_mismatch"
+          ],
+          "expected_spurious_collisions": 0.006689745621221191,
+          "inconclusive": false,
+          "note": "no alternative reconstruction exists at substitution depth 2 over a pool widened to 123 records (an estimated 0.00669 chance collisions would have been tolerable here)"
+        },
+        "completeness_checks": [
+          {
+            "name": "cardinality_cross_check",
+            "state": "pass",
+            "detail": "declared 5, witness 5; note the search scope was itself bounded by this count, so the check is weakened though not void"
+          },
+          {
+            "name": "gross_ratio_sanity",
+            "state": "pass",
+            "detail": "fees deviate from policy by 0 bps against 0 bps across the pool, within the 27 bps band (instrument mix is normalised out, so this compares pricing rather than composition)"
+          },
+          {
+            "name": "feed_completeness",
+            "state": "pass",
+            "detail": "every source known to this run was joined into the candidate pool"
+          }
+        ]
+      },
+      "fee_check": {
+        "mode": "observed",
+        "circular": false,
+        "expected_mdr_paise": 243156,
+        "observed_mdr_paise": 243156,
+        "delta_bps": 0,
+        "band_bps": 2,
+        "rounding_component_bps": 0,
+        "within_band": true,
+        "claim": "observed effective rate is within 0 bps of policy (band 2 bps)"
+      },
+      "agent": {
+        "invoked": false
+      },
+      "claim": "this credit is reconstructed exactly by 5 records, and that reconstruction is unique among all subsets with k(S) \u003c= 5",
+      "cost": {
+        "model_calls": 0,
+        "input_tokens": 0,
+        "output_tokens": 0,
+        "inr_micros": 0
+      },
+      "timing_ms": {
+        "entropy_gate": 0,
+        "feasibility": 7,
+        "fee_check": 0,
+        "narrow": 0,
+        "prove": 2,
+        "reconstruct": 6
+      },
+      "policy_version": "fees_2026_08",
+      "replay_seed": 1001
+    },
+    "b0_posted": true,
+    "b0_posted_wrong": false,
+    "b0_confidence": 0.9500000000000001,
+    "b0_proposed": [
+      "pay_000289",
+      "pay_000291",
+      "pay_000293",
+      "pay_000295",
+      "pay_000297"
+    ],
+    "b0_tokens_in": 1800,
+    "expectation_met": true
+  },
+  {
+    "case": {
+      "Number": 2,
+      "Name": "signed_items",
+      "Scenario": "the batch contains a chargeback debit and a fully refunded payment",
+      "ExpectB0": "posts, often wrong",
+      "ExpectAxiom": "VERIFIED with SIGNED_ITEMS_PRESENT",
+      "Why": "sign is accountingly essential and computationally a non-event; nothing in the solver special-cases it",
+      "Spec": {
+        "Seed": 1002,
+        "Archetype": "travel",
+        "Settlements": 6,
+        "BatchSize": 6,
+        "BatchJitter": 0,
+        "PoolJitter": 0,
+        "PoolTarget": 24,
+        "ChargebackRate": 1,
+        "RefundRate": 0.4,
+        "FullRefundShare": 0.8,
+        "AdjustmentRate": 0.02,
+        "Mode": "report_present_mapping_withheld",
+        "DeclareTxnCount": true,
+        "JoinDisputes": true,
+        "FeeDriftBps": 0,
+        "Policy": {
+          "version": "fees_2026_08",
+          "mdr_bps_by_instrument": {
+            "card": 200,
+            "emi": 265,
+            "netbanking": 190,
+            "upi": 0,
+            "wallet": 210
+          },
+          "gst_bps": 1800,
+          "fee_rounding": "half_up",
+          "tax_rounding": "half_up",
+          "refund_returns_mdr": false,
+          "dispute_fee_paise": 2500,
+          "fee_band_bps": 2
+        },
+        "Start": "2026-08-20T00:00:00Z",
+        "Pathology": "signed_items"
+      },
+      "WindowHours": 0,
+      "InferredRounding": false,
+      "GateScope": false
+    },
+    "status": "VERIFIED",
+    "flags": [
+      "SIGNED_ITEMS_PRESENT"
+    ],
+    "posted": true,
+    "posted_wrong": false,
+    "pool_n": 24,
+    "k_star": 12,
+    "collision_index": 0.009569086072731547,
+    "latency_ms": 12,
+    "receipt": {
+      "settlement_ref": "bank_credit_2026_08_25_1003",
+      "run_id": "case_02_signed_items",
+      "merchant_id": "mid_travel",
+      "merchant_name": "Meridian Travel Pvt Ltd",
+      "merchant_archetype": "travel",
+      "status": "VERIFIED",
+      "flags": [
+        "SIGNED_ITEMS_PRESENT"
+      ],
+      "data_mode": "report_present_mapping_withheld",
+      "narration": "UPI/CREDIT/442864/RAZORPAY/SETTLE/NA",
+      "target_paise": 4263913,
+      "value_date": "2026-08-25",
+      "pool": {
+        "n": 24,
+        "contribution_sigma_paise": 3595739.211076805,
+        "signed_items": 2,
+        "total_contribution_paise": 109725094
+      },
+      "amount_entropy": {
+        "distinct_contribution_values": 24,
+        "twin_class_count": 0,
+        "twin_mass": 0,
+        "twin_mass_threshold": 0.3,
+        "lattice_gcd_paise": 1,
+        "pass": true
+      },
+      "feasibility": {
+        "n": 24,
+        "contribution_sigma_paise": 3595739.211076805,
+        "lattice_gcd_paise": 1,
+        "k_star": 12,
+        "collision_index_at_k_star": 0.009569086072731547,
+        "collision_index_estimator": "empirical_subset_sampling",
+        "collision_index_analytic_at_k_star": 0.08660899492560119,
+        "cumulative_index_at_k_star": 0.04152148675996855,
+        "threshold_underdetermined": 10,
+        "lattice_correction_applied": false,
+        "decision": "enumerate",
+        "declared_txn_count": 7,
+        "implied_free_cardinality": 7,
+        "collision_index_at_implied": 0.0021722510150139116,
+        "predicted_entries": 8192,
+        "predicted_bytes": 147456,
+        "memory_ceiling_bytes": 1073741824,
+        "curve": [
+          {
+            "k": 1,
+            "subsets": 24,
+            "collision_index": 0.000004090674517650874,
+            "collision_index_analytic": 0.0000026627667268358724
+          },
+          {
+            "k": 2,
+            "subsets": 276,
+            "collision_index": 0.000020627669108918314,
+            "collision_index_analytic": 0.000021652894706530853
+          },
+          {
+            "k": 3,
+            "subsets": 2024,
+            "collision_index": 0.0000498995859297322,
+            "collision_index_analytic": 0.0001296497729638503
+          },
+          {
+            "k": 4,
+            "subsets": 10626,
+            "collision_index": 0.00012532978113946318,
+            "collision_index_analytic": 0.0005894699841532912
+          },
+          {
+            "k": 5,
+            "subsets": 42504,
+            "collision_index": 0.0001399900144664185,
+            "collision_index_analytic": 0.0021089519284199724
+          },
+          {
+            "k": 6,
+            "subsets": 134596,
+            "collision_index": 0.000666387304236983,
+            "collision_index_analytic": 0.006096469537195319
+          },
+          {
+            "k": 7,
+            "subsets": 346104,
+            "collision_index": 0.0021722510150139116,
+            "collision_index_analytic": 0.014513744661908119
+          },
+          {
+            "k": 8,
+            "subsets": 735471,
+            "collision_index": 0.0060963280665754,
+            "collision_index_analytic": 0.028849775584614046
+          },
+          {
+            "k": 9,
+            "subsets": 1307504,
+            "collision_index": 0.0017239073409252015,
+            "collision_index_analytic": 0.04835525203340014
+          },
+          {
+            "k": 10,
+            "subsets": 1961256,
+            "collision_index": 0.0022316972498845566,
+            "collision_index_analytic": 0.06881072996566479
+          },
+          {
+            "k": 11,
+            "subsets": 2496144,
+            "collision_index": 0.018721891985438766,
+            "collision_index_analytic": 0.08350167224119892
+          },
+          {
+            "k": 12,
+            "subsets": 2704156,
+            "collision_index": 0.009569086072731547,
+            "collision_index_analytic": 0.08660899492560119
+          }
+        ],
+        "note": "uniqueness very likely at this scope"
+      },
+      "solver": {
+        "method": "cardinality_restricted_meet_in_the_middle",
+        "k_max": 7,
+        "k_max_source": "declared_txn_count",
+        "split": [
+          12,
+          12
+        ],
+        "entries_left": 3302,
+        "entries_right": 3302,
+        "entry_encoding": "int64 sum + uint32 colex rank, 12 bytes",
+        "memory_bytes": 90336,
+        "memory_ceiling_bytes": 1073741824,
+        "probed_targets": [
+          "T",
+          "pool_total_minus_T"
+        ],
+        "solve_side": "witness",
+        "dedup_applied": false,
+        "dedup_removed": 0,
+        "nearest_miss": {
+          "nearest_sum_paise": 4264771,
+          "gap_paise": 858,
+          "cardinality": 5,
+          "valid": true
+        }
+      },
+      "uniqueness": {
+        "method": "exhaustive_enumeration_count",
+        "scope": "all subsets with k(S) \u003c= 7",
+        "scope_source": "declared_txn_count",
+        "scope_note": "the region was bounded by the report's declared transaction count, not by the gate; the gate would have searched k(S) \u003c= 12, where an estimated 0.04 subsets hit this target",
+        "k_max_if_gate_derived": 12,
+        "scope_complete": true,
+        "matches_found": 1,
+        "rivals_found": 0,
+        "counted_after_dedup": false,
+        "count_saturated": false,
+        "alternative_witnesses": null,
+        "cumulative_index_in_searched_region": 0.0031785760444130776
+      },
+      "witness": [
+        "cbk_000238",
+        "pay_000223",
+        "pay_000225",
+        "pay_000227",
+        "pay_000229",
+        "pay_000232"
+      ],
+      "witness_size": 6,
+      "negative_members": [
+        "cbk_000238",
+        "pay_000232"
+      ],
+      "accounting": {
+        "gross_paise": 10439622,
+        "mdr_paise": 149159,
+        "gst_on_mdr_paise": 26849,
+        "refunds_paise": 2992003,
+        "chargebacks_paise": 3007698,
+        "adjustments_paise": 0,
+        "reconstructed_paise": 4263913,
+        "target_paise": 4263913,
+        "residual_paise": 0,
+        "slack_allowed_paise": 0,
+        "slack_consumed_paise": 0,
+        "closes": true,
+        "negative_items": 2
+      },
+      "rounding": {
+        "mode": "declared",
+        "tolerance_paise": 0,
+        "band_basis": "cardinality",
+        "slack_allowed_paise": 0,
+        "slack_consumed_paise": 0
+      },
+      "narrowing": {
+        "pool_before": 210,
+        "pool_after": 24,
+        "dropped": {
+          "already_reconciled": 24,
+          "mid_mismatch": 36,
+          "outside_settlement_window": 125,
+          "zero_net_contribution": 1
+        },
+        "window_hours": 14,
+        "constraints_applied": [
+          "mid_mismatch",
+          "currency_mismatch",
+          "outside_settlement_window",
+          "already_reconciled",
+          "zero_net_contribution"
+        ],
+        "neighbourhood_probe": {
+          "method": "witness_neighbourhood_join",
+          "stable": true,
+          "max_substitution_depth": 2,
+          "requested_substitution_depth": 2,
+          "removal_sums_enumerated": 22,
+          "addition_sums_enumerated": 2629,
+          "widened_pool_n": 78,
+          "original_pool_n": 12,
+          "constraints_tested": [
+            "outside_settlement_window",
+            "payment_method_mismatch",
+            "already_reconciled",
+            "currency_mismatch"
+          ],
+          "expected_spurious_collisions": 0.003033512374105121,
+          "inconclusive": false,
+          "note": "no alternative reconstruction exists at substitution depth 2 over a pool widened to 78 records (an estimated 0.00303 chance collisions would have been tolerable here)"
+        },
+        "completeness_checks": [
+          {
+            "name": "cardinality_cross_check",
+            "state": "pass",
+            "detail": "declared 7, reconciled as 6 reconstructed records plus 1 that net to exactly zero; those moved no money and cannot be identified from the credit, but they are accounted for by count"
+          },
+          {
+            "name": "gross_ratio_sanity",
+            "state": "pass",
+            "detail": "fees deviate from policy by 0 bps against 0 bps across the pool, within the 27 bps band (instrument mix is normalised out, so this compares pricing rather than composition)"
+          },
+          {
+            "name": "feed_completeness",
+            "state": "pass",
+            "detail": "every source known to this run was joined into the candidate pool"
+          }
+        ],
+        "zero_contribution_records": [
+          "pay_000235"
+        ]
+      },
+      "fee_check": {
+        "mode": "observed",
+        "circular": false,
+        "expected_mdr_paise": 149159,
+        "observed_mdr_paise": 149159,
+        "delta_bps": 0,
+        "band_bps": 2,
+        "rounding_component_bps": 0,
+        "within_band": true,
+        "claim": "observed effective rate is within 0 bps of policy (band 2 bps)"
+      },
+      "agent": {
+        "invoked": false
+      },
+      "claim": "this credit is reconstructed exactly by 6 records, and that reconstruction is unique among all subsets with k(S) \u003c= 7. A further 1 record(s) in this window net to exactly zero and are named separately: they moved no money and cannot be attributed from the credit by any method",
+      "cost": {
+        "model_calls": 0,
+        "input_tokens": 0,
+        "output_tokens": 0,
+        "inr_micros": 0
+      },
+      "timing_ms": {
+        "entropy_gate": 0,
+        "feasibility": 4,
+        "fee_check": 0,
+        "narrow": 0,
+        "prove": 2,
+        "reconstruct": 5
+      },
+      "policy_version": "fees_2026_08",
+      "replay_seed": 1002
+    },
+    "b0_posted": true,
+    "b0_posted_wrong": false,
+    "b0_confidence": 0.9,
+    "b0_proposed": [
+      "cbk_000238",
+      "pay_000223",
+      "pay_000225",
+      "pay_000227",
+      "pay_000229",
+      "pay_000232"
+    ],
+    "b0_tokens_in": 1160,
+    "expectation_met": true
+  },
+  {
+    "case": {
+      "Number": 3,
+      "Name": "large_batch_complement",
+      "Scenario": "a 257-record batch drawn from a 260-record pool, with the settlement mapping withheld",
+      "ExpectB0": "no match, low confidence",
+      "ExpectAxiom": "VERIFIED with COMPLEMENT_SOLVED, at the gate-derived scope",
+      "Why": "the batch is almost the whole pool, so the answer is recovered by solving for the excluded set in the same enumeration",
+      "Spec": {
+        "Seed": 1003,
+        "Archetype": "travel",
+        "Settlements": 3,
+        "BatchSize": 257,
+        "BatchJitter": 0,
+        "PoolJitter": 0,
+        "PoolTarget": 260,
+        "ChargebackRate": 0,
+        "RefundRate": 0.1,
+        "FullRefundShare": 0.25,
+        "AdjustmentRate": 0.02,
+        "Mode": "report_present_mapping_withheld",
+        "DeclareTxnCount": false,
+        "JoinDisputes": true,
+        "FeeDriftBps": 0,
+        "Policy": {
+          "version": "fees_2026_08",
+          "mdr_bps_by_instrument": {
+            "card": 200,
+            "emi": 265,
+            "netbanking": 190,
+            "upi": 0,
+            "wallet": 210
+          },
+          "gst_bps": 1800,
+          "fee_rounding": "half_up",
+          "tax_rounding": "half_up",
+          "refund_returns_mdr": false,
+          "dispute_fee_paise": 2500,
+          "fee_band_bps": 2
+        },
+        "Start": "2026-08-20T00:00:00Z",
+        "Pathology": "complement"
+      },
+      "WindowHours": 0,
+      "InferredRounding": false,
+      "GateScope": true
+    },
+    "status": "VERIFIED",
+    "flags": [
+      "COMPLEMENT_SOLVED",
+      "SIGNED_ITEMS_PRESENT"
+    ],
+    "posted": true,
+    "posted_wrong": false,
+    "pool_n": 258,
+    "k_star": 3,
+    "collision_index": 0.16817783731093572,
+    "latency_ms": 67,
+    "receipt": {
+      "settlement_ref": "bank_credit_2026_08_23_1001",
+      "run_id": "case_03_large_batch_complement",
+      "merchant_id": "mid_travel",
+      "merchant_name": "Meridian Travel Pvt Ltd",
+      "merchant_archetype": "travel",
+      "status": "VERIFIED",
+      "flags": [
+        "COMPLEMENT_SOLVED",
+        "SIGNED_ITEMS_PRESENT"
+      ],
+      "data_mode": "report_present_mapping_withheld",
+      "narration": "IMPS/P2A/725988/RAZORPAY SOFTWARE/SETTLEMENT",
+      "target_paise": 1050266353,
+      "value_date": "2026-08-23",
+      "pool": {
+        "n": 258,
+        "contribution_sigma_paise": 3559248.593079075,
+        "signed_items": 8,
+        "total_contribution_paise": 1062910698
+      },
+      "amount_entropy": {
+        "distinct_contribution_values": 258,
+        "twin_class_count": 0,
+        "twin_mass": 0,
+        "twin_mass_threshold": 0.3,
+        "lattice_gcd_paise": 1,
+        "pass": true
+      },
+      "feasibility": {
+        "n": 258,
+        "contribution_sigma_paise": 3559248.593079075,
+        "lattice_gcd_paise": 1,
+        "k_star": 3,
+        "collision_index_at_k_star": 0.16817783731093572,
+        "collision_index_estimator": "empirical_subset_sampling",
+        "collision_index_analytic_at_k_star": 0.18307652508966205,
+        "cumulative_index_at_k_star": 0.1690782583275273,
+        "threshold_underdetermined": 10,
+        "lattice_correction_applied": false,
+        "decision": "enumerate",
+        "predicted_entries": 715780,
+        "predicted_bytes": 12884040,
+        "memory_ceiling_bytes": 1073741824,
+        "curve": [
+          {
+            "k": 1,
+            "subsets": 258,
+            "collision_index": 0.000004293723069594573,
+            "collision_index_analytic": 0.000028918212833942094
+          },
+          {
+            "k": 2,
+            "subsets": 33153,
+            "collision_index": 0.0008961272935219827,
+            "collision_index_analytic": 0.0026276019747159046
+          },
+          {
+            "k": 3,
+            "subsets": 2829056,
+            "collision_index": 0.16817783731093572,
+            "collision_index_analytic": 0.18307652508966205
+          },
+          {
+            "k": 4,
+            "subsets": 180352320,
+            "collision_index": 11.750592762214769,
+            "collision_index_analytic": 10.10749374971944
+          },
+          {
+            "k": 5,
+            "subsets": 9161897856,
+            "collision_index": 416.3725558032616,
+            "collision_index_analytic": 459.25319592462677
+          },
+          {
+            "k": 6,
+            "subsets": 386326692928,
+            "collision_index": 8495.034735994523,
+            "collision_index_analytic": 17677.90659961311
+          },
+          {
+            "k": 7,
+            "subsets": 13907760945408,
+            "collision_index": 105644.35380278257,
+            "collision_index_analytic": 589196.2050656518
+          },
+          {
+            "k": 8,
+            "subsets": 436355999662176,
+            "collision_index": 1178860.4091197615,
+            "collision_index_analytic": 17292098.5490222
+          },
+          {
+            "k": 9,
+            "subsets": 12120999990616000,
+            "collision_index": 22089960.36122405,
+            "collision_index_analytic": 452865190.5540614
+          },
+          {
+            "k": 10,
+            "subsets": 301812899766338400,
+            "collision_index": 247422777.17207637,
+            "collision_index_analytic": 10697678499.422825
+          },
+          {
+            "k": 11,
+            "subsets": 4611686018427388000,
+            "collision_index": 1000000000000000000,
+            "collision_index_analytic": 33795229590.495422
+          },
+          {
+            "k": 12,
+            "subsets": 4611686018427388000,
+            "collision_index": 1000000000000000000,
+            "collision_index_analytic": 32356468922.789448
+          }
+        ],
+        "note": "contested band: an estimated 0.17 subsets hit this target across the searched region, so an ambiguous outcome is a normal and correct result here"
+      },
+      "solver": {
+        "method": "cardinality_restricted_meet_in_the_middle",
+        "k_max": 3,
+        "k_max_source": "feasibility_gate",
+        "split": [
+          129,
+          129
+        ],
+        "entries_left": 357890,
+        "entries_right": 357890,
+        "entry_encoding": "int64 sum + uint32 colex rank, 12 bytes",
+        "memory_bytes": 12783408,
+        "memory_ceiling_bytes": 1073741824,
+        "probed_targets": [
+          "T",
+          "pool_total_minus_T"
+        ],
+        "solve_side": "complement",
+        "dedup_applied": false,
+        "dedup_removed": 0,
+        "nearest_miss": {
+          "nearest_sum_paise": 12644344,
+          "gap_paise": 1,
+          "cardinality": 3,
+          "valid": true
+        }
+      },
+      "uniqueness": {
+        "method": "exhaustive_enumeration_count",
+        "scope": "all subsets with k(S) \u003c= 3",
+        "scope_source": "feasibility_gate",
+        "scope_complete": true,
+        "matches_found": 1,
+        "rivals_found": 0,
+        "counted_after_dedup": false,
+        "count_saturated": false,
+        "alternative_witnesses": null,
+        "cumulative_index_in_searched_region": 0.1690782583275273
+      },
+      "witness": [
+        "pay_001355",
+        "pay_001358",
+        "pay_001360",
+        "pay_001362",
+        "pay_001364",
+        "pay_001366",
+        "pay_001369",
+        "pay_001372",
+        "pay_001374",
+        "pay_001376",
+        "pay_001378",
+        "pay_001380",
+        "pay_001382",
+        "pay_001384",
+        "pay_001386",
+        "pay_001388",
+        "pay_001390",
+        "pay_001392",
+        "pay_001395",
+        "pay_001397",
+        "pay_001400",
+        "pay_001402",
+        "pay_001404",
+        "pay_001406",
+        "pay_001408",
+        "pay_001410",
+        "pay_001412",
+        "pay_001415",
+        "pay_001417",
+        "pay_001419",
+        "pay_001421",
+        "pay_001424",
+        "pay_001426",
+        "pay_001428",
+        "pay_001430",
+        "pay_001432",
+        "pay_001434",
+        "pay_001436",
+        "pay_001438",
+        "pay_001440",
+        "pay_001442",
+        "pay_001444",
+        "pay_001446",
+        "pay_001448",
+        "pay_001450",
+        "pay_001452",
+        "pay_001454",
+        "pay_001457",
+        "pay_001459",
+        "pay_001461",
+        "pay_001463",
+        "pay_001465",
+        "pay_001467",
+        "pay_001469",
+        "pay_001472",
+        "pay_001474",
+        "pay_001476",
+        "pay_001478",
+        "pay_001481",
+        "pay_001483",
+        "pay_001485",
+        "pay_001487",
+        "pay_001489",
+        "pay_001491",
+        "pay_001493",
+        "pay_001495",
+        "pay_001497",
+        "pay_001499",
+        "pay_001501",
+        "pay_001503",
+        "pay_001505",
+        "pay_001507",
+        "pay_001509",
+        "pay_001511",
+        "pay_001513",
+        "pay_001515",
+        "pay_001517",
+        "pay_001519",
+        "pay_001521",
+        "pay_001523",
+        "pay_001525",
+        "pay_001530",
+        "pay_001532",
+        "pay_001534",
+        "pay_001536",
+        "pay_001538",
+        "pay_001540",
+        "pay_001542",
+        "pay_001544",
+        "pay_001546",
+        "pay_001548",
+        "pay_001550",
+        "pay_001552",
+        "pay_001555",
+        "pay_001557",
+        "pay_001559",
+        "pay_001561",
+        "pay_001563",
+        "pay_001565",
+        "pay_001567",
+        "pay_001569",
+        "pay_001571",
+        "pay_001573",
+        "pay_001575",
+        "pay_001577",
+        "pay_001579",
+        "pay_001581",
+        "pay_001583",
+        "pay_001585",
+        "pay_001587",
+        "pay_001590",
+        "pay_001593",
+        "pay_001595",
+        "pay_001597",
+        "pay_001599",
+        "pay_001601",
+        "pay_001603",
+        "pay_001605",
+        "pay_001607",
+        "pay_001609",
+        "pay_001611",
+        "pay_001613",
+        "pay_001615",
+        "pay_001617",
+        "pay_001619",
+        "pay_001621",
+        "pay_001623",
+        "pay_001625",
+        "pay_001627",
+        "pay_001629",
+        "pay_001631",
+        "pay_001633",
+        "pay_001635",
+        "pay_001637",
+        "pay_001639",
+        "pay_001641",
+        "pay_001643",
+        "pay_001645",
+        "pay_001647",
+        "pay_001649",
+        "pay_001651",
+        "pay_001653",
+        "pay_001655",
+        "pay_001658",
+        "pay_001661",
+        "pay_001663",
+        "pay_001665",
+        "pay_001667",
+        "pay_001669",
+        "pay_001672",
+        "pay_001674",
+        "pay_001676",
+        "pay_001678",
+        "pay_001680",
+        "pay_001682",
+        "pay_001684",
+        "pay_001686",
+        "pay_001688",
+        "pay_001690",
+        "pay_001692",
+        "pay_001694",
+        "pay_001696",
+        "pay_001698",
+        "pay_001700",
+        "pay_001702",
+        "pay_001704",
+        "pay_001706",
+        "pay_001708",
+        "pay_001710",
+        "pay_001712",
+        "pay_001714",
+        "pay_001716",
+        "pay_001718",
+        "pay_001720",
+        "pay_001722",
+        "pay_001724",
+        "pay_001726",
+        "pay_001731",
+        "pay_001733",
+        "pay_001735",
+        "pay_001737",
+        "pay_001739",
+        "pay_001741",
+        "pay_001743",
+        "pay_001745",
+        "pay_001747",
+        "pay_001749",
+        "pay_001751",
+        "pay_001753",
+        "pay_001756",
+        "pay_001758",
+        "pay_001760",
+        "pay_001762",
+        "pay_001764",
+        "pay_001766",
+        "pay_001768",
+        "pay_001770",
+        "pay_001773",
+        "pay_001775",
+        "pay_001778",
+        "pay_001780",
+        "pay_001782",
+        "pay_001784",
+        "pay_001786",
+        "pay_001788",
+        "pay_001790",
+        "pay_001792",
+        "pay_001794",
+        "pay_001796",
+        "pay_001799",
+        "pay_001801",
+        "pay_001803",
+        "pay_001805",
+        "pay_001807",
+        "pay_001809",
+        "pay_001811",
+        "pay_001813",
+        "pay_001815",
+        "pay_001817",
+        "pay_001820",
+        "pay_001822",
+        "pay_001824",
+        "pay_001826",
+        "pay_001828",
+        "pay_001830",
+        "pay_001832",
+        "pay_001834",
+        "pay_001836",
+        "pay_001838",
+        "pay_001840",
+        "pay_001842",
+        "pay_001844",
+        "pay_001846",
+        "pay_001848",
+        "pay_001851",
+        "pay_001853",
+        "pay_001855",
+        "pay_001857",
+        "pay_001859",
+        "pay_001862",
+        "pay_001865",
+        "pay_001867",
+        "pay_001869",
+        "pay_001871",
+        "pay_001873",
+        "pay_001875",
+        "pay_001877",
+        "pay_001879",
+        "pay_001881",
+        "pay_001883",
+        "pay_001885",
+        "pay_001887",
+        "pay_001889",
+        "pay_001891",
+        "pay_001893"
+      ],
+      "witness_size": 255,
+      "negative_members": [
+        "pay_001366",
+        "pay_001412",
+        "pay_001478",
+        "pay_001587",
+        "pay_001669",
+        "pay_001753",
+        "pay_001775",
+        "pay_001817"
+      ],
+      "accounting": {
+        "gross_paise": 1128641403,
+        "mdr_paise": 19682751,
+        "gst_on_mdr_paise": 3542897,
+        "refunds_paise": 55149402,
+        "chargebacks_paise": 0,
+        "adjustments_paise": 0,
+        "reconstructed_paise": 1050266353,
+        "target_paise": 1050266353,
+        "residual_paise": 0,
+        "slack_allowed_paise": 0,
+        "slack_consumed_paise": 0,
+        "closes": true,
+        "negative_items": 8
+      },
+      "rounding": {
+        "mode": "declared",
+        "tolerance_paise": 0,
+        "band_basis": "cardinality",
+        "slack_allowed_paise": 0,
+        "slack_consumed_paise": 0
+      },
+      "narrowing": {
+        "pool_before": 1938,
+        "pool_after": 258,
+        "dropped": {
+          "already_reconciled": 387,
+          "mid_mismatch": 771,
+          "outside_settlement_window": 520,
+          "zero_net_contribution": 2
+        },
+        "window_hours": 14,
+        "constraints_applied": [
+          "mid_mismatch",
+          "currency_mismatch",
+          "outside_settlement_window",
+          "already_reconciled",
+          "zero_net_contribution"
+        ],
+        "neighbourhood_probe": {
+          "method": "witness_neighbourhood_join",
+          "stable": true,
+          "max_substitution_depth": 1,
+          "requested_substitution_depth": 2,
+          "removal_sums_enumerated": 256,
+          "addition_sums_enumerated": 652,
+          "widened_pool_n": 906,
+          "original_pool_n": 510,
+          "constraints_tested": [
+            "outside_settlement_window",
+            "payment_method_mismatch",
+            "already_reconciled",
+            "currency_mismatch"
+          ],
+          "expected_spurious_collisions": 0.013171694016437694,
+          "inconclusive": false,
+          "note": "no alternative reconstruction exists at substitution depth 1 over a pool widened to 906 records (an estimated 0.0132 chance collisions would have been tolerable here)"
+        },
+        "completeness_checks": [
+          {
+            "name": "cardinality_cross_check",
+            "state": "inactive",
+            "detail": "no transaction count was declared for this batch"
+          },
+          {
+            "name": "gross_ratio_sanity",
+            "state": "pass",
+            "detail": "fees deviate from policy by 0 bps against 0 bps across the pool, within the 27 bps band (instrument mix is normalised out, so this compares pricing rather than composition)"
+          },
+          {
+            "name": "feed_completeness",
+            "state": "pass",
+            "detail": "every source known to this run was joined into the candidate pool"
+          }
+        ],
+        "zero_contribution_records": [
+          "pay_001527",
+          "pay_001728"
+        ]
+      },
+      "fee_check": {
+        "mode": "observed",
+        "circular": false,
+        "expected_mdr_paise": 19682751,
+        "observed_mdr_paise": 19682751,
+        "delta_bps": 0,
+        "band_bps": 2,
+        "rounding_component_bps": 0,
+        "within_band": true,
+        "claim": "observed effective rate is within 0 bps of policy (band 2 bps)"
+      },
+      "agent": {
+        "invoked": false
+      },
+      "claim": "this credit is reconstructed exactly by 255 records, and that reconstruction is unique among all subsets with k(S) \u003c= 3. A further 2 record(s) in this window net to exactly zero and are named separately: they moved no money and cannot be attributed from the credit by any method",
+      "cost": {
+        "model_calls": 0,
+        "input_tokens": 0,
+        "output_tokens": 0,
+        "inr_micros": 0
+      },
+      "timing_ms": {
+        "entropy_gate": 0,
+        "feasibility": 4,
+        "fee_check": 0,
+        "narrow": 0,
+        "prove": 4,
+        "reconstruct": 58
+      },
+      "policy_version": "fees_2026_08",
+      "replay_seed": 1003
+    },
+    "b0_posted": false,
+    "b0_posted_wrong": false,
+    "b0_confidence": 0.15,
+    "b0_proposed": [
+      "pay_001395",
+      "pay_001408",
+      "pay_001440",
+      "pay_001442",
+      "pay_001563",
+      "pay_001583",
+      "pay_001597",
+      "pay_001891"
+    ],
+    "b0_tokens_in": 10520,
+    "expectation_met": true
+  },
+  {
+    "case": {
+      "Number": 4,
+      "Name": "underdetermined",
+      "Scenario": "the same 257-record batch, but narrowing leaves 320 candidates instead of 260",
+      "ExpectB0": "posts, arbitrary",
+      "ExpectAxiom": "UNDERDETERMINED, refused before enumeration, with a computed remediation",
+      "Why": "the pair with case 3: identical settlement, opposite verdict, and the difference is narrowing quality rather than the solver",
+      "Spec": {
+        "Seed": 1003,
+        "Archetype": "travel",
+        "Settlements": 3,
+        "BatchSize": 257,
+        "BatchJitter": 0,
+        "PoolJitter": 0,
+        "PoolTarget": 320,
+        "ChargebackRate": 0,
+        "RefundRate": 0.1,
+        "FullRefundShare": 0.25,
+        "AdjustmentRate": 0.02,
+        "Mode": "report_present_mapping_withheld",
+        "DeclareTxnCount": true,
+        "JoinDisputes": true,
+        "FeeDriftBps": 0,
+        "Policy": {
+          "version": "fees_2026_08",
+          "mdr_bps_by_instrument": {
+            "card": 200,
+            "emi": 265,
+            "netbanking": 190,
+            "upi": 0,
+            "wallet": 210
+          },
+          "gst_bps": 1800,
+          "fee_rounding": "half_up",
+          "tax_rounding": "half_up",
+          "refund_returns_mdr": false,
+          "dispute_fee_paise": 2500,
+          "fee_band_bps": 2
+        },
+        "Start": "2026-08-20T00:00:00Z",
+        "Pathology": "underdetermined"
+      },
+      "WindowHours": 0,
+      "InferredRounding": false,
+      "GateScope": false
+    },
+    "status": "UNDERDETERMINED",
+    "flags": [
+      "SIGNED_ITEMS_PRESENT"
+    ],
+    "posted": false,
+    "posted_wrong": false,
+    "pool_n": 318,
+    "k_star": 4,
+    "collision_index": 0.617929367521851,
+    "latency_ms": 16,
+    "receipt": {
+      "settlement_ref": "bank_credit_2026_08_23_1001",
+      "run_id": "case_04_underdetermined",
+      "merchant_id": "mid_travel",
+      "merchant_name": "Meridian Travel Pvt Ltd",
+      "merchant_archetype": "travel",
+      "status": "UNDERDETERMINED",
+      "flags": [
+        "SIGNED_ITEMS_PRESENT"
+      ],
+      "data_mode": "report_present_mapping_withheld",
+      "narration": "IMPS/P2A/525829/RAZORPAY SOFTWARE/SETTLEMENT",
+      "target_paise": 1030232708,
+      "value_date": "2026-08-23",
+      "pool": {
+        "n": 318,
+        "contribution_sigma_paise": 3323839.3692607717,
+        "signed_items": 7,
+        "total_contribution_paise": 1313235942
+      },
+      "amount_entropy": {
+        "distinct_contribution_values": 318,
+        "twin_class_count": 0,
+        "twin_mass": 0,
+        "twin_mass_threshold": 0.3,
+        "lattice_gcd_paise": 1,
+        "pass": true
+      },
+      "feasibility": {
+        "n": 318,
+        "contribution_sigma_paise": 3323839.3692607717,
+        "lattice_gcd_paise": 1,
+        "k_star": 4,
+        "collision_index_at_k_star": 0.617929367521851,
+        "collision_index_estimator": "empirical_subset_sampling",
+        "collision_index_analytic_at_k_star": 25.090702412404703,
+        "cumulative_index_at_k_star": 0.6236619559075346,
+        "threshold_underdetermined": 10,
+        "lattice_correction_applied": false,
+        "decision": "refuse_before_enumeration",
+        "declared_txn_count": 257,
+        "implied_free_cardinality": 61,
+        "collision_index_at_implied": 1000000000000000000,
+        "predicted_entries": 0,
+        "predicted_bytes": 0,
+        "memory_ceiling_bytes": 1073741824,
+        "curve": [
+          {
+            "k": 1,
+            "subsets": 318,
+            "collision_index": 3.3932192569725666e-7,
+            "collision_index_analytic": 0.00003816780267449275
+          },
+          {
+            "k": 2,
+            "subsets": 50403,
+            "collision_index": 0.00006590845697023927,
+            "collision_index_analytic": 0.004277710866918634
+          },
+          {
+            "k": 3,
+            "subsets": 5309116,
+            "collision_index": 0.005666340606787633,
+            "collision_index_analytic": 0.3679015566211721
+          },
+          {
+            "k": 4,
+            "subsets": 418092885,
+            "collision_index": 0.617929367521851,
+            "collision_index_analytic": 25.090702412404703
+          },
+          {
+            "k": 5,
+            "subsets": 26256233178,
+            "collision_index": 54.60881288114018,
+            "collision_index_analytic": 1409.3454468775544
+          },
+          {
+            "k": 6,
+            "subsets": 1369700164119,
+            "collision_index": 2587.8981927053032,
+            "collision_index_analytic": 67115.05043751308
+          },
+          {
+            "k": 7,
+            "subsets": 61049493029304,
+            "collision_index": 107944.45032186886,
+            "collision_index_analytic": 2769510.9085710053
+          },
+          {
+            "k": 8,
+            "subsets": 2373299041514193,
+            "collision_index": 3935207.924781317,
+            "collision_index_analytic": 100711139.22120549
+          },
+          {
+            "k": 9,
+            "subsets": 81746966985488860,
+            "collision_index": 128360409.23463811,
+            "collision_index_analytic": 3270547280.021397
+          },
+          {
+            "k": 10,
+            "subsets": 4611686018427388000,
+            "collision_index": 1000000000000000000,
+            "collision_index_analytic": 37955091111.71804
+          },
+          {
+            "k": 11,
+            "subsets": 4611686018427388000,
+            "collision_index": 1000000000000000000,
+            "collision_index_analytic": 36188759446.43105
+          },
+          {
+            "k": 12,
+            "subsets": 4611686018427388000,
+            "collision_index": 1000000000000000000,
+            "collision_index_analytic": 34648099290.08634
+          }
+        ],
+        "note": "the declared batch of 257 records in a pool of 318 implies a free cardinality of 61, at which an estimated 1e+18 subsets hit this target; the decidable region here stops at k = 4"
+      },
+      "witness_size": 0,
+      "rounding": {
+        "mode": "declared",
+        "tolerance_paise": 0,
+        "band_basis": "cardinality",
+        "slack_allowed_paise": 0,
+        "slack_consumed_paise": 0
+      },
+      "narrowing": {
+        "pool_before": 2118,
+        "pool_after": 318,
+        "dropped": {
+          "already_reconciled": 387,
+          "mid_mismatch": 771,
+          "outside_settlement_window": 640,
+          "zero_net_contribution": 2
+        },
+        "window_hours": 14,
+        "constraints_applied": [
+          "mid_mismatch",
+          "currency_mismatch",
+          "outside_settlement_window",
+          "already_reconciled",
+          "zero_net_contribution"
+        ],
+        "completeness_checks": null,
+        "zero_contribution_records": [
+          "pay_001545",
+          "pay_001746"
+        ]
+      },
+      "agent": {
+        "invoked": false
+      },
+      "claim": "this batch is claimed to be 257 records of a 318-record pool, a free cardinality of 61, at which the pool admits an estimated 1e+18 distinct reconstructions of this target; no arithmetic procedure can single one out",
+      "note": "no witness is exhibited by design: displaying one arbitrary member of a population this large would misrepresent it as an answer",
+      "remediation": [
+        {
+          "action": "supply the settlement reference, or the settlement_id to payment_id mapping",
+          "effect": "collapses this reconciliation leg from a search to a lookup"
+        },
+        {
+          "action": "tighten the value-date window so the pool falls to about 159 candidates",
+          "effect": "takes the collision index at k=61 from 1e+18 to 1.54e+10",
+          "projected_collision_index": 15367567196.026714,
+          "projected_pool_n": 159
+        },
+        {
+          "action": "tighten the value-date window so the pool falls to about 79 candidates",
+          "effect": "takes the collision index at k=39 from 1e+18 to 1.92e+10",
+          "projected_collision_index": 19219307475.042114,
+          "projected_pool_n": 79
+        },
+        {
+          "action": "split the settlement by instrument, where the payout is instrument-segregated",
+          "effect": "cuts the pool by the instrument mix, which lowers the index super-linearly"
+        }
+      ],
+      "exception_cost_inr": 333,
+      "cost": {
+        "model_calls": 0,
+        "input_tokens": 0,
+        "output_tokens": 0,
+        "inr_micros": 0
+      },
+      "timing_ms": {
+        "entropy_gate": 0,
+        "feasibility": 16,
+        "fee_check": 0,
+        "narrow": 0
+      },
+      "policy_version": "fees_2026_08",
+      "replay_seed": 1003
+    },
+    "b0_posted": false,
+    "b0_posted_wrong": false,
+    "b0_confidence": 0.72,
+    "b0_proposed": [
+      "pay_001475",
+      "pay_001485",
+      "pay_001494",
+      "pay_001496",
+      "pay_001499",
+      "pay_001501",
+      "pay_001503",
+      "pay_001505",
+      "pay_001509",
+      "pay_001511",
+      "pay_001517",
+      "pay_001521",
+      "pay_001525",
+      "pay_001541",
+      "pay_001543",
+      "pay_001558",
+      "pay_001560",
+      "pay_001562",
+      "pay_001564",
+      "pay_001566",
+      "pay_001570",
+      "pay_001573",
+      "pay_001579",
+      "pay_001581",
+      "pay_001585",
+      "pay_001597",
+      "pay_001599",
+      "pay_001601",
+      "pay_001605",
+      "pay_001611",
+      "pay_001613",
+      "pay_001615",
+      "pay_001617",
+      "pay_001619",
+      "pay_001623",
+      "pay_001625",
+      "pay_001629",
+      "pay_001631",
+      "pay_001633",
+      "pay_001635",
+      "pay_001649",
+      "pay_001653",
+      "pay_001655",
+      "pay_001657",
+      "pay_001659",
+      "pay_001661",
+      "pay_001665",
+      "pay_001667",
+      "pay_001673",
+      "pay_001685",
+      "pay_001696",
+      "pay_001698",
+      "pay_001700",
+      "pay_001704",
+      "pay_001706",
+      "pay_001710",
+      "pay_001716",
+      "pay_001730",
+      "pay_001732",
+      "pay_001734",
+      "pay_001738",
+      "pay_001742",
+      "pay_001749",
+      "pay_001753",
+      "pay_001755",
+      "pay_001757",
+      "pay_001761",
+      "pay_001763",
+      "pay_001765",
+      "pay_001767",
+      "pay_001771",
+      "pay_001776",
+      "pay_001778",
+      "pay_001780",
+      "pay_001786",
+      "pay_001788",
+      "pay_001791",
+      "pay_001793",
+      "pay_001798",
+      "pay_001800",
+      "pay_001802",
+      "pay_001810",
+      "pay_001812",
+      "pay_001814",
+      "pay_001827",
+      "pay_001829",
+      "pay_001831",
+      "pay_001844",
+      "pay_001846",
+      "pay_001848",
+      "pay_001850",
+      "pay_001864",
+      "pay_001866",
+      "pay_001871",
+      "pay_001873",
+      "pay_001875",
+      "pay_001883",
+      "pay_001887",
+      "pay_001889",
+      "pay_001891",
+      "pay_001893",
+      "pay_001897",
+      "pay_001903",
+      "pay_001905",
+      "pay_001909",
+      "pay_001911",
+      "pay_001915",
+      "pay_001929",
+      "pay_001931",
+      "pay_001937",
+      "pay_001939",
+      "pay_001941",
+      "pay_001943",
+      "pay_001945",
+      "pay_001947",
+      "pay_001951",
+      "pay_001957",
+      "pay_001961",
+      "pay_001966",
+      "pay_001976",
+      "pay_001978",
+      "pay_001981",
+      "pay_001990",
+      "pay_001992",
+      "pay_001994",
+      "pay_001996",
+      "pay_002000",
+      "pay_002002",
+      "pay_002004",
+      "pay_002022",
+      "pay_002024",
+      "pay_002030",
+      "pay_002032",
+      "pay_002034",
+      "pay_002036",
+      "pay_002038",
+      "pay_002040",
+      "pay_002042",
+      "pay_002048",
+      "pay_002056",
+      "pay_002058",
+      "pay_002060",
+      "pay_002062",
+      "pay_002064",
+      "pay_002068",
+      "pay_002070",
+      "pay_002074",
+      "pay_002078",
+      "pay_002080",
+      "pay_002082",
+      "pay_002084",
+      "pay_002088",
+      "pay_002092",
+      "pay_002094",
+      "pay_002098",
+      "pay_002100",
+      "pay_002112",
+      "pay_002114",
+      "pay_002120",
+      "pay_002122",
+      "pay_002124",
+      "pay_002126",
+      "pay_002134"
+    ],
+    "b0_tokens_in": 12920,
+    "expectation_met": true
+  },
+  {
+    "case": {
+      "Number": 5,
+      "Name": "ambiguous_twin",
+      "Scenario": "two records carry an identical contribution, so a rival witness is constructible",
+      "ExpectB0": "picks one, high confidence",
+      "ExpectAxiom": "AMBIGUOUS with TWIN_SWAP, both witnesses exhibited",
+      "Why": "ambiguity proved by construction in linear time, with no search at all",
+      "Spec": {
+        "Seed": 1005,
+        "Archetype": "travel",
+        "Settlements": 6,
+        "BatchSize": 5,
+        "BatchJitter": 0,
+        "PoolJitter": 0,
+        "PoolTarget": 34,
+        "ChargebackRate": 0,
+        "RefundRate": 0,
+        "FullRefundShare": 0.25,
+        "AdjustmentRate": 0.02,
+        "Mode": "report_present_mapping_withheld",
+        "DeclareTxnCount": true,
+        "JoinDisputes": true,
+        "FeeDriftBps": 0,
+        "Policy": {
+          "version": "fees_2026_08",
+          "mdr_bps_by_instrument": {
+            "card": 200,
+            "emi": 265,
+            "netbanking": 190,
+            "upi": 0,
+            "wallet": 210
+          },
+          "gst_bps": 1800,
+          "fee_rounding": "half_up",
+          "tax_rounding": "half_up",
+          "refund_returns_mdr": false,
+          "dispute_fee_paise": 2500,
+          "fee_band_bps": 2
+        },
+        "Start": "2026-08-20T00:00:00Z",
+        "Pathology": "twin"
+      },
+      "WindowHours": 0,
+      "InferredRounding": false,
+      "GateScope": false
+    },
+    "status": "AMBIGUOUS",
+    "flags": [
+      "TWIN_SWAP"
+    ],
+    "posted": false,
+    "posted_wrong": false,
+    "pool_n": 34,
+    "k_star": 12,
+    "collision_index": 1.343340077841329,
+    "latency_ms": 11,
+    "receipt": {
+      "settlement_ref": "bank_credit_2026_08_25_1003",
+      "run_id": "case_05_ambiguous_twin",
+      "merchant_id": "mid_travel",
+      "merchant_name": "Meridian Travel Pvt Ltd",
+      "merchant_archetype": "travel",
+      "status": "AMBIGUOUS",
+      "flags": [
+        "TWIN_SWAP"
+      ],
+      "data_mode": "report_present_mapping_withheld",
+      "narration": "UPI/CREDIT/642281/RAZORPAY/SETTLE/NA",
+      "target_paise": 18810423,
+      "value_date": "2026-08-25",
+      "pool": {
+        "n": 34,
+        "contribution_sigma_paise": 2881397.0195917096,
+        "signed_items": 0,
+        "total_contribution_paise": 120377200
+      },
+      "amount_entropy": {
+        "distinct_contribution_values": 33,
+        "twin_classes": [
+          {
+            "value_paise": 5367682,
+            "members": [
+              0,
+              5
+            ]
+          }
+        ],
+        "twin_class_count": 1,
+        "twin_mass": 0.058823529411764705,
+        "twin_mass_threshold": 0.3,
+        "lattice_gcd_paise": 1,
+        "pass": true
+      },
+      "feasibility": {
+        "n": 34,
+        "contribution_sigma_paise": 2881397.0195917096,
+        "lattice_gcd_paise": 1,
+        "k_star": 12,
+        "collision_index_at_k_star": 1.343340077841329,
+        "collision_index_estimator": "empirical_subset_sampling",
+        "collision_index_analytic_at_k_star": 21.916812269743602,
+        "cumulative_index_at_k_star": 6.464811069271304,
+        "threshold_underdetermined": 10,
+        "lattice_correction_applied": false,
+        "decision": "enumerate",
+        "declared_txn_count": 5,
+        "implied_free_cardinality": 5,
+        "collision_index_at_implied": 0.01298032490464755,
+        "predicted_entries": 255716,
+        "predicted_bytes": 4602888,
+        "memory_ceiling_bytes": 1073741824,
+        "curve": [
+          {
+            "k": 1,
+            "subsets": 34,
+            "collision_index": 1.7848297967559242e-7,
+            "collision_index_analytic": 0.000004707451781695367
+          },
+          {
+            "k": 2,
+            "subsets": 561,
+            "collision_index": 0.000004846825834066527,
+            "collision_index_analytic": 0.00005492307276960056
+          },
+          {
+            "k": 3,
+            "subsets": 5984,
+            "collision_index": 0.00017153134754116107,
+            "collision_index_analytic": 0.00047834134539118453
+          },
+          {
+            "k": 4,
+            "subsets": 46376,
+            "collision_index": 0.0015000158051728513,
+            "collision_index_analytic": 0.00321048211511624
+          },
+          {
+            "k": 5,
+            "subsets": 278256,
+            "collision_index": 0.01298032490464755,
+            "collision_index_analytic": 0.017229254999873322
+          },
+          {
+            "k": 6,
+            "subsets": 1344904,
+            "collision_index": 0.07605865215804854,
+            "collision_index_analytic": 0.07601908243353869
+          },
+          {
+            "k": 7,
+            "subsets": 5379616,
+            "collision_index": 0.3391987021293493,
+            "collision_index_analytic": 0.2815199779329465
+          },
+          {
+            "k": 8,
+            "subsets": 18156204,
+            "collision_index": 0.7197014438391027,
+            "collision_index_analytic": 0.8887651635576763
+          },
+          {
+            "k": 9,
+            "subsets": 52451256,
+            "collision_index": 0.8206163547228518,
+            "collision_index_analytic": 2.420703514797645
+          },
+          {
+            "k": 10,
+            "subsets": 131128140,
+            "collision_index": 1.1179195330180802,
+            "collision_index_analytic": 5.74120248505175
+          },
+          {
+            "k": 11,
+            "subsets": 286097760,
+            "collision_index": 2.033319408196367,
+            "collision_index_analytic": 11.94332026206692
+          },
+          {
+            "k": 12,
+            "subsets": 548354040,
+            "collision_index": 1.343340077841329,
+            "collision_index_analytic": 21.916812269743602
+          }
+        ],
+        "note": "contested band: an estimated 6.46 subsets hit this target across the searched region, so an ambiguous outcome is a normal and correct result here"
+      },
+      "solver": {
+        "method": "cardinality_restricted_meet_in_the_middle",
+        "k_max": 5,
+        "k_max_source": "declared_txn_count",
+        "split": [
+          17,
+          17
+        ],
+        "entries_left": 9402,
+        "entries_right": 9402,
+        "entry_encoding": "int64 sum + uint32 colex rank, 12 bytes",
+        "memory_bytes": 299904,
+        "memory_ceiling_bytes": 1073741824,
+        "probed_targets": [
+          "T",
+          "pool_total_minus_T"
+        ],
+        "solve_side": "",
+        "dedup_applied": false,
+        "dedup_removed": 0,
+        "nearest_miss": {
+          "nearest_sum_paise": 18810396,
+          "gap_paise": 27,
+          "cardinality": 5,
+          "valid": true
+        }
+      },
+      "uniqueness": {
+        "method": "exhaustive_enumeration_count",
+        "scope": "all subsets with k(S) \u003c= 5",
+        "scope_source": "declared_txn_count",
+        "scope_note": "the region was bounded by the report's declared transaction count, not by the gate; the gate would have searched k(S) \u003c= 12, where an estimated 6.46 subsets hit this target",
+        "k_max_if_gate_derived": 12,
+        "scope_complete": true,
+        "matches_found": 2,
+        "rivals_found": 1,
+        "counted_after_dedup": false,
+        "count_saturated": false,
+        "alternative_witnesses": [
+          [
+            "pay_000253",
+            "pay_000255",
+            "pay_000257",
+            "pay_000259",
+            "pay_000261"
+          ],
+          [
+            "pay_000255",
+            "pay_000257",
+            "pay_000259",
+            "pay_000261",
+            "pay_000263"
+          ]
+        ],
+        "cumulative_index_in_searched_region": 0.014656897366175304
+      },
+      "witness": [
+        "pay_000253",
+        "pay_000255",
+        "pay_000257",
+        "pay_000259",
+        "pay_000261"
+      ],
+      "witness_size": 5,
+      "rounding": {
+        "mode": "declared",
+        "tolerance_paise": 0,
+        "band_basis": "cardinality",
+        "slack_allowed_paise": 0,
+        "slack_consumed_paise": 0
+      },
+      "narrowing": {
+        "pool_before": 252,
+        "pool_after": 34,
+        "dropped": {
+          "already_reconciled": 18,
+          "mid_mismatch": 30,
+          "outside_settlement_window": 170
+        },
+        "window_hours": 14,
+        "constraints_applied": [
+          "mid_mismatch",
+          "currency_mismatch",
+          "outside_settlement_window",
+          "already_reconciled",
+          "zero_net_contribution"
+        ],
+        "completeness_checks": null
+      },
+      "fee_check": {
+        "mode": "observed",
+        "circular": false,
+        "expected_mdr_paise": 265391,
+        "observed_mdr_paise": 265391,
+        "delta_bps": 0,
+        "band_bps": 2,
+        "rounding_component_bps": 0,
+        "within_band": true,
+        "claim": "observed effective rate is within 0 bps of policy (band 2 bps)"
+      },
+      "agent": {
+        "invoked": false
+      },
+      "claim": "2 distinct reconstructions of this credit exist within the searched region; the arithmetic cannot choose between them. pay_000253 and pay_000263 carry an identical contribution, so an alternative reconstruction is constructible by exchanging one for the other; this ambiguity is structural rather than incidental",
+      "exception_cost_inr": 333,
+      "cost": {
+        "model_calls": 0,
+        "input_tokens": 0,
+        "output_tokens": 0,
+        "inr_micros": 0
+      },
+      "timing_ms": {
+        "entropy_gate": 0,
+        "feasibility": 7,
+        "fee_check": 0,
+        "narrow": 0,
+        "prove": 0,
+        "reconstruct": 3
+      },
+      "policy_version": "fees_2026_08",
+      "replay_seed": 1005
+    },
+    "b0_posted": true,
+    "b0_posted_wrong": true,
+    "b0_confidence": 0.9500000000000001,
+    "b0_proposed": [
+      "pay_000255",
+      "pay_000257",
+      "pay_000259",
+      "pay_000261",
+      "pay_000263"
+    ],
+    "b0_tokens_in": 1560,
+    "expectation_met": true
+  },
+  {
+    "case": {
+      "Number": 6,
+      "Name": "fee_anomaly_observed",
+      "Scenario": "the reconstruction closes exactly, but the effective rate is 8 bps off policy",
+      "ExpectB0": "silent",
+      "ExpectAxiom": "VERIFIED with FEE_ANOMALY, sized in basis points",
+      "Why": "the money being accounted for and the fee being right are different questions",
+      "Spec": {
+        "Seed": 1006,
+        "Archetype": "travel",
+        "Settlements": 6,
+        "BatchSize": 5,
+        "BatchJitter": 0,
+        "PoolJitter": 0,
+        "PoolTarget": 34,
+        "ChargebackRate": 0,
+        "RefundRate": 0,
+        "FullRefundShare": 0.25,
+        "AdjustmentRate": 0.02,
+        "Mode": "report_present_mapping_withheld",
+        "DeclareTxnCount": true,
+        "JoinDisputes": true,
+        "FeeDriftBps": 8,
+        "Policy": {
+          "version": "fees_2026_08",
+          "mdr_bps_by_instrument": {
+            "card": 200,
+            "emi": 265,
+            "netbanking": 190,
+            "upi": 0,
+            "wallet": 210
+          },
+          "gst_bps": 1800,
+          "fee_rounding": "half_up",
+          "tax_rounding": "half_up",
+          "refund_returns_mdr": false,
+          "dispute_fee_paise": 2500,
+          "fee_band_bps": 2
+        },
+        "Start": "2026-08-20T00:00:00Z",
+        "Pathology": "fee_anomaly"
+      },
+      "WindowHours": 0,
+      "InferredRounding": false,
+      "GateScope": false
+    },
+    "status": "VERIFIED",
+    "flags": [
+      "FEE_ANOMALY"
+    ],
+    "posted": true,
+    "posted_wrong": false,
+    "pool_n": 34,
+    "k_star": 12,
+    "collision_index": 2.4272189000134428,
+    "latency_ms": 13,
+    "receipt": {
+      "settlement_ref": "bank_credit_2026_08_25_1003",
+      "run_id": "case_06_fee_anomaly_observed",
+      "merchant_id": "mid_travel",
+      "merchant_name": "Meridian Travel Pvt Ltd",
+      "merchant_archetype": "travel",
+      "status": "VERIFIED",
+      "flags": [
+        "FEE_ANOMALY"
+      ],
+      "data_mode": "report_present_mapping_withheld",
+      "narration": "UPI/CREDIT/589267/RAZORPAY/SETTLE/NA",
+      "target_paise": 11163796,
+      "value_date": "2026-08-25",
+      "pool": {
+        "n": 34,
+        "contribution_sigma_paise": 2375283.175605573,
+        "signed_items": 0,
+        "total_contribution_paise": 123520215
+      },
+      "amount_entropy": {
+        "distinct_contribution_values": 34,
+        "twin_class_count": 0,
+        "twin_mass": 0,
+        "twin_mass_threshold": 0.3,
+        "lattice_gcd_paise": 1,
+        "pass": true
+      },
+      "feasibility": {
+        "n": 34,
+        "contribution_sigma_paise": 2375283.175605573,
+        "lattice_gcd_paise": 1,
+        "k_star": 12,
+        "collision_index_at_k_star": 2.4272189000134428,
+        "collision_index_estimator": "empirical_subset_sampling",
+        "collision_index_analytic_at_k_star": 26.58674056279206,
+        "cumulative_index_at_k_star": 3.9733353687640984,
+        "threshold_underdetermined": 10,
+        "lattice_correction_applied": false,
+        "decision": "enumerate",
+        "declared_txn_count": 5,
+        "implied_free_cardinality": 5,
+        "collision_index_at_implied": 0.010402058924477112,
+        "predicted_entries": 255716,
+        "predicted_bytes": 4602888,
+        "memory_ceiling_bytes": 1073741824,
+        "curve": [
+          {
+            "k": 1,
+            "subsets": 34,
+            "collision_index": 4.6631324450913744e-7,
+            "collision_index_analytic": 0.000005710492825846161
+          },
+          {
+            "k": 2,
+            "subsets": 561,
+            "collision_index": 0.00005277720435598357,
+            "collision_index_analytic": 0.0000666258153177037
+          },
+          {
+            "k": 3,
+            "subsets": 5984,
+            "collision_index": 0.000418189976744695,
+            "collision_index_analytic": 0.0005802640043565565
+          },
+          {
+            "k": 4,
+            "subsets": 46376,
+            "collision_index": 0.004058926447496435,
+            "collision_index_analytic": 0.003894556107227082
+          },
+          {
+            "k": 5,
+            "subsets": 278256,
+            "collision_index": 0.010402058924477112,
+            "collision_index_analytic": 0.020900381275072114
+          },
+          {
+            "k": 6,
+            "subsets": 1344904,
+            "collision_index": 0.019644327878219722,
+            "collision_index_analytic": 0.09221686062768109
+          },
+          {
+            "k": 7,
+            "subsets": 5379616,
+            "collision_index": 0.03571856493966772,
+            "collision_index_analytic": 0.3415048924281247
+          },
+          {
+            "k": 8,
+            "subsets": 18156204,
+            "collision_index": 0.11816331703036115,
+            "collision_index_analytic": 1.078138943471081
+          },
+          {
+            "k": 9,
+            "subsets": 52451256,
+            "collision_index": 0.03833483124996094,
+            "collision_index_analytic": 2.9364953048492195
+          },
+          {
+            "k": 10,
+            "subsets": 131128140,
+            "collision_index": 0.41438349073749386,
+            "collision_index_analytic": 6.964510126285515
+          },
+          {
+            "k": 11,
+            "subsets": 286097760,
+            "collision_index": 0.9049395180486334,
+            "collision_index_analytic": 14.488145144368005
+          },
+          {
+            "k": 12,
+            "subsets": 548354040,
+            "collision_index": 2.4272189000134428,
+            "collision_index_analytic": 26.58674056279206
+          }
+        ],
+        "note": "contested band: an estimated 3.97 subsets hit this target across the searched region, so an ambiguous outcome is a normal and correct result here"
+      },
+      "solver": {
+        "method": "cardinality_restricted_meet_in_the_middle",
+        "k_max": 5,
+        "k_max_source": "declared_txn_count",
+        "split": [
+          17,
+          17
+        ],
+        "entries_left": 9402,
+        "entries_right": 9402,
+        "entry_encoding": "int64 sum + uint32 colex rank, 12 bytes",
+        "memory_bytes": 299904,
+        "memory_ceiling_bytes": 1073741824,
+        "probed_targets": [
+          "T",
+          "pool_total_minus_T"
+        ],
+        "solve_side": "witness",
+        "dedup_applied": false,
+        "dedup_removed": 0,
+        "nearest_miss": {
+          "nearest_sum_paise": 11163718,
+          "gap_paise": 78,
+          "cardinality": 5,
+          "valid": true
+        }
+      },
+      "uniqueness": {
+        "method": "exhaustive_enumeration_count",
+        "scope": "all subsets with k(S) \u003c= 5",
+        "scope_source": "declared_txn_count",
+        "scope_note": "the region was bounded by the report's declared transaction count, not by the gate; the gate would have searched k(S) \u003c= 12, where an estimated 3.97 subsets hit this target",
+        "k_max_if_gate_derived": 12,
+        "scope_complete": true,
+        "matches_found": 1,
+        "rivals_found": 0,
+        "counted_after_dedup": false,
+        "count_saturated": false,
+        "alternative_witnesses": null,
+        "cumulative_index_in_searched_region": 0.014932418866318735
+      },
+      "witness": [
+        "pay_000253",
+        "pay_000255",
+        "pay_000257",
+        "pay_000259",
+        "pay_000261"
+      ],
+      "witness_size": 5,
+      "accounting": {
+        "gross_paise": 11460690,
+        "mdr_paise": 251606,
+        "gst_on_mdr_paise": 45288,
+        "refunds_paise": 0,
+        "chargebacks_paise": 0,
+        "adjustments_paise": 0,
+        "reconstructed_paise": 11163796,
+        "target_paise": 11163796,
+        "residual_paise": 0,
+        "slack_allowed_paise": 0,
+        "slack_consumed_paise": 0,
+        "closes": true,
+        "negative_items": 0
+      },
+      "rounding": {
+        "mode": "declared",
+        "tolerance_paise": 0,
+        "band_basis": "cardinality",
+        "slack_allowed_paise": 0,
+        "slack_consumed_paise": 0
+      },
+      "narrowing": {
+        "pool_before": 252,
+        "pool_after": 34,
+        "dropped": {
+          "already_reconciled": 18,
+          "mid_mismatch": 30,
+          "outside_settlement_window": 170
+        },
+        "window_hours": 14,
+        "constraints_applied": [
+          "mid_mismatch",
+          "currency_mismatch",
+          "outside_settlement_window",
+          "already_reconciled",
+          "zero_net_contribution"
+        ],
+        "neighbourhood_probe": {
+          "method": "witness_neighbourhood_join",
+          "stable": true,
+          "max_substitution_depth": 2,
+          "requested_substitution_depth": 2,
+          "removal_sums_enumerated": 16,
+          "addition_sums_enumerated": 5051,
+          "widened_pool_n": 105,
+          "original_pool_n": 10,
+          "constraints_tested": [
+            "outside_settlement_window",
+            "payment_method_mismatch",
+            "already_reconciled",
+            "currency_mismatch"
+          ],
+          "expected_spurious_collisions": 0.005297968797941638,
+          "inconclusive": false,
+          "note": "no alternative reconstruction exists at substitution depth 2 over a pool widened to 105 records (an estimated 0.0053 chance collisions would have been tolerable here)"
+        },
+        "completeness_checks": [
+          {
+            "name": "cardinality_cross_check",
+            "state": "pass",
+            "detail": "declared 5, witness 5; note the search scope was itself bounded by this count, so the check is weakened though not void"
+          },
+          {
+            "name": "gross_ratio_sanity",
+            "state": "pass",
+            "detail": "fees deviate from policy by 8 bps against 8 bps across the pool, within the 27 bps band (instrument mix is normalised out, so this compares pricing rather than composition)"
+          },
+          {
+            "name": "feed_completeness",
+            "state": "pass",
+            "detail": "every source known to this run was joined into the candidate pool"
+          }
+        ]
+      },
+      "fee_check": {
+        "mode": "observed",
+        "circular": false,
+        "expected_mdr_paise": 242438,
+        "observed_mdr_paise": 251606,
+        "delta_bps": 8,
+        "band_bps": 2,
+        "rounding_component_bps": 0,
+        "within_band": false,
+        "claim": "observed effective rate is 6 bps outside the configured band of 2 bps across ₹1,14,606.90 of gross; this identifies an effective rate, not a schedule"
+      },
+      "agent": {
+        "invoked": false
+      },
+      "claim": "this credit is reconstructed exactly by 5 records, and that reconstruction is unique among all subsets with k(S) \u003c= 5",
+      "cost": {
+        "model_calls": 0,
+        "input_tokens": 0,
+        "output_tokens": 0,
+        "inr_micros": 0
+      },
+      "timing_ms": {
+        "entropy_gate": 0,
+        "feasibility": 7,
+        "fee_check": 0,
+        "narrow": 0,
+        "prove": 1,
+        "reconstruct": 3
+      },
+      "policy_version": "fees_2026_08",
+      "replay_seed": 1006
+    },
+    "b0_posted": true,
+    "b0_posted_wrong": false,
+    "b0_confidence": 0.9500000000000001,
+    "b0_proposed": [
+      "pay_000253",
+      "pay_000255",
+      "pay_000257",
+      "pay_000259",
+      "pay_000261"
+    ],
+    "b0_tokens_in": 1560,
+    "expectation_met": true
+  },
+  {
+    "case": {
+      "Number": 7,
+      "Name": "fee_check_circular",
+      "Scenario": "the same batch in lump-credit mode, where fee rows do not exist",
+      "ExpectB0": "silent",
+      "ExpectAxiom": "VERIFIED with FEE_CHECK_CIRCULAR and no anomaly claim at all",
+      "Why": "reporting a check that cannot fail is worse than reporting no check, because it looks like assurance",
+      "Spec": {
+        "Seed": 1006,
+        "Archetype": "travel",
+        "Settlements": 6,
+        "BatchSize": 5,
+        "BatchJitter": 0,
+        "PoolJitter": 0,
+        "PoolTarget": 34,
+        "ChargebackRate": 0,
+        "RefundRate": 0,
+        "FullRefundShare": 0.25,
+        "AdjustmentRate": 0.02,
+        "Mode": "lump_credit_only",
+        "DeclareTxnCount": true,
+        "JoinDisputes": true,
+        "FeeDriftBps": 8,
+        "Policy": {
+          "version": "fees_2026_08",
+          "mdr_bps_by_instrument": {
+            "card": 200,
+            "emi": 265,
+            "netbanking": 190,
+            "upi": 0,
+            "wallet": 210
+          },
+          "gst_bps": 1800,
+          "fee_rounding": "half_up",
+          "tax_rounding": "half_up",
+          "refund_returns_mdr": false,
+          "dispute_fee_paise": 2500,
+          "fee_band_bps": 2
+        },
+        "Start": "2026-08-20T00:00:00Z",
+        "Pathology": "fee_circular"
+      },
+      "WindowHours": 0,
+      "InferredRounding": false,
+      "GateScope": false
+    },
+    "status": "VERIFIED",
+    "flags": [
+      "FEE_CHECK_CIRCULAR"
+    ],
+    "posted": true,
+    "posted_wrong": false,
+    "pool_n": 34,
+    "k_star": 12,
+    "collision_index": 2.424857733454302,
+    "latency_ms": 15,
+    "receipt": {
+      "settlement_ref": "bank_credit_2026_08_25_1003",
+      "run_id": "case_07_fee_check_circular",
+      "merchant_id": "mid_travel",
+      "merchant_name": "Meridian Travel Pvt Ltd",
+      "merchant_archetype": "travel",
+      "status": "VERIFIED",
+      "flags": [
+        "FEE_CHECK_CIRCULAR"
+      ],
+      "data_mode": "lump_credit_only",
+      "narration": "UPI/CREDIT/589267/RAZORPAY/SETTLE/NA",
+      "target_paise": 11174614,
+      "value_date": "2026-08-25",
+      "pool": {
+        "n": 34,
+        "contribution_sigma_paise": 2377581.8215460475,
+        "signed_items": 0,
+        "total_contribution_paise": 123639542
+      },
+      "amount_entropy": {
+        "distinct_contribution_values": 34,
+        "twin_class_count": 0,
+        "twin_mass": 0,
+        "twin_mass_threshold": 0.3,
+        "lattice_gcd_paise": 1,
+        "pass": true
+      },
+      "feasibility": {
+        "n": 34,
+        "contribution_sigma_paise": 2377581.8215460475,
+        "lattice_gcd_paise": 1,
+        "k_star": 12,
+        "collision_index_at_k_star": 2.424857733454302,
+        "collision_index_estimator": "empirical_subset_sampling",
+        "collision_index_analytic_at_k_star": 26.561036503856517,
+        "cumulative_index_at_k_star": 3.969998278823605,
+        "threshold_underdetermined": 10,
+        "lattice_correction_applied": false,
+        "decision": "enumerate",
+        "declared_txn_count": 5,
+        "implied_free_cardinality": 5,
+        "collision_index_at_implied": 0.01039206625755423,
+        "predicted_entries": 255716,
+        "predicted_bytes": 4602888,
+        "memory_ceiling_bytes": 1073741824,
+        "curve": [
+          {
+            "k": 1,
+            "subsets": 34,
+            "collision_index": 4.6586237280704086e-7,
+            "collision_index_analytic": 0.0000057049719217774624
+          },
+          {
+            "k": 2,
+            "subsets": 561,
+            "collision_index": 0.00005272682775594825,
+            "collision_index_analytic": 0.00006656140148406694
+          },
+          {
+            "k": 3,
+            "subsets": 5984,
+            "collision_index": 0.00041778557790159816,
+            "collision_index_analytic": 0.0005797030051573155
+          },
+          {
+            "k": 4,
+            "subsets": 46376,
+            "collision_index": 0.004055006221025471,
+            "collision_index_analytic": 0.003890790850652229
+          },
+          {
+            "k": 5,
+            "subsets": 278256,
+            "collision_index": 0.01039206625755423,
+            "collision_index_analytic": 0.020880174787902276
+          },
+          {
+            "k": 6,
+            "subsets": 1344904,
+            "collision_index": 0.01962534680979232,
+            "collision_index_analytic": 0.09212770537321027
+          },
+          {
+            "k": 7,
+            "subsets": 5379616,
+            "collision_index": 0.03568436320754717,
+            "collision_index_analytic": 0.3411747255217671
+          },
+          {
+            "k": 8,
+            "subsets": 18156204,
+            "collision_index": 0.11805029061667303,
+            "collision_index_analytic": 1.077096598815171
+          },
+          {
+            "k": 9,
+            "subsets": 52451256,
+            "collision_index": 0.038297536833180906,
+            "collision_index_analytic": 2.9336563013917805
+          },
+          {
+            "k": 10,
+            "subsets": 131128140,
+            "collision_index": 0.4139868113027868,
+            "collision_index_analytic": 6.957776838377565
+          },
+          {
+            "k": 11,
+            "subsets": 286097760,
+            "collision_index": 0.9045781458527128,
+            "collision_index_analytic": 14.474138006645422
+          },
+          {
+            "k": 12,
+            "subsets": 548354040,
+            "collision_index": 2.424857733454302,
+            "collision_index_analytic": 26.561036503856517
+          }
+        ],
+        "note": "contested band: an estimated 3.97 subsets hit this target across the searched region, so an ambiguous outcome is a normal and correct result here"
+      },
+      "solver": {
+        "method": "cardinality_restricted_meet_in_the_middle",
+        "k_max": 5,
+        "k_max_source": "declared_txn_count",
+        "split": [
+          17,
+          17
+        ],
+        "entries_left": 9402,
+        "entries_right": 9402,
+        "entry_encoding": "int64 sum + uint32 colex rank, 12 bytes",
+        "memory_bytes": 299904,
+        "memory_ceiling_bytes": 1073741824,
+        "probed_targets": [
+          "T",
+          "pool_total_minus_T"
+        ],
+        "solve_side": "witness",
+        "dedup_applied": false,
+        "dedup_removed": 0,
+        "nearest_miss": {
+          "nearest_sum_paise": 11174675,
+          "gap_paise": 61,
+          "cardinality": 5,
+          "valid": true
+        }
+      },
+      "uniqueness": {
+        "method": "exhaustive_enumeration_count",
+        "scope": "all subsets with k(S) \u003c= 5",
+        "scope_source": "declared_txn_count",
+        "scope_note": "the region was bounded by the report's declared transaction count, not by the gate; the gate would have searched k(S) \u003c= 12, where an estimated 3.97 subsets hit this target",
+        "k_max_if_gate_derived": 12,
+        "scope_complete": true,
+        "matches_found": 1,
+        "rivals_found": 0,
+        "counted_after_dedup": false,
+        "count_saturated": false,
+        "alternative_witnesses": null,
+        "cumulative_index_in_searched_region": 0.014918050746610054
+      },
+      "witness": [
+        "pay_000253",
+        "pay_000255",
+        "pay_000257",
+        "pay_000259",
+        "pay_000261"
+      ],
+      "witness_size": 5,
+      "accounting": {
+        "gross_paise": 11460690,
+        "mdr_paise": 242438,
+        "gst_on_mdr_paise": 43638,
+        "refunds_paise": 0,
+        "chargebacks_paise": 0,
+        "adjustments_paise": 0,
+        "reconstructed_paise": 11174614,
+        "target_paise": 11174614,
+        "residual_paise": 0,
+        "slack_allowed_paise": 0,
+        "slack_consumed_paise": 0,
+        "closes": true,
+        "negative_items": 0
+      },
+      "rounding": {
+        "mode": "declared",
+        "tolerance_paise": 0,
+        "band_basis": "cardinality",
+        "slack_allowed_paise": 0,
+        "slack_consumed_paise": 0
+      },
+      "narrowing": {
+        "pool_before": 252,
+        "pool_after": 34,
+        "dropped": {
+          "already_reconciled": 18,
+          "mid_mismatch": 30,
+          "outside_settlement_window": 170
+        },
+        "window_hours": 14,
+        "constraints_applied": [
+          "mid_mismatch",
+          "currency_mismatch",
+          "outside_settlement_window",
+          "already_reconciled",
+          "zero_net_contribution"
+        ],
+        "neighbourhood_probe": {
+          "method": "witness_neighbourhood_join",
+          "stable": true,
+          "max_substitution_depth": 2,
+          "requested_substitution_depth": 2,
+          "removal_sums_enumerated": 16,
+          "addition_sums_enumerated": 5051,
+          "widened_pool_n": 105,
+          "original_pool_n": 10,
+          "constraints_tested": [
+            "outside_settlement_window",
+            "payment_method_mismatch",
+            "already_reconciled",
+            "currency_mismatch"
+          ],
+          "expected_spurious_collisions": 0.005292905298022032,
+          "inconclusive": false,
+          "note": "no alternative reconstruction exists at substitution depth 2 over a pool widened to 105 records (an estimated 0.00529 chance collisions would have been tolerable here)"
+        },
+        "completeness_checks": [
+          {
+            "name": "cardinality_cross_check",
+            "state": "pass",
+            "detail": "declared 5, witness 5; note the search scope was itself bounded by this count, so the check is weakened though not void"
+          },
+          {
+            "name": "gross_ratio_sanity",
+            "state": "inactive",
+            "detail": "contributions are policy-derived in this data mode, which makes the implied rate tautological; the check would pass for any subset and is therefore not run"
+          },
+          {
+            "name": "feed_completeness",
+            "state": "pass",
+            "detail": "every source known to this run was joined into the candidate pool"
+          }
+        ]
+      },
+      "fee_check": {
+        "mode": "derived",
+        "circular": true,
+        "expected_mdr_paise": 0,
+        "observed_mdr_paise": 0,
+        "delta_bps": 0,
+        "band_bps": 2,
+        "rounding_component_bps": 0,
+        "within_band": true,
+        "claim": "no fee anomaly claim is made in this data mode: the observed fee is derived from the same policy that built the contributions, so agreement would be tautological"
+      },
+      "agent": {
+        "invoked": false
+      },
+      "claim": "this credit is reconstructed exactly by 5 records, and that reconstruction is unique among all subsets with k(S) \u003c= 5",
+      "cost": {
+        "model_calls": 0,
+        "input_tokens": 0,
+        "output_tokens": 0,
+        "inr_micros": 0
+      },
+      "timing_ms": {
+        "entropy_gate": 0,
+        "feasibility": 8,
+        "fee_check": 0,
+        "narrow": 0,
+        "prove": 2,
+        "reconstruct": 5
+      },
+      "policy_version": "fees_2026_08",
+      "replay_seed": 1006
+    },
+    "b0_posted": true,
+    "b0_posted_wrong": false,
+    "b0_confidence": 0.9500000000000001,
+    "b0_proposed": [
+      "pay_000253",
+      "pay_000255",
+      "pay_000257",
+      "pay_000259",
+      "pay_000261"
+    ],
+    "b0_tokens_in": 1560,
+    "expectation_met": true
+  },
+  {
+    "case": {
+      "Number": 8,
+      "Name": "rounding_inferred",
+      "Scenario": "the rounding convention is unknown, on a large pool",
+      "ExpectB0": "posts, wrong subset",
+      "ExpectAxiom": "VERIFIED with ROUNDING_APPLIED, band scaled by witness cardinality",
+      "Why": "a pool-width tolerance band matches everything, which is worse than matching nothing",
+      "Spec": {
+        "Seed": 1008,
+        "Archetype": "travel",
+        "Settlements": 6,
+        "BatchSize": 5,
+        "BatchJitter": 0,
+        "PoolJitter": 0,
+        "PoolTarget": 26,
+        "ChargebackRate": 0,
+        "RefundRate": 0.1,
+        "FullRefundShare": 0.25,
+        "AdjustmentRate": 0.02,
+        "Mode": "report_present_mapping_withheld",
+        "DeclareTxnCount": true,
+        "JoinDisputes": true,
+        "FeeDriftBps": 0,
+        "Policy": {
+          "version": "fees_2026_08",
+          "mdr_bps_by_instrument": {
+            "card": 200,
+            "emi": 265,
+            "netbanking": 190,
+            "upi": 0,
+            "wallet": 210
+          },
+          "gst_bps": 1800,
+          "fee_rounding": "half_up",
+          "tax_rounding": "half_up",
+          "refund_returns_mdr": false,
+          "dispute_fee_paise": 2500,
+          "fee_band_bps": 2
+        },
+        "Start": "2026-08-20T00:00:00Z",
+        "Pathology": "inferred_rounding"
+      },
+      "WindowHours": 0,
+      "InferredRounding": true,
+      "GateScope": false
+    },
+    "status": "VERIFIED",
+    "flags": [
+      "ROUNDING_APPLIED",
+      "SIGNED_ITEMS_PRESENT"
+    ],
+    "posted": true,
+    "posted_wrong": false,
+    "pool_n": 26,
+    "k_star": 12,
+    "collision_index": 0.06644663346613545,
+    "latency_ms": 11,
+    "receipt": {
+      "settlement_ref": "bank_credit_2026_08_25_1003",
+      "run_id": "case_08_rounding_inferred",
+      "merchant_id": "mid_travel",
+      "merchant_name": "Meridian Travel Pvt Ltd",
+      "merchant_archetype": "travel",
+      "status": "VERIFIED",
+      "flags": [
+        "ROUNDING_APPLIED",
+        "SIGNED_ITEMS_PRESENT"
+      ],
+      "data_mode": "report_present_mapping_withheld",
+      "narration": "UPI/CREDIT/631866/RAZORPAY/SETTLE/NA",
+      "target_paise": 7778657,
+      "value_date": "2026-08-25",
+      "pool": {
+        "n": 26,
+        "contribution_sigma_paise": 3685982.9151619165,
+        "signed_items": 1,
+        "total_contribution_paise": 86551759
+      },
+      "amount_entropy": {
+        "distinct_contribution_values": 26,
+        "twin_class_count": 0,
+        "twin_mass": 0,
+        "twin_mass_threshold": 0.3,
+        "lattice_gcd_paise": 1,
+        "pass": true
+      },
+      "feasibility": {
+        "n": 26,
+        "contribution_sigma_paise": 3685982.9151619165,
+        "lattice_gcd_paise": 1,
+        "k_star": 12,
+        "collision_index_at_k_star": 0.06644663346613545,
+        "collision_index_estimator": "empirical_subset_sampling",
+        "collision_index_analytic_at_k_star": 0.3017448284621023,
+        "cumulative_index_at_k_star": 0.20742654151670115,
+        "threshold_underdetermined": 10,
+        "lattice_correction_applied": false,
+        "decision": "enumerate",
+        "declared_txn_count": 5,
+        "implied_free_cardinality": 5,
+        "collision_index_at_implied": 0.002112349598816576,
+        "predicted_entries": 16382,
+        "predicted_bytes": 294876,
+        "memory_ceiling_bytes": 1073741824,
+        "curve": [
+          {
+            "k": 1,
+            "subsets": 26,
+            "collision_index": 2.443194148817886e-7,
+            "collision_index_analytic": 0.00000281403889523498
+          },
+          {
+            "k": 2,
+            "subsets": 325,
+            "collision_index": 0.000021760840974440905,
+            "collision_index_analytic": 0.000024872824816791935
+          },
+          {
+            "k": 3,
+            "subsets": 2600,
+            "collision_index": 0.00035052363163576506,
+            "collision_index_analytic": 0.00016246861136739928
+          },
+          {
+            "k": 4,
+            "subsets": 14950,
+            "collision_index": 0.001047930908941342,
+            "collision_index_analytic": 0.0008090361823800567
+          },
+          {
+            "k": 5,
+            "subsets": 65780,
+            "collision_index": 0.002112349598816576,
+            "collision_index_analytic": 0.0031839454241033545
+          },
+          {
+            "k": 6,
+            "subsets": 230230,
+            "collision_index": 0.001703890893725016,
+            "collision_index_analytic": 0.010172859262106104
+          },
+          {
+            "k": 7,
+            "subsets": 657800,
+            "collision_index": 0.0024240077448199225,
+            "collision_index_analytic": 0.026909250220043417
+          },
+          {
+            "k": 8,
+            "subsets": 1562275,
+            "collision_index": 0.006603848558688057,
+            "collision_index_analytic": 0.05978183444715942
+          },
+          {
+            "k": 9,
+            "subsets": 3124550,
+            "collision_index": 0.02465555131399654,
+            "collision_index_analytic": 0.11272570807828788
+          },
+          {
+            "k": 10,
+            "subsets": 5311735,
+            "collision_index": 0.033472703710168715,
+            "collision_index_analytic": 0.18179969407514235
+          },
+          {
+            "k": 11,
+            "subsets": 7726160,
+            "collision_index": 0.06858709652938447,
+            "collision_index_analytic": 0.2521297556900971
+          },
+          {
+            "k": 12,
+            "subsets": 9657700,
+            "collision_index": 0.06644663346613545,
+            "collision_index_analytic": 0.3017448284621023
+          }
+        ],
+        "note": "uniqueness very likely at this scope"
+      },
+      "solver": {
+        "method": "cardinality_restricted_meet_in_the_middle",
+        "k_max": 5,
+        "k_max_source": "declared_txn_count",
+        "split": [
+          13,
+          13
+        ],
+        "entries_left": 2380,
+        "entries_right": 2380,
+        "entry_encoding": "int64 sum + uint32 colex rank, 12 bytes",
+        "memory_bytes": 72564,
+        "memory_ceiling_bytes": 1073741824,
+        "probed_targets": [
+          "T",
+          "pool_total_minus_T"
+        ],
+        "solve_side": "witness",
+        "dedup_applied": false,
+        "dedup_removed": 0,
+        "nearest_miss": {
+          "nearest_sum_paise": 7778356,
+          "gap_paise": 301,
+          "cardinality": 4,
+          "valid": true
+        }
+      },
+      "uniqueness": {
+        "method": "exhaustive_enumeration_count",
+        "scope": "all subsets with k(S) \u003c= 5",
+        "scope_source": "declared_txn_count",
+        "scope_note": "the region was bounded by the report's declared transaction count, not by the gate; the gate would have searched k(S) \u003c= 12, where an estimated 0.21 subsets hit this target",
+        "k_max_if_gate_derived": 12,
+        "scope_complete": true,
+        "matches_found": 1,
+        "rivals_found": 0,
+        "counted_after_dedup": false,
+        "count_saturated": false,
+        "alternative_witnesses": null,
+        "cumulative_index_in_searched_region": 0.0035328092997830057
+      },
+      "witness": [
+        "pay_000208",
+        "pay_000210",
+        "pay_000212",
+        "pay_000214",
+        "pay_000217"
+      ],
+      "witness_size": 5,
+      "negative_members": [
+        "pay_000214"
+      ],
+      "accounting": {
+        "gross_paise": 10987660,
+        "mdr_paise": 117913,
+        "gst_on_mdr_paise": 21225,
+        "refunds_paise": 3069865,
+        "chargebacks_paise": 0,
+        "adjustments_paise": 0,
+        "reconstructed_paise": 7778657,
+        "target_paise": 7778657,
+        "residual_paise": 0,
+        "slack_allowed_paise": 5,
+        "slack_consumed_paise": 0,
+        "closes": true,
+        "negative_items": 1
+      },
+      "rounding": {
+        "mode": "inferred",
+        "tolerance_paise": 1,
+        "band_basis": "cardinality",
+        "slack_allowed_paise": 5,
+        "slack_consumed_paise": 0
+      },
+      "narrowing": {
+        "pool_before": 204,
+        "pool_after": 26,
+        "dropped": {
+          "already_reconciled": 18,
+          "mid_mismatch": 30,
+          "outside_settlement_window": 130
+        },
+        "window_hours": 14,
+        "constraints_applied": [
+          "mid_mismatch",
+          "currency_mismatch",
+          "outside_settlement_window",
+          "already_reconciled",
+          "zero_net_contribution"
+        ],
+        "neighbourhood_probe": {
+          "method": "witness_neighbourhood_join",
+          "stable": true,
+          "max_substitution_depth": 2,
+          "requested_substitution_depth": 2,
+          "removal_sums_enumerated": 16,
+          "addition_sums_enumerated": 2927,
+          "widened_pool_n": 81,
+          "original_pool_n": 10,
+          "constraints_tested": [
+            "outside_settlement_window",
+            "payment_method_mismatch",
+            "already_reconciled",
+            "currency_mismatch"
+          ],
+          "expected_spurious_collisions": 0.01378913294454203,
+          "inconclusive": false,
+          "note": "no alternative reconstruction exists at substitution depth 2 over a pool widened to 81 records (an estimated 0.0138 chance collisions would have been tolerable here)"
+        },
+        "completeness_checks": [
+          {
+            "name": "cardinality_cross_check",
+            "state": "pass",
+            "detail": "declared 5, witness 5; note the search scope was itself bounded by this count, so the check is weakened though not void"
+          },
+          {
+            "name": "gross_ratio_sanity",
+            "state": "pass",
+            "detail": "fees deviate from policy by 0 bps against 0 bps across the pool, within the 27 bps band (instrument mix is normalised out, so this compares pricing rather than composition)"
+          },
+          {
+            "name": "feed_completeness",
+            "state": "pass",
+            "detail": "every source known to this run was joined into the candidate pool"
+          }
+        ]
+      },
+      "fee_check": {
+        "mode": "observed",
+        "circular": false,
+        "expected_mdr_paise": 117913,
+        "observed_mdr_paise": 117913,
+        "delta_bps": 0,
+        "band_bps": 2,
+        "rounding_component_bps": 0,
+        "within_band": true,
+        "claim": "observed effective rate is within 0 bps of policy (band 2 bps)"
+      },
+      "agent": {
+        "invoked": false
+      },
+      "claim": "this credit is reconstructed exactly by 5 records, and that reconstruction is unique among all subsets with k(S) \u003c= 5",
+      "cost": {
+        "model_calls": 0,
+        "input_tokens": 0,
+        "output_tokens": 0,
+        "inr_micros": 0
+      },
+      "timing_ms": {
+        "entropy_gate": 0,
+        "feasibility": 9,
+        "fee_check": 0,
+        "narrow": 0,
+        "prove": 0,
+        "reconstruct": 1
+      },
+      "policy_version": "fees_2026_08",
+      "replay_seed": 1008
+    },
+    "b0_posted": true,
+    "b0_posted_wrong": false,
+    "b0_confidence": 0.9500000000000001,
+    "b0_proposed": [
+      "pay_000208",
+      "pay_000210",
+      "pay_000212",
+      "pay_000214",
+      "pay_000217"
+    ],
+    "b0_tokens_in": 1240,
+    "expectation_met": true
+  },
+  {
+    "case": {
+      "Number": 9,
+      "Name": "unjoined_disputes_feed",
+      "Scenario": "a chargeback exists in a disputes feed nobody wired into the pool",
+      "ExpectB0": "no match",
+      "ExpectAxiom": "UNRESOLVED, then VERIFIED with RESOLVED_BY_HYPOTHESIS and a citation",
+      "Why": "the finance-ops loop, closed end to end: model proposes, system finds the record, verifier decides",
+      "Spec": {
+        "Seed": 1009,
+        "Archetype": "travel",
+        "Settlements": 6,
+        "BatchSize": 6,
+        "BatchJitter": 0,
+        "PoolJitter": 0,
+        "PoolTarget": 24,
+        "ChargebackRate": 1,
+        "RefundRate": 0.1,
+        "FullRefundShare": 0.25,
+        "AdjustmentRate": 0.02,
+        "Mode": "report_present_mapping_withheld",
+        "DeclareTxnCount": true,
+        "JoinDisputes": false,
+        "FeeDriftBps": 0,
+        "Policy": {
+          "version": "fees_2026_08",
+          "mdr_bps_by_instrument": {
+            "card": 200,
+            "emi": 265,
+            "netbanking": 190,
+            "upi": 0,
+            "wallet": 210
+          },
+          "gst_bps": 1800,
+          "fee_rounding": "half_up",
+          "tax_rounding": "half_up",
+          "refund_returns_mdr": false,
+          "dispute_fee_paise": 2500,
+          "fee_band_bps": 2
+        },
+        "Start": "2026-08-20T00:00:00Z",
+        "Pathology": "unjoined_disputes"
+      },
+      "WindowHours": 0,
+      "InferredRounding": false,
+      "GateScope": false
+    },
+    "status": "VERIFIED",
+    "flags": [
+      "SIGNED_ITEMS_PRESENT",
+      "RESOLVED_BY_HYPOTHESIS"
+    ],
+    "posted": true,
+    "posted_wrong": false,
+    "pool_n": 25,
+    "k_star": 12,
+    "collision_index": 0.019657506384222142,
+    "latency_ms": 26,
+    "receipt": {
+      "settlement_ref": "bank_credit_2026_08_25_1003",
+      "run_id": "case_09_unjoined_disputes_feed",
+      "merchant_id": "mid_travel",
+      "merchant_name": "Meridian Travel Pvt Ltd",
+      "merchant_archetype": "travel",
+      "status": "VERIFIED",
+      "flags": [
+        "SIGNED_ITEMS_PRESENT",
+        "RESOLVED_BY_HYPOTHESIS"
+      ],
+      "data_mode": "report_present_mapping_withheld",
+      "narration": "UPI/CREDIT/318085/RAZORPAY/SETTLE/NA",
+      "target_paise": 26854947,
+      "value_date": "2026-08-25",
+      "pool": {
+        "n": 25,
+        "contribution_sigma_paise": 3302045.1591301416,
+        "signed_items": 1,
+        "total_contribution_paise": 96589550
+      },
+      "amount_entropy": {
+        "distinct_contribution_values": 25,
+        "twin_class_count": 0,
+        "twin_mass": 0,
+        "twin_mass_threshold": 0.3,
+        "lattice_gcd_paise": 1,
+        "pass": true
+      },
+      "feasibility": {
+        "n": 25,
+        "contribution_sigma_paise": 3302045.1591301416,
+        "lattice_gcd_paise": 1,
+        "k_star": 12,
+        "collision_index_at_k_star": 0.019657506384222142,
+        "collision_index_estimator": "empirical_subset_sampling",
+        "collision_index_analytic_at_k_star": 0.18136974096472622,
+        "cumulative_index_at_k_star": 0.2935512173720234,
+        "threshold_underdetermined": 10,
+        "lattice_correction_applied": false,
+        "decision": "enumerate",
+        "declared_txn_count": 7,
+        "implied_free_cardinality": 7,
+        "collision_index_at_implied": 0.022553884228602848,
+        "predicted_entries": 12287,
+        "predicted_bytes": 245736,
+        "memory_ceiling_bytes": 1073741824,
+        "curve": [
+          {
+            "k": 1,
+            "subsets": 25,
+            "collision_index": 4.050079726217554e-8,
+            "collision_index_analytic": 0.0000030204181134406882
+          },
+          {
+            "k": 2,
+            "subsets": 300,
+            "collision_index": 0.0000019546679364117434,
+            "collision_index_analytic": 0.00002562909756039107
+          },
+          {
+            "k": 3,
+            "subsets": 2300,
+            "collision_index": 0.000017160275191420407,
+            "collision_index_analytic": 0.00016043320739913863
+          },
+          {
+            "k": 4,
+            "subsets": 12650,
+            "collision_index": 0.0003423081333848602,
+            "collision_index_analytic": 0.0007641657827004941
+          },
+          {
+            "k": 5,
+            "subsets": 53130,
+            "collision_index": 0.0014172022721863227,
+            "collision_index_analytic": 0.0028706607488120307
+          },
+          {
+            "k": 6,
+            "subsets": 177100,
+            "collision_index": 0.007703494294934055,
+            "collision_index_analytic": 0.008735142483716781
+          },
+          {
+            "k": 7,
+            "subsets": 480700,
+            "collision_index": 0.022553884228602848,
+            "collision_index_analytic": 0.021950891318605767
+          },
+          {
+            "k": 8,
+            "subsets": 1081575,
+            "collision_index": 0.04938305873799506,
+            "collision_index_analytic": 0.04619965198979995
+          },
+          {
+            "k": 9,
+            "subsets": 2042975,
+            "collision_index": 0.07742583641441987,
+            "collision_index_analytic": 0.08227518260408652
+          },
+          {
+            "k": 10,
+            "subsets": 3268760,
+            "collision_index": 0.07031072725411167,
+            "collision_index_analytic": 0.12488494652888489
+          },
+          {
+            "k": 11,
+            "subsets": 4457400,
+            "collision_index": 0.044738044208241505,
+            "collision_index_analytic": 0.1623724424662199
+          },
+          {
+            "k": 12,
+            "subsets": 5200300,
+            "collision_index": 0.019657506384222142,
+            "collision_index_analytic": 0.18136974096472622
+          }
+        ],
+        "note": "uniqueness very likely at this scope"
+      },
+      "solver": {
+        "method": "cardinality_restricted_meet_in_the_middle",
+        "k_max": 7,
+        "k_max_source": "declared_txn_count",
+        "split": [
+          12,
+          13
+        ],
+        "entries_left": 3302,
+        "entries_right": 5812,
+        "entry_encoding": "int64 sum + uint32 colex rank, 12 bytes",
+        "memory_bytes": 129960,
+        "memory_ceiling_bytes": 1073741824,
+        "probed_targets": [
+          "T",
+          "pool_total_minus_T"
+        ],
+        "solve_side": "witness",
+        "dedup_applied": false,
+        "dedup_removed": 0,
+        "nearest_miss": {
+          "nearest_sum_paise": 26854933,
+          "gap_paise": 14,
+          "cardinality": 6,
+          "valid": true
+        }
+      },
+      "uniqueness": {
+        "method": "exhaustive_enumeration_count",
+        "scope": "all subsets with k(S) \u003c= 7",
+        "scope_source": "declared_txn_count",
+        "scope_note": "the region was bounded by the report's declared transaction count, not by the gate; the gate would have searched k(S) \u003c= 12, where an estimated 0.29 subsets hit this target",
+        "k_max_if_gate_derived": 12,
+        "scope_complete": true,
+        "matches_found": 1,
+        "rivals_found": 0,
+        "counted_after_dedup": false,
+        "count_saturated": false,
+        "alternative_witnesses": null,
+        "cumulative_index_in_searched_region": 0.03203604437303318
+      },
+      "witness": [
+        "pay_000210",
+        "pay_000212",
+        "pay_000214",
+        "pay_000216",
+        "pay_000218",
+        "pay_000221",
+        "cbk_000223"
+      ],
+      "witness_size": 7,
+      "negative_members": [
+        "cbk_000223"
+      ],
+      "accounting": {
+        "gross_paise": 31476615,
+        "mdr_paise": 637655,
+        "gst_on_mdr_paise": 114778,
+        "refunds_paise": 2830384,
+        "chargebacks_paise": 1038851,
+        "adjustments_paise": 0,
+        "reconstructed_paise": 26854947,
+        "target_paise": 26854947,
+        "residual_paise": 0,
+        "slack_allowed_paise": 0,
+        "slack_consumed_paise": 0,
+        "closes": true,
+        "negative_items": 1
+      },
+      "rounding": {
+        "mode": "declared",
+        "tolerance_paise": 0,
+        "band_basis": "cardinality",
+        "slack_allowed_paise": 0,
+        "slack_consumed_paise": 0
+      },
+      "narrowing": {
+        "pool_before": 205,
+        "pool_after": 25,
+        "dropped": {
+          "already_reconciled": 24,
+          "mid_mismatch": 36,
+          "outside_settlement_window": 120
+        },
+        "window_hours": 14,
+        "constraints_applied": [
+          "mid_mismatch",
+          "currency_mismatch",
+          "outside_settlement_window",
+          "already_reconciled",
+          "zero_net_contribution"
+        ],
+        "neighbourhood_probe": {
+          "method": "witness_neighbourhood_join",
+          "stable": true,
+          "max_substitution_depth": 2,
+          "requested_substitution_depth": 2,
+          "removal_sums_enumerated": 29,
+          "addition_sums_enumerated": 2851,
+          "widened_pool_n": 82,
+          "original_pool_n": 14,
+          "constraints_tested": [
+            "outside_settlement_window",
+            "feed_not_joined",
+            "payment_method_mismatch",
+            "already_reconciled",
+            "currency_mismatch"
+          ],
+          "expected_spurious_collisions": 0.003982404141407233,
+          "inconclusive": false,
+          "note": "no alternative reconstruction exists at substitution depth 2 over a pool widened to 82 records (an estimated 0.00398 chance collisions would have been tolerable here)"
+        },
+        "completeness_checks": [
+          {
+            "name": "cardinality_cross_check",
+            "state": "pass",
+            "detail": "declared 7, witness 7; note the search scope was itself bounded by this count, so the check is weakened though not void"
+          },
+          {
+            "name": "gross_ratio_sanity",
+            "state": "pass",
+            "detail": "fees deviate from policy by 0 bps against 0 bps across the pool, within the 27 bps band (instrument mix is normalised out, so this compares pricing rather than composition)"
+          },
+          {
+            "name": "feed_completeness",
+            "state": "pass",
+            "detail": "every source known to this run was joined into the candidate pool"
+          }
+        ]
+      },
+      "fee_check": {
+        "mode": "observed",
+        "circular": false,
+        "expected_mdr_paise": 637655,
+        "observed_mdr_paise": 637655,
+        "delta_bps": 0,
+        "band_bps": 2,
+        "rounding_component_bps": 0,
+        "within_band": true,
+        "claim": "observed effective rate is within 0 bps of policy (band 2 bps)"
+      },
+      "agent": {
+        "invoked": true,
+        "provider": "offline-stub",
+        "iterations": 1,
+        "hypotheses": [
+          {
+            "kind": "CHARGEBACK_DEBIT",
+            "amount_paise": 1038851,
+            "effect": "add_item",
+            "source_ref": "cbk_000223",
+            "evidence": "cbk_000223 in the disputes feed, dated 2026-08-23, contributing -₹10,388.51",
+            "rationale": "an unexplained debit of this shape is most often a disputed transaction plus its handling fee",
+            "outcome": "accepted: the identity closes uniquely and the hypothesis cites a real record"
+          }
+        ],
+        "accepted": {
+          "kind": "CHARGEBACK_DEBIT",
+          "amount_paise": 1038851,
+          "effect": "add_item",
+          "source_ref": "cbk_000223",
+          "evidence": "cbk_000223 in the disputes feed, dated 2026-08-23, contributing -₹10,388.51",
+          "rationale": "an unexplained debit of this shape is most often a disputed transaction plus its handling fee",
+          "outcome": "accepted: the identity closes uniquely and the hypothesis cites a real record"
+        },
+        "note": "resolved by an agent hypothesis; the verification stack was re-run unmodified over the amended pool"
+      },
+      "claim": "this credit is reconstructed exactly by 7 records, and that reconstruction is unique among all subsets with k(S) \u003c= 7, and the missing record was found in the disputes feed and cited as cbk_000223",
+      "remediation": [
+        {
+          "action": "search for an unjoined source that could explain the residual",
+          "effect": "the resolution agent proposes typed hypotheses and the verifier re-runs unmodified over each"
+        }
+      ],
+      "cost": {
+        "model_calls": 0,
+        "input_tokens": 0,
+        "output_tokens": 0,
+        "inr_micros": 0
+      },
+      "timing_ms": {
+        "entropy_gate": 0,
+        "feasibility": 6,
+        "fee_check": 0,
+        "narrow": 0,
+        "prove": 2,
+        "reconstruct": 4
+      },
+      "policy_version": "fees_2026_08",
+      "replay_seed": 1009
+    },
+    "b0_posted": false,
+    "b0_posted_wrong": false,
+    "b0_confidence": 0.72,
+    "b0_proposed": [
+      "pay_000214",
+      "pay_000221",
+      "pay_000234",
+      "pay_000254",
+      "pay_000256",
+      "pay_000258"
+    ],
+    "b0_tokens_in": 1160,
+    "expectation_met": true
+  },
+  {
+    "case": {
+      "Number": 10,
+      "Name": "narrowing_sensitive",
+      "Scenario": "narrowing drops a record that genuinely belonged, and a coincidental subset closes",
+      "ExpectB0": "posts, confidently wrong",
+      "ExpectAxiom": "NARROWING_SENSITIVE, held for review, constraint named",
+      "Why": "the dangerous failure nobody demos: a wrong posting with a proof attached",
+      "Spec": {
+        "Seed": 1010,
+        "Archetype": "travel",
+        "Settlements": 6,
+        "BatchSize": 6,
+        "BatchJitter": 0,
+        "PoolJitter": 0,
+        "PoolTarget": 30,
+        "ChargebackRate": 0,
+        "RefundRate": 0,
+        "FullRefundShare": 0.25,
+        "AdjustmentRate": 0.02,
+        "Mode": "report_present_mapping_withheld",
+        "DeclareTxnCount": true,
+        "JoinDisputes": true,
+        "FeeDriftBps": 0,
+        "Policy": {
+          "version": "fees_2026_08",
+          "mdr_bps_by_instrument": {
+            "card": 200,
+            "emi": 265,
+            "netbanking": 190,
+            "upi": 0,
+            "wallet": 210
+          },
+          "gst_bps": 1800,
+          "fee_rounding": "half_up",
+          "tax_rounding": "half_up",
+          "refund_returns_mdr": false,
+          "dispute_fee_paise": 2500,
+          "fee_band_bps": 2
+        },
+        "Start": "2026-08-20T00:00:00Z",
+        "Pathology": "narrowing_sensitive"
+      },
+      "WindowHours": 10,
+      "InferredRounding": false,
+      "GateScope": false
+    },
+    "status": "NARROWING_SENSITIVE",
+    "flags": [],
+    "posted": false,
+    "posted_wrong": false,
+    "pool_n": 29,
+    "k_star": 12,
+    "collision_index": 0.3749135973981732,
+    "latency_ms": 10,
+    "receipt": {
+      "settlement_ref": "bank_credit_2026_08_25_1003",
+      "run_id": "case_10_narrowing_sensitive",
+      "merchant_id": "mid_travel",
+      "merchant_name": "Meridian Travel Pvt Ltd",
+      "merchant_archetype": "travel",
+      "status": "NARROWING_SENSITIVE",
+      "flags": [],
+      "data_mode": "report_present_mapping_withheld",
+      "narration": "UPI/CREDIT/459168/RAZORPAY/SETTLE/NA",
+      "target_paise": 24834440,
+      "value_date": "2026-08-25",
+      "pool": {
+        "n": 29,
+        "contribution_sigma_paise": 2841989.008348626,
+        "signed_items": 0,
+        "total_contribution_paise": 111060432
+      },
+      "amount_entropy": {
+        "distinct_contribution_values": 29,
+        "twin_class_count": 0,
+        "twin_mass": 0,
+        "twin_mass_threshold": 0.3,
+        "lattice_gcd_paise": 1,
+        "pass": true
+      },
+      "feasibility": {
+        "n": 29,
+        "contribution_sigma_paise": 2841989.008348626,
+        "lattice_gcd_paise": 1,
+        "k_star": 12,
+        "collision_index_at_k_star": 0.3749135973981732,
+        "collision_index_estimator": "empirical_subset_sampling",
+        "collision_index_analytic_at_k_star": 2.102956986717672,
+        "cumulative_index_at_k_star": 1.5437606886818813,
+        "threshold_underdetermined": 10,
+        "lattice_correction_applied": false,
+        "decision": "enumerate",
+        "declared_txn_count": 6,
+        "implied_free_cardinality": 6,
+        "collision_index_at_implied": 0.030696658633920876,
+        "predicted_entries": 49016,
+        "predicted_bytes": 979956,
+        "memory_ceiling_bytes": 1073741824,
+        "curve": [
+          {
+            "k": 1,
+            "subsets": 29,
+            "collision_index": 1.8161076949457116e-7,
+            "collision_index_analytic": 0.000004070855340275948
+          },
+          {
+            "k": 2,
+            "subsets": 406,
+            "collision_index": 0.000002295874706529268,
+            "collision_index_analytic": 0.0000402994118287403
+          },
+          {
+            "k": 3,
+            "subsets": 3654,
+            "collision_index": 0.000043396893129565967,
+            "collision_index_analytic": 0.00029613898774408335
+          },
+          {
+            "k": 4,
+            "subsets": 23751,
+            "collision_index": 0.00046846939859842613,
+            "collision_index_analytic": 0.0016670152618430006
+          },
+          {
+            "k": 5,
+            "subsets": 118755,
+            "collision_index": 0.00464365756741994,
+            "collision_index_analytic": 0.0074551188900211195
+          },
+          {
+            "k": 6,
+            "subsets": 475020,
+            "collision_index": 0.030696658633920876,
+            "collision_index_analytic": 0.02722224523298295
+          },
+          {
+            "k": 7,
+            "subsets": 1560780,
+            "collision_index": 0.08576104521759421,
+            "collision_index_analytic": 0.08280953447793747
+          },
+          {
+            "k": 8,
+            "subsets": 4292145,
+            "collision_index": 0.17730397033477996,
+            "collision_index_analytic": 0.21301837313259672
+          },
+          {
+            "k": 9,
+            "subsets": 10015005,
+            "collision_index": 0.28632952157263664,
+            "collision_index_analytic": 0.4686165124958657
+          },
+          {
+            "k": 10,
+            "subsets": 20030010,
+            "collision_index": 0.3524586527480989,
+            "collision_index_analytic": 0.8891373171910152
+          },
+          {
+            "k": 11,
+            "subsets": 34597290,
+            "collision_index": 0.2311392414320537,
+            "collision_index_analytic": 1.4643112912938794
+          },
+          {
+            "k": 12,
+            "subsets": 51895935,
+            "collision_index": 0.3749135973981732,
+            "collision_index_analytic": 2.102956986717672
+          }
+        ],
+        "note": "contested band: an estimated 1.54 subsets hit this target across the searched region, so an ambiguous outcome is a normal and correct result here"
+      },
+      "solver": {
+        "method": "cardinality_restricted_meet_in_the_middle",
+        "k_max": 6,
+        "k_max_source": "declared_txn_count",
+        "split": [
+          14,
+          15
+        ],
+        "entries_left": 6476,
+        "entries_right": 9949,
+        "entry_encoding": "int64 sum + uint32 colex rank, 12 bytes",
+        "memory_bytes": 257160,
+        "memory_ceiling_bytes": 1073741824,
+        "probed_targets": [
+          "T",
+          "pool_total_minus_T"
+        ],
+        "solve_side": "witness",
+        "dedup_applied": false,
+        "dedup_removed": 0,
+        "nearest_miss": {
+          "nearest_sum_paise": 24834471,
+          "gap_paise": 31,
+          "cardinality": 6,
+          "valid": true
+        }
+      },
+      "uniqueness": {
+        "method": "exhaustive_enumeration_count",
+        "scope": "all subsets with k(S) \u003c= 6",
+        "scope_source": "declared_txn_count",
+        "scope_note": "the region was bounded by the report's declared transaction count, not by the gate; the gate would have searched k(S) \u003c= 12, where an estimated 1.54 subsets hit this target",
+        "k_max_if_gate_derived": 12,
+        "scope_complete": true,
+        "matches_found": 1,
+        "rivals_found": 0,
+        "counted_after_dedup": false,
+        "count_saturated": false,
+        "alternative_witnesses": null,
+        "cumulative_index_in_searched_region": 0.03585465997854483
+      },
+      "witness": [
+        "pay_000243",
+        "pay_000245",
+        "pay_000247",
+        "pay_000249",
+        "pay_000251",
+        "pay_000253"
+      ],
+      "witness_size": 6,
+      "accounting": {
+        "gross_paise": 25428608,
+        "mdr_paise": 503532,
+        "gst_on_mdr_paise": 90636,
+        "refunds_paise": 0,
+        "chargebacks_paise": 0,
+        "adjustments_paise": 0,
+        "reconstructed_paise": 24834440,
+        "target_paise": 24834440,
+        "residual_paise": 0,
+        "slack_allowed_paise": 0,
+        "slack_consumed_paise": 0,
+        "closes": true,
+        "negative_items": 0
+      },
+      "rounding": {
+        "mode": "declared",
+        "tolerance_paise": 0,
+        "band_basis": "cardinality",
+        "slack_allowed_paise": 0,
+        "slack_consumed_paise": 0
+      },
+      "narrowing": {
+        "pool_before": 240,
+        "pool_after": 29,
+        "dropped": {
+          "already_reconciled": 24,
+          "mid_mismatch": 36,
+          "outside_settlement_window": 151
+        },
+        "window_hours": 10,
+        "constraints_applied": [
+          "mid_mismatch",
+          "currency_mismatch",
+          "outside_settlement_window",
+          "already_reconciled",
+          "zero_net_contribution"
+        ],
+        "neighbourhood_probe": {
+          "method": "witness_neighbourhood_join",
+          "stable": false,
+          "max_substitution_depth": 2,
+          "requested_substitution_depth": 2,
+          "removal_sums_enumerated": 22,
+          "addition_sums_enumerated": 3829,
+          "widened_pool_n": 93,
+          "original_pool_n": 12,
+          "constraints_tested": [
+            "outside_settlement_window",
+            "payment_method_mismatch",
+            "already_reconciled",
+            "currency_mismatch"
+          ],
+          "expected_spurious_collisions": 0.005997296944269124,
+          "inconclusive": false,
+          "rival": {
+            "removed": [
+              "pay_000253"
+            ],
+            "added": [
+              "pay_000241"
+            ],
+            "depth": 1,
+            "sum_delta_paise": 0
+          },
+          "admitting_constraint": "outside_settlement_window",
+          "note": "the widened pool admits an alternative reconstruction at substitution depth 1; this answer came from a filtering decision rather than from the arithmetic. An estimated 0.006 collisions would be expected here by chance, so this one is a finding"
+        },
+        "completeness_checks": [
+          {
+            "name": "cardinality_cross_check",
+            "state": "pass",
+            "detail": "declared 6, witness 6; note the search scope was itself bounded by this count, so the check is weakened though not void"
+          },
+          {
+            "name": "gross_ratio_sanity",
+            "state": "pass",
+            "detail": "fees deviate from policy by 0 bps against 0 bps across the pool, within the 27 bps band (instrument mix is normalised out, so this compares pricing rather than composition)"
+          },
+          {
+            "name": "feed_completeness",
+            "state": "pass",
+            "detail": "every source known to this run was joined into the candidate pool"
+          }
+        ]
+      },
+      "fee_check": {
+        "mode": "observed",
+        "circular": false,
+        "expected_mdr_paise": 503532,
+        "observed_mdr_paise": 503532,
+        "delta_bps": 0,
+        "band_bps": 2,
+        "rounding_component_bps": 0,
+        "within_band": true,
+        "claim": "observed effective rate is within 0 bps of policy (band 2 bps)"
+      },
+      "agent": {
+        "invoked": false
+      },
+      "claim": "widening the pool by relaxing outside_settlement_window admits an alternative reconstruction of the same credit; this answer came from a filtering decision rather than from the arithmetic",
+      "remediation": [
+        {
+          "action": "confirm the outside_settlement_window constraint is correctly configured for this merchant",
+          "effect": "either the rival is genuinely ineligible, in which case the answer stands, or the batch is misidentified"
+        }
+      ],
+      "exception_cost_inr": 333,
+      "cost": {
+        "model_calls": 0,
+        "input_tokens": 0,
+        "output_tokens": 0,
+        "inr_micros": 0
+      },
+      "timing_ms": {
+        "entropy_gate": 0,
+        "feasibility": 4,
+        "fee_check": 0,
+        "narrow": 0,
+        "prove": 0,
+        "reconstruct": 6
+      },
+      "policy_version": "fees_2026_08",
+      "replay_seed": 1010
+    },
+    "b0_posted": true,
+    "b0_posted_wrong": true,
+    "b0_confidence": 0.9500000000000001,
+    "b0_proposed": [
+      "pay_000243",
+      "pay_000245",
+      "pay_000247",
+      "pay_000249",
+      "pay_000251",
+      "pay_000253"
+    ],
+    "b0_tokens_in": 1360,
+    "expectation_met": true
+  },
+  {
+    "case": {
+      "Number": 11,
+      "Name": "subscription_entropy",
+      "Scenario": "210 candidates drawn from three subscription price points",
+      "ExpectB0": "posts, arbitrary",
+      "ExpectAxiom": "UNDERDETERMINED with AMOUNT_ENTROPY_INSUFFICIENT, refused in milliseconds",
+      "Why": "these settlements are genuinely not reconstructable from amounts, and saying so fast is more useful than saying so slowly",
+      "Spec": {
+        "Seed": 1011,
+        "Archetype": "subscription_saas",
+        "Settlements": 6,
+        "BatchSize": 8,
+        "BatchJitter": 0,
+        "PoolJitter": 0,
+        "PoolTarget": 210,
+        "ChargebackRate": 0,
+        "RefundRate": 0,
+        "FullRefundShare": 0.25,
+        "AdjustmentRate": 0.02,
+        "Mode": "report_present_mapping_withheld",
+        "DeclareTxnCount": true,
+        "JoinDisputes": true,
+        "FeeDriftBps": 0,
+        "Policy": {
+          "version": "fees_2026_08",
+          "mdr_bps_by_instrument": {
+            "card": 200,
+            "emi": 265,
+            "netbanking": 190,
+            "upi": 0,
+            "wallet": 210
+          },
+          "gst_bps": 1800,
+          "fee_rounding": "half_up",
+          "tax_rounding": "half_up",
+          "refund_returns_mdr": false,
+          "dispute_fee_paise": 2500,
+          "fee_band_bps": 2
+        },
+        "Start": "2026-08-20T00:00:00Z",
+        "Pathology": "amount_entropy"
+      },
+      "WindowHours": 0,
+      "InferredRounding": false,
+      "GateScope": false
+    },
+    "status": "UNDERDETERMINED",
+    "flags": [
+      "AMOUNT_ENTROPY_INSUFFICIENT",
+      "LATTICE_CORRECTED"
+    ],
+    "posted": false,
+    "posted_wrong": false,
+    "pool_n": 210,
+    "k_star": 0,
+    "collision_index": 0,
+    "latency_ms": 0,
+    "receipt": {
+      "settlement_ref": "bank_credit_2026_08_25_1003",
+      "run_id": "case_11_subscription_entropy",
+      "merchant_id": "mid_subscription_saas",
+      "merchant_name": "Northwind SaaS Pvt Ltd",
+      "merchant_archetype": "subscription_saas",
+      "status": "UNDERDETERMINED",
+      "flags": [
+        "AMOUNT_ENTROPY_INSUFFICIENT",
+        "LATTICE_CORRECTED"
+      ],
+      "data_mode": "report_present_mapping_withheld",
+      "narration": "UPI/CREDIT/550900/RAZORPAY/SETTLE/NA",
+      "target_paise": 885050,
+      "value_date": "2026-08-25",
+      "pool": {
+        "n": 210,
+        "contribution_sigma_paise": 62459.42646854428,
+        "signed_items": 0,
+        "total_contribution_paise": 23872192
+      },
+      "amount_entropy": {
+        "distinct_contribution_values": 6,
+        "twin_classes": [
+          {
+            "value_paise": 48722,
+            "members": [
+              8,
+              15,
+              19,
+              23,
+              28,
+              33,
+              37,
+              38,
+              41,
+              42,
+              57,
+              58,
+              59,
+              62,
+              67,
+              70,
+              71,
+              76,
+              79,
+              81,
+              83,
+              86,
+              87,
+              97,
+              99,
+              106,
+              107,
+              109,
+              110,
+              111,
+              123,
+              126,
+              136,
+              137,
+              142,
+              144,
+              146,
+              150,
+              166,
+              168,
+              169,
+              173,
+              178,
+              181,
+              184,
+              185,
+              205,
+              206,
+              209
+            ]
+          },
+          {
+            "value_paise": 49900,
+            "members": [
+              2,
+              5,
+              14,
+              16,
+              25,
+              26,
+              49,
+              54,
+              65,
+              73,
+              74,
+              77,
+              85,
+              91,
+              100,
+              104,
+              112,
+              121,
+              132,
+              133,
+              134,
+              140,
+              156,
+              170,
+              175,
+              183,
+              200
+            ]
+          },
+          {
+            "value_paise": 97542,
+            "members": [
+              0,
+              3,
+              6,
+              7,
+              9,
+              10,
+              13,
+              17,
+              24,
+              36,
+              39,
+              46,
+              48,
+              51,
+              61,
+              63,
+              64,
+              72,
+              90,
+              92,
+              98,
+              102,
+              114,
+              116,
+              118,
+              124,
+              125,
+              139,
+              147,
+              152,
+              155,
+              157,
+              160,
+              161,
+              162,
+              164,
+              171,
+              174,
+              179,
+              180,
+              182,
+              196,
+              198,
+              201,
+              204,
+              208
+            ]
+          },
+          {
+            "value_paise": 99900,
+            "members": [
+              29,
+              43,
+              60,
+              66,
+              69,
+              80,
+              88,
+              89,
+              94,
+              101,
+              119,
+              129,
+              138,
+              141,
+              149,
+              167,
+              176
+            ]
+          },
+          {
+            "value_paise": 195182,
+            "members": [
+              4,
+              11,
+              12,
+              21,
+              22,
+              27,
+              30,
+              31,
+              35,
+              40,
+              44,
+              47,
+              50,
+              53,
+              55,
+              56,
+              75,
+              78,
+              84,
+              93,
+              95,
+              96,
+              103,
+              105,
+              108,
+              115,
+              117,
+              122,
+              130,
+              131,
+              135,
+              143,
+              145,
+              148,
+              151,
+              159,
+              163,
+              165,
+              172,
+              177,
+              187,
+              188,
+              189,
+              190,
+              191,
+              193,
+              194,
+              197,
+              199,
+              202,
+              203
+            ]
+          },
+          {
+            "value_paise": 199900,
+            "members": [
+              1,
+              18,
+              20,
+              32,
+              34,
+              45,
+              52,
+              68,
+              82,
+              113,
+              120,
+              127,
+              128,
+              153,
+              154,
+              158,
+              186,
+              192,
+              195,
+              207
+            ]
+          }
+        ],
+        "twin_class_count": 6,
+        "twin_mass": 1,
+        "twin_mass_threshold": 0.3,
+        "lattice_gcd_paise": 2,
+        "pass": false,
+        "note": "amounts do not distinguish transactions in this pool"
+      },
+      "feasibility": {
+        "n": 0,
+        "contribution_sigma_paise": 0,
+        "lattice_gcd_paise": 0,
+        "k_star": 0,
+        "collision_index_at_k_star": 0,
+        "collision_index_estimator": "",
+        "collision_index_analytic_at_k_star": 0,
+        "cumulative_index_at_k_star": 0,
+        "threshold_underdetermined": 0,
+        "lattice_correction_applied": false,
+        "decision": "",
+        "predicted_entries": 0,
+        "predicted_bytes": 0,
+        "memory_ceiling_bytes": 0,
+        "curve": null,
+        "note": ""
+      },
+      "witness_size": 0,
+      "rounding": {
+        "mode": "declared",
+        "tolerance_paise": 0,
+        "band_basis": "cardinality",
+        "slack_allowed_paise": 0,
+        "slack_consumed_paise": 0
+      },
+      "narrowing": {
+        "pool_before": 1338,
+        "pool_after": 210,
+        "dropped": {
+          "already_reconciled": 30,
+          "mid_mismatch": 48,
+          "outside_settlement_window": 1050
+        },
+        "window_hours": 14,
+        "constraints_applied": [
+          "mid_mismatch",
+          "currency_mismatch",
+          "outside_settlement_window",
+          "already_reconciled",
+          "zero_net_contribution"
+        ],
+        "completeness_checks": null
+      },
+      "agent": {
+        "invoked": false
+      },
+      "claim": "the pool holds 6 distinct contribution values across 210 records, with 100% of it inside twin classes; amounts do not distinguish these transactions from one another",
+      "remediation": [
+        {
+          "action": "supply the settlement reference",
+          "effect": "collapses this reconciliation leg to a lookup, which is the only reliable route for this amount distribution"
+        },
+        {
+          "action": "split by instrument or by subscription plan",
+          "effect": "raises the count of distinct contribution values and lowers twin mass"
+        },
+        {
+          "action": "carry a per-transaction identifier through to the bank narration where the sponsor bank supports it",
+          "effect": "removes the dependence on amounts entirely"
+        }
+      ],
+      "exception_cost_inr": 333,
+      "cost": {
+        "model_calls": 0,
+        "input_tokens": 0,
+        "output_tokens": 0,
+        "inr_micros": 0
+      },
+      "timing_ms": {
+        "entropy_gate": 0,
+        "fee_check": 0,
+        "narrow": 0
+      },
+      "policy_version": "fees_2026_08",
+      "replay_seed": 1011
+    },
+    "b0_posted": false,
+    "b0_posted_wrong": false,
+    "b0_confidence": 0.45,
+    "b0_proposed": [
+      "pay_001341",
+      "pay_001379",
+      "pay_001455",
+      "pay_001549",
+      "pay_001559",
+      "pay_001753"
+    ],
+    "b0_tokens_in": 8600,
+    "expectation_met": true
+  }
+]

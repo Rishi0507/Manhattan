@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"math"
 	"sort"
 	"strings"
 	"time"
@@ -115,6 +116,82 @@ func renderResults(
 		b.WriteString("\n")
 	}
 
+	// ---- The baseline, published ----------------------------------------
+	if len(sum.B0Sweep) > 0 {
+		fmt.Fprintf(&b, "## The baseline, across every threshold\n\n")
+		fmt.Fprintf(&b, "The headline result rests on a wrong-posting count produced by a component in\n")
+		fmt.Fprintf(&b, "this repository, and %d wrong out of %d posted is not a figure anybody should\n",
+			sum.B0PostedWrong, sum.B0Posted)
+		fmt.Fprintf(&b, "accept on assertion. So here is everything B0's confidence score is computed\n")
+		fmt.Fprintf(&b, "from:\n\n")
+		for _, f := range sum.B0Features {
+			fmt.Fprintf(&b, "- %s\n", f)
+		}
+		fmt.Fprintf(&b, "\nand here is its behaviour at every threshold, over the same %d decisions the\n", sum.Settlements)
+		fmt.Fprintf(&b, "headline uses. Nothing is re-run: each settlement's confidence and whether the\n")
+		fmt.Fprintf(&b, "proposal was correct are recorded once, and the sweep is computed from those.\n\n")
+		fmt.Fprintf(&b, "| threshold | posted | right | wrong | precision | recall | F1 | |\n")
+		fmt.Fprintf(&b, "|---:|---:|---:|---:|---:|---:|---:|---|\n")
+		for _, p := range sum.B0Sweep {
+			mark := ""
+			if p.Shipped {
+				mark = "**shipped**"
+			}
+			if p.BestF1 {
+				mark += " **best F1**"
+			}
+			fmt.Fprintf(&b, "| %.2f | %d | %d | %d | %.0f%% | %.0f%% | %.2f | %s |\n",
+				p.Threshold, p.Posted, p.Right, p.Wrong,
+				p.Precision*100, p.Recall*100, p.F1, mark)
+		}
+		b.WriteString("\n")
+		fmt.Fprintf(&b, "There is no threshold at which this class of matcher is both useful and safe.\n")
+		fmt.Fprintf(&b, "The confidence score measures how good the match looks, not whether it is the\n")
+		fmt.Fprintf(&b, "only one, and those two come apart exactly where the money is. Raising the\n")
+		fmt.Fprintf(&b, "threshold does not find the rivals. It posts fewer things without knowing\n")
+		fmt.Fprintf(&b, "which ones it should have kept.\n\n")
+	}
+
+	// ---- The exception queue ---------------------------------------------
+	if len(sum.TopExceptions) > 0 {
+		fmt.Fprintf(&b, "## The exception queue\n\n")
+		fmt.Fprintf(&b, "The track's third bar is an honest exception list, and a count of exceptions is\n")
+		fmt.Fprintf(&b, "not one. The %d most expensive of %d, in the order an operations lead would\n",
+			len(sum.TopExceptions), sum.Exceptions)
+		fmt.Fprintf(&b, "work them. All %d are in `out/receipts.ndjson`, one JSON object per line.\n\n",
+			sum.Exceptions)
+		fmt.Fprintf(&b, "| settlement | merchant | status | cost INR | pool | agent | cause | computed remedy |\n")
+		fmt.Fprintf(&b, "|---|---|---|---:|---:|---|---|---|\n")
+		for _, e := range sum.TopExceptions {
+			worked := "skipped"
+			if e.AgentTouch {
+				worked = "worked"
+			}
+			rem := e.Remediation
+			if rem == "" {
+				rem = "none available"
+			}
+			fmt.Fprintf(&b, "| `%s` | %s | `%s` | %d | %d | %s | %s | %s |\n",
+				e.Ref, e.Archetype, e.Status, e.CostINR, e.PoolN, worked,
+				cell(e.Cause, 90), cell(rem, 80))
+		}
+		b.WriteString("\n")
+		fmt.Fprintf(&b, "Every row carries a status that distinguishes two answers existing from ten\n")
+		fmt.Fprintf(&b, "million existing from a filter having decided it, a cause traceable to a\n")
+		fmt.Fprintf(&b, "specific gate or residual, a computed remedy rather than \"needs review\", and a\n")
+		fmt.Fprintf(&b, "price. Which means the queue can be sorted by cost and worked in the order that\n")
+		fmt.Fprintf(&b, "clears the most money per hour.\n\n")
+		fmt.Fprintf(&b, "The whole held queue prices at **INR %s** at the configured analyst handling\n",
+			commas(int64(sum.ExceptionCostINR)))
+		fmt.Fprintf(&b, "time. B0's %d wrong postings price at **INR %s** to unwind, at INR 2,400 each,\n",
+			sum.B0PostedWrong, commas(int64(sum.B0PostedWrong*2400)))
+		fmt.Fprintf(&b, "which is roughly two hours of a mid-level finance analyst. Refusing is the\n")
+		fmt.Fprintf(&b, "cheaper position by **INR %s** per %d settlements, and that conclusion holds\n",
+			commas(int64(sum.B0PostedWrong*2400-sum.ExceptionCostINR)), sum.Settlements)
+		fmt.Fprintf(&b, "unless unwinding a wrong posting costs under INR %.0f.\n\n",
+			float64(sum.ExceptionCostINR)/math.Max(float64(sum.B0PostedWrong), 1))
+	}
+
 	// ---- The agent ------------------------------------------------------
 	if sum.AgentCalls > 0 || sum.AgentSkipped > 0 {
 		fmt.Fprintf(&b, "## What the agent did\n\n")
@@ -122,16 +199,23 @@ func renderResults(
 		fmt.Fprintf(&b, "choose one action, apply it as an edit to the pipeline's inputs, then re-run the\n")
 		fmt.Fprintf(&b, "entire verification stack unchanged over the result. It cannot reach the decision.\n\n")
 
-		fmt.Fprintf(&b, "| | |\n|---|---:|\n")
-		fmt.Fprintf(&b, "| settlements held for review | %d |\n", sum.Exceptions)
-		fmt.Fprintf(&b, "| agent invoked on | %d |\n", sum.AgentInvoked)
-		fmt.Fprintf(&b, "| **not invoked, by deterministic triage** | **%d** |\n", sum.AgentSkipped)
-		fmt.Fprintf(&b, "| actions taken | %d |\n", sum.AgentSteps)
-		fmt.Fprintf(&b, "| repaired into a posting | %d |\n", sum.AgentRepaired)
-		fmt.Fprintf(&b, "| given a proven cure | %d |\n\n", sum.AgentProvenCures)
+		// As a flow rather than a partition. The counts do not add up when
+		// read as a partition, and a reader who tries will conclude the
+		// instrumentation is broken rather than that repairs left the queue.
+		entered := sum.AgentInvoked + sum.AgentSkipped
+		fmt.Fprintf(&b, "```\n")
+		fmt.Fprintf(&b, "%3d  settlements entered the loop as unresolved\n", entered)
+		fmt.Fprintf(&b, "%3d  settled by deterministic triage, with no model call\n", sum.AgentSkipped)
+		fmt.Fprintf(&b, "%3d  reached the agent\n", sum.AgentInvoked)
+		fmt.Fprintf(&b, "%3d  actions taken\n", sum.AgentSteps)
+		fmt.Fprintf(&b, "%3d  repaired into a posting, each citing a real record\n", sum.AgentRepaired)
+		fmt.Fprintf(&b, "%3d  given a proven cure: verified remedy, deliberately not posted\n", sum.AgentProvenCures)
+		fmt.Fprintf(&b, "%3d  remain held for review\n", sum.Exceptions)
+		fmt.Fprintf(&b, "%3d  wrong postings caused\n", sum.AutoPostedWrong)
+		fmt.Fprintf(&b, "```\n\n")
 
-		fmt.Fprintf(&b, "The triage row is the one worth reading. About %.0f per cent of exceptions are\n",
-			100*float64(sum.AgentSkipped)/float64(max(sum.Exceptions, 1)))
+		fmt.Fprintf(&b, "The triage row is the one worth reading. %.0f per cent of the queue is\n",
+			100*float64(sum.AgentSkipped)/float64(max(entered, 1)))
 		fmt.Fprintf(&b, "settled without a model call at all, because a cheap deterministic check\n")
 		fmt.Fprintf(&b, "establishes that no action in the vocabulary could change the outcome: the\n")
 		fmt.Fprintf(&b, "amounts do not distinguish the transactions, or a rival already appears when the\n")
@@ -302,6 +386,19 @@ func renderResults(
 
 	fmt.Fprintf(&b, "---\n\nReproduce with `make bench`. Same seed, same numbers.\n")
 	return b.String()
+}
+
+// cell renders a sentence into a markdown table cell without breaking it.
+func cell(s string, n int) string {
+	s = strings.TrimSpace(strings.ReplaceAll(s, "|", "/"))
+	if len(s) <= n {
+		return s
+	}
+	cut := strings.LastIndex(s[:n], " ")
+	if cut < n/2 {
+		cut = n
+	}
+	return s[:cut] + "..."
 }
 
 func logAbsRatio(a, b float64) float64 {

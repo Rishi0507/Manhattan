@@ -1,0 +1,14 @@
+{ "theme": "base",
+  "themeVariables": {
+    "background": "#faf6ee",
+    "primaryColor": "#f5efe2",
+    "primaryTextColor": "#2c2318",
+    "primaryBorderColor": "#cbba9c",
+    "lineColor": "#8a7a62",
+    "secondaryColor": "#ede4d2",
+    "tertiaryColor": "#fffdf8",
+    "fontFamily": "Source Sans 3, Segoe UI, sans-serif",
+    "fontSize": "15px"
+  },
+  "flowchart": { "curve": "basis", "padding": 12 }
+}

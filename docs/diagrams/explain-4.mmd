@@ -1,0 +1,18 @@
+flowchart TB
+  I["bank credit +<br/>transaction feeds"] --> P["read the narration<br/>(model, fixed output shape)"]
+  P --> N["narrow the pool:<br/>merchant, time window"]
+  N --> E{"are the amounts<br/>varied enough for a<br/>match to mean anything?"}
+  E -->|no| U["UNDERDETERMINED<br/>refuse before searching"]
+  E -->|yes| S["search: meet in the middle,<br/>whole-number paise"]
+  S --> R{"how many groups<br/>hit the target?"}
+  R -->|zero| X["UNRESOLVED<br/>report the nearest miss"]
+  R -->|"two or more"| AM["AMBIGUOUS<br/>show both"]
+  R -->|exactly one| W["widen the pool<br/>and search again"]
+  W -->|"a rival appears"| NS["NARROWING_SENSITIVE"]
+  W -->|"still unique"| G{"count, fee and<br/>completeness checks"}
+  G -->|"any fails"| X
+  G -->|"all pass"| V["VERIFIED<br/>post it"]
+  X --> AG["agent: pick an action,<br/>apply, re-prove"]
+  NS --> AG
+  AG -->|"found a missing record"| V
+  AG -->|otherwise| EX["exception list,<br/>with the remedy named"]

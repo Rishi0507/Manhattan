@@ -1,0 +1,14 @@
+flowchart LR
+    P["narrowed pool<br/>n records"] --> L["left half"]
+    P --> R["right half"]
+    L --> LB["buckets by cardinality<br/><small>int64 sum + uint32 colex rank</small>"]
+    R --> RB["buckets by cardinality<br/><small>sorted, 12 bytes per entry</small>"]
+    LB --> PR{{"probe"}}
+    RB --> PR
+    PR -->|"target T"| W["small-|S| witnesses"]
+    PR -->|"pool total − T"| C["large-|S| witnesses,<br/>via their complements"]
+    W --> DD["canonicalise, deduplicate,<br/>count exhaustively"]
+    C --> DD
+    DD --> OUT["witness set<br/>+ the rival count"]
+    style PR fill:#eaf1fd,stroke:#1461cc,color:#16181d
+    style OUT fill:#e7f5ee,stroke:#0a7d4e,color:#16181d

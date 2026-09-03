@@ -1,0 +1,82 @@
+[
+  {
+    "lo_collision_index": 0.00025861860941385966,
+    "hi_collision_index": 0.0009265034304861182,
+    "configurations": 3,
+    "verified_rate": 1,
+    "ambiguous_rate": 0,
+    "underdetermined_rate": 0,
+    "wrong_post_rate": 0,
+    "b0_wrong_post_rate": 0
+  },
+  {
+    "lo_collision_index": 0.0009265034304861182,
+    "hi_collision_index": 0.003319206644286218,
+    "configurations": 2,
+    "verified_rate": 1,
+    "ambiguous_rate": 0,
+    "underdetermined_rate": 0,
+    "wrong_post_rate": 0,
+    "b0_wrong_post_rate": 0
+  },
+  {
+    "lo_collision_index": 0.003319206644286218,
+    "hi_collision_index": 0.011891086837847209,
+    "configurations": 4,
+    "verified_rate": 0.9375,
+    "ambiguous_rate": 0,
+    "underdetermined_rate": 0,
+    "wrong_post_rate": 0,
+    "b0_wrong_post_rate": 0
+  },
+  {
+    "lo_collision_index": 0.011891086837847209,
+    "hi_collision_index": 0.04259992261362513,
+    "configurations": 4,
+    "verified_rate": 0.875,
+    "ambiguous_rate": 0.0625,
+    "underdetermined_rate": 0,
+    "wrong_post_rate": 0,
+    "b0_wrong_post_rate": 0
+  },
+  {
+    "lo_collision_index": 0.04259992261362513,
+    "hi_collision_index": 0.15261459540525885,
+    "configurations": 2,
+    "verified_rate": 1,
+    "ambiguous_rate": 0,
+    "underdetermined_rate": 0,
+    "wrong_post_rate": 0,
+    "b0_wrong_post_rate": 0
+  },
+  {
+    "lo_collision_index": 0.15261459540525885,
+    "hi_collision_index": 0.5467431230323732,
+    "configurations": 5,
+    "verified_rate": 0.625,
+    "ambiguous_rate": 0.1,
+    "underdetermined_rate": 0.2,
+    "wrong_post_rate": 0,
+    "b0_wrong_post_rate": 0.15
+  },
+  {
+    "lo_collision_index": 0.5467431230323732,
+    "hi_collision_index": 1.9587120208876991,
+    "configurations": 13,
+    "verified_rate": 0.17307692307692307,
+    "ambiguous_rate": 0.16346153846153846,
+    "underdetermined_rate": 0.6634615384615384,
+    "wrong_post_rate": 0,
+    "b0_wrong_post_rate": 0.40384615384615385
+  },
+  {
+    "lo_collision_index": 1.9587120208876991,
+    "hi_collision_index": 7.017102948623293,
+    "configurations": 63,
+    "verified_rate": 0.20238095238095238,
+    "ambiguous_rate": 0.19642857142857142,
+    "underdetermined_rate": 0.6011904761904762,
+    "wrong_post_rate": 0,
+    "b0_wrong_post_rate": 0.4146825396825397
+  }
+]
