@@ -38,7 +38,7 @@ Manhattan now measures the density by sampling subset sums from the actual pool.
 
 **On one lognormal pool**, the fixture in `internal/feasibility/empirical_test.go`, checked against exhaustive enumeration of every 3-subset: the sampled estimator scores **0.09** mean absolute log-ratio against the counted truth, the analytic form **0.72**.
 
-**Across the whole calibration sweep**, {{ .D.SweptConfigs }} configurations spanning every archetype, pool size and batch size: the sampled estimator scores **{{ f2 .D.EmpiricalLogRatio }}**, the analytic form **{{ f2 .D.AnalyticLogRatio }}**. Both are far worse than on the single pool, because the sweep deliberately includes regimes neither model was built for, among them pools whose true rival count runs into the thousands.
+**Across the calibration sweep**, the {{ .D.SweptConfigs }} configurations of {{ .D.TotalSweptConfigs }} where exhaustive counting was feasible and there is therefore a true count to score against: the sampled estimator scores **{{ f2 .D.EmpiricalLogRatio }}**, the analytic form **{{ f2 .D.AnalyticLogRatio }}**. Both are far worse than on the single pool, because the sweep deliberately includes regimes neither model was built for, among them pools whose true rival count runs into the thousands.
 
 The swept numbers are the ones to quote about the system; the single-pool pair describes one fixture and nothing more. The ordering is what the design rests on and it holds in both: the sampled estimator is closer to the counted truth than the closed form, everywhere it has been measured. Both are carried on every receipt.
 
@@ -46,7 +46,7 @@ The swept numbers are the ones to quote about the system; the single-pool pair d
 
 This is the sharpest limit on the commercial claim and it was found in this project's own sweep rather than pointed out afterwards.
 
-Read flat across all {{ .D.SweptConfigs }} swept configurations, the collision index does **not** order outcomes cleanly. Travel at pool 220 with index 4.64 verifies nothing; travel at pool 70 with index 6.03 verifies everything. Marketplace at 150 with index 5.87 verifies nothing; marketplace at 48 with index 5.96 verifies everything. Higher predicted index, better observed outcome, twice.
+Read flat across all {{ .D.TotalSweptConfigs }} swept configurations, the collision index does **not** order outcomes cleanly. Travel at pool 220 with index 4.64 verifies nothing; travel at pool 70 with index 6.03 verifies everything. Marketplace at 150 with index 5.87 verifies nothing; marketplace at 48 with index 5.96 verifies everything. Higher predicted index, better observed outcome, twice.
 
 Segmented by batch cardinality, which is the variable the index has to be read against, the verified rate is monotone in the index at cardinality {{ ints .D.MonotoneAt }} and not at {{ ints .D.NotMonotoneAt }}. The reason is a property of the estimator: the index is an *expected* number of colliding subsets, and at small cardinality the enumeration is small enough that the realised count is frequently one where the expectation is five.
 
@@ -122,7 +122,7 @@ The band is scaled by the **witness** cardinality, not the pool size. A pool-wid
 
 An action that cites a real record in a real feed may post. An action that changes a filter, a window or a constraint may not, however cleanly the accounting identity closes afterwards.
 
-That rule exists because of a measured failure rather than a principle chosen in advance. Without it, an agent able to retune narrowing produced **two wrong postings in three hundred settlements**. That figure is recorded by hand from an earlier build and is the only number in this document not emitted by run `{{ .S.RunID }}`, because the build that produced it no longer exists. What happened: it tightened a value-date window, the candidate pool fell from 44 records to 40, an `AMBIGUOUS` settlement became `VERIFIED`, and the answer was wrong because the tightening had cut real records out of the batch. Every check passed, including the completeness probe, because the surviving rival differed from the found witness by more than the probe's depth bound.
+That rule exists because of a measured failure rather than a principle chosen in advance. Without it, an agent able to retune narrowing produced **two wrong postings in three hundred settlements**. That figure is recorded by hand from an earlier build and is the only number in this document not emitted by run `{{ .S.RunID }}`. The build that produced it is gone, so the failure it describes is rebuilt as a committed test in `internal/agent/corroboration_test.go`: the property that prevents it is asserted directly, and the test fails if `TIGHTEN_WINDOW` is ever made postable again. What happened: it tightened a value-date window, the candidate pool fell from 44 records to 40, an `AMBIGUOUS` settlement became `VERIFIED`, and the answer was wrong because the tightening had cut real records out of the batch. Every check passed, including the completeness probe, because the surviving rival differed from the found witness by more than the probe's depth bound.
 
 The consequence is a real ceiling, and it is a ceiling on the mechanism rather than a shortfall in the result. Most refusals are `UNDERDETERMINED`, caused by a pool that is too wide, and the agent can prove exactly what would fix them but is not permitted to act on it. On the shipped benchmark it repairs **{{ .S.AgentRepaired }}** settlements into postings and produces **{{ .S.AgentProvenCures }}** proven cures, out of the {{ .D.ExceptionsEntered }} that entered the loop.
 
@@ -154,7 +154,13 @@ This is a real dependency and it is asserted by a test rather than hoped for.
 
 Memory grows with `C(n/2, at most k*)`. It is bounded across the accept region and guarded by a configured ceiling checked *before* allocation, but a merchant with pools above roughly 1,000 candidates at `k = 3` sits near it: **{{ i .D.PeakEnvelopeMB }} MB** at the top of the measured envelope.
 
-Two memory figures appear in this repository and they measure different things. **{{ i .S.PeakMemoryMB }} MB** is the peak across the whole {{ .S.Settlements }}-settlement batch, whose narrowed pools run from {{ .S.Pools.NarrowedMin }} to {{ .S.Pools.NarrowedMax }} candidates. **{{ i .D.PeakEnvelopeMB }} MB** is the top of the resource envelope, which deliberately probes a 1,000-candidate pool that no merchant in the benchmark has. Neither figure is wrong. Quoting the first one as a ceiling would be.
+Three memory figures appear in this repository and they measure different things, so each is named where it is used.
+
+**{{ i .D.PeakSolverMB }} MB** is the largest enumeration any single settlement in this batch actually allocated, computed from the entry counts on its receipt at twelve bytes each. It is deterministic: the same seed and the same commit produce it exactly. This is the figure a capacity estimate should use.
+
+**{{ i .S.PeakMemoryMB }} MB** is a *sampled* process heap high-water mark, and it moves. Two runs of the same commit on the same seed have reported 15 MB and 119 MB for an identical batch, because where the sample lands depends on when the garbage collector happened to run. It is published because it is the number an operator asks for, and it is labelled as sampled everywhere it appears. It should never be quoted as a bound.
+
+**{{ i .D.PeakEnvelopeMB }} MB** is the top of the resource envelope, which deliberately probes a 1,000-candidate pool at k=3 that no merchant in this benchmark has. It is a ceiling for a pool size the batch does not contain.
 
 ---
 
@@ -164,9 +170,53 @@ The measured answer to "we already ship that mapping" depends on a generated def
 
 It is deliberately modest, because the argument does not need reports to be bad. It needs them to be occasionally wrong in a way nothing downstream can detect, which is a much weaker and much more defensible claim. But if a gateway's true defect rate is a tenth of this, the lookup's {{ .D.B1Wrong }} wrong postings become two or three, and the case for an independent reconstruction is correspondingly smaller in volume terms. It is not smaller in kind: the wrong postings that remain are still silent, still unattributable, and still found at audit rather than at posting.
 
-The three defect shapes modelled (an omitted chargeback raised against an earlier cycle, a payment named from the previous cycle, a mapping short by one) are chosen as plausible rather than sampled from anything. A payments engineer will know better than this generator does which of them actually occurs and at what rate, and that is a conversation this document invites rather than forecloses.
+The three defect shapes modelled are chosen as plausible rather than sampled from any observed population, and two of the three have documented real-world counterparts while the third does not.
+
+**The chargeback cycle mismatch is documented behaviour, not a hypothetical.** A dispute is raised against the original transaction and debited in whatever cycle the network resolves it in, which is routinely a different cycle from the one that carried the payment. Razorpay's own settlement documentation describes disputes and their fees as adjustments applied to a later settlement, and the card network rules that govern the timetable (Visa and Mastercard both allow dispute windows measured in months from the transaction date) are why the two cycles come apart at all. A settlement report whose own join is by capture date therefore has a structural reason to omit a debit that genuinely moved money in the cycle it is describing.
+
+**The cross-cycle double-count** follows from the same timetable in the other direction, and is the ordinary failure mode of any reconciliation keyed on a date rather than on a settlement identifier.
+
+**A mapping short by one record** is not a payments phenomenon at all; it is what a truncated file or a partial write looks like downstream, and it is included because a reconciliation should not depend on its inputs being well-formed.
+
+A payments engineer will know better than this generator does which of these actually occurs and at what rate, and that is a conversation this document invites rather than forecloses. What the argument does not depend on is the rate: see the sensitivity sweep, where the composite's wrong-posting count stays at zero from a 6 per cent defect rate down to a tenth of it.
 
 **What is not an assumption** is the structural point underneath it. A reconciliation whose only check on the settlement report is the settlement report cannot detect a defective one at any rate, including zero. Manhattan flagged {{ .D.DefectsCaught }} of {{ .D.Defects }} and missed {{ .D.DefectsMissed }} because it has an independent account of the money, and that property does not depend on how often the report is wrong.
+
+---
+
+## Determinism is per commit, and covers decisions rather than timings
+
+Same seed and same commit produce the same **decision** on every settlement: identical statuses, witnesses, rival counts, flags and remediations. That is the property the reproducibility claim rests on and it is the one that matters, because it is what lets a receipt be re-derived by somebody checking it.
+
+It does not extend to timings. Measured across two runs of one binary at one seed: median latency moved 14.0 ms to 13.7 ms, p95 moved 81 ms to 100 ms, sampled peak memory moved 12.6 MB to 13.5 MB. Receipts carry `timing_ms`, so they are **not byte-identical between runs** and the earlier claim that they were is withdrawn.
+
+Across commits nothing is guaranteed at all. Changing the generator changes the random stream, so a fixed seed produces different data. Two runs an hour apart at seed {{ .S.Seed }} reported 161 and 151 verified settlements, and the cause was a code change between them rather than any instability.
+
+The honest form of the claim is on every document: **same seed and same commit, same decisions.**
+
+---
+
+## Corroborated narrowing needs a seed of proofs, so it cannot rescue the worst cases
+
+`NARROW_TO_HISTORY` posts only where a merchant's own prior `VERIFIED` settlements corroborate the bound, and a profile requires twelve of them. That threshold is what makes the action safe and it is also a floor on what it can reach.
+
+The measured consequence is in the sensitivity sweep and it is worth reading. At the modelled window misconfiguration the action produces repairs. At **twice** that misconfiguration it produces none, because a merchant whose window is that badly set proves almost nothing, never accumulates twelve proofs, and therefore has no history to corroborate against.
+
+So the action helps a deployment that is somewhat wrong and cannot help one that is very wrong. That is the correct behaviour under the corroboration rule and it is a real ceiling: the settlements most in need of the repair are the ones least able to establish the evidence for it.
+
+---
+
+## The operational conditions are modelled, and the agent's contribution depends on them
+
+This run deliberately models two misconfigurations:
+
+{{ range .D.Conditions }}- {{ . }}
+{{ end }}
+Both are things a deployment gets wrong on its own side rather than things a counterparty did, and both are the most common of their kind. They are also the reason the agent has anything to repair, and a reader is entitled to be suspicious of that.
+
+The answer is the sensitivity sweep rather than an argument: the agent's contribution is published as a function of how much misconfiguration exists, and at zero the narrowing action repairs **{{ .D.ControlNarrow }}**. An agent that repaired something on a correctly configured deployment would be inventing work, which is worse than doing none.
+
+What does not depend on these conditions is the safety property. Wrong postings are zero in every scenario of the sweep, including the ones where the agent is doing the most work.
 
 ---
 
@@ -202,7 +252,7 @@ The archetype table is likewise modelled. The spread and twin-mass values come f
 
 The deterministic path needs no statistical gate, because a closed integer identity is not a probabilistic claim. Those techniques govern the *residual*, and after this design the residual is large, measured, and **segmented by merchant archetype**, because `UNDERDETERMINED` is now an explicit population with a known shape rather than a hidden one. A calibrated probabilistic layer over the `UNDERDETERMINED` and `AMBIGUOUS` buckets, with a distribution-free error guarantee, is the obvious next thing to build.
 
-Being able to name what was left out, why, and exactly which population it would serve is worth more than a diagram with eight techniques on it.
+Being able to name what was left out, why, and exactly which population it would serve is the point of this document.
 
 ---
 

@@ -223,7 +223,7 @@ func Generate(spec Spec) *model.Dataset {
 		}
 		b.ds.Credits = append(b.ds.Credits, credit)
 		b.ds.GroundTruth[ref] = truth
-		b.reportMapping(ref, truth)
+		b.reportMapping(ref, truth, merchant.ID)
 	}
 
 	return b.ds
@@ -457,7 +457,7 @@ func displayName(archetype string) string {
 // independent account of the money cannot tell a correct report from a
 // defective one, because the only thing it can check the report against is
 // the report.
-func (b *builder) reportMapping(ref string, truth []string) {
+func (b *builder) reportMapping(ref string, truth []string, merchantID string) {
 	stated := append([]string(nil), truth...)
 	defect := ""
 
@@ -482,7 +482,7 @@ func (b *builder) reportMapping(ref string, truth []string) {
 			// Name a record that belongs to a different cycle.
 			var outside []string
 			for _, p := range b.ds.Payments {
-				if !contains(truth, p.ID) {
+				if p.MerchantID == merchantID && !contains(truth, p.ID) {
 					outside = append(outside, p.ID)
 				}
 			}

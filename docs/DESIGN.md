@@ -208,7 +208,7 @@ The strongest evidence is that **the entire eleven-case suite passes on a delibe
 
 The deterministic path needs no statistical gate, because a closed integer identity is not a probabilistic claim. Those techniques govern the *residual*, and after this design the residual is large, measured, and segmented by merchant archetype, because `UNDERDETERMINED` is now an explicit population with a known shape rather than a hidden one.
 
-A calibrated probabilistic layer over the `UNDERDETERMINED` and `AMBIGUOUS` buckets, with a distribution-free error guarantee, is the obvious next thing to build. Being able to name what was left out, why, and exactly which population it would serve is worth more than a diagram with eight techniques on it.
+A calibrated probabilistic layer over the `UNDERDETERMINED` and `AMBIGUOUS` buckets, with a distribution-free error guarantee, is the obvious next thing to build. Being able to name what was left out, why, and exactly which population it would serve is the point of this section.
 
 **Per-role model tiering.** The interface supports pointing the high-volume parse role at a smaller model, and the field exists so the decision can be made deliberately. It is not made silently on an operator's behalf: a misread narration produces a pool for the wrong merchant, and that is not a place to economise by default.
 

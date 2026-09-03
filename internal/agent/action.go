@@ -44,6 +44,24 @@ const (
 	// merchant whose payouts are segregated by instrument.
 	ActionSplitByInstrument ActionKind = "SPLIT_BY_INSTRUMENT"
 
+	// ActionNarrowToHistory tightens the value-date window to a bound this
+	// merchant's own proved settlements corroborate.
+	//
+	// It is TIGHTEN_WINDOW with a second source attached, and the second
+	// source is what makes it postable where the bare action is not. See
+	// memory.go: the bound may never be tighter than the widest offset
+	// observed across at least twelve of this merchant's VERIFIED
+	// settlements, each proved by exhaustive enumeration without reference to
+	// any window hypothesis.
+	//
+	// The distinction from TIGHTEN_WINDOW is the whole point of the
+	// corroboration rule rather than an exception to it. "The window looks too
+	// wide" is the model's opinion and cannot post. "This merchant's last
+	// nineteen proved batches all closed within 9.4 hours" is a measurement
+	// over proofs, and a window no tighter than that does not cut out records
+	// this system has already shown belong.
+	ActionNarrowToHistory ActionKind = "NARROW_TO_HISTORY"
+
 	// ActionSearchFeed looks in a source that was never joined into the pool
 	// for a record of a named class.
 	ActionSearchFeed ActionKind = "SEARCH_FEED"
@@ -64,8 +82,9 @@ const (
 
 // AllActions is the vocabulary presented to the model.
 var AllActions = []ActionKind{
-	ActionTightenWindow, ActionWidenWindow, ActionSplitByInstrument,
-	ActionSearchFeed, ActionProposeAdjustment, ActionRelaxReconciled, ActionEscalate,
+	ActionTightenWindow, ActionNarrowToHistory, ActionWidenWindow,
+	ActionSplitByInstrument, ActionSearchFeed, ActionProposeAdjustment,
+	ActionRelaxReconciled, ActionEscalate,
 }
 
 // Corroborated reports whether an action's result may post.
@@ -107,6 +126,14 @@ func (k ActionKind) Corroborated() bool {
 	case ActionSearchFeed:
 		// Introduces a real record from a real feed, cited by id on the
 		// receipt. This is evidence.
+		return true
+	case ActionNarrowToHistory:
+		// Narrows to a bound this merchant's own proved settlements
+		// demonstrate. The corroborating source is a population of receipts
+		// that were established without reference to any window hypothesis,
+		// so it is evidence in the same sense a cited record is, and the
+		// bound is checked against that history before the action is allowed
+		// to run at all. See Profile.Supports.
 		return true
 	}
 	// Everything else changes a filter or asserts an unmodelled event. Both
@@ -225,12 +252,39 @@ const maxFeedCandidates = 40
 // Returning an overlay rather than mutating state is what makes the boundary
 // checkable: every effect the agent can have on a decision is a value of this
 // type, and a reader can enumerate the ways it could possibly matter.
-func (a Action) apply(base narrow.Config, merchant model.Merchant, credit model.BankCredit, feed []model.Record) (*pipeline.Overlay, string, bool) {
+func (a Action) apply(base narrow.Config, merchant model.Merchant, credit model.BankCredit,
+	feed []model.Record, profile *Profile) (*pipeline.Overlay, string, bool) {
 	n := base
 	n.CycleDays = merchant.SettlementCycleDays
 	n.EnforceInstrument = merchant.InstrumentSegregated
 
 	switch a.Kind {
+	case ActionNarrowToHistory:
+		// The bound defaults to exactly what the history shows, because that
+		// is the tightest window the evidence supports and there is no reason
+		// for the model to propose anything else. If it proposes something
+		// wider that is allowed; tighter is refused, with the reason.
+		h := a.WindowHours
+		if h <= 0 {
+			if profile == nil {
+				return nil, "this merchant has no proved settlement history to narrow to", false
+			}
+			h = profile.MaxOffsetHours
+		}
+		ok, why := profile.Supports(h)
+		if !ok {
+			return nil, why, false
+		}
+		if h >= base.Window.Hours() {
+			return nil, fmt.Sprintf(
+				"this merchant's history supports a window of %.1fh, which is not tighter than the "+
+					"%.0fh already in use, so narrowing to it changes nothing",
+				h, base.Window.Hours()), false
+		}
+		n.Window = time.Duration(h * float64(time.Hour))
+		return &pipeline.Overlay{Narrowing: &n, Provenance: string(a.Kind)},
+			fmt.Sprintf("window narrowed to plus or minus %.1f hours; %s", h, why), true
+
 	case ActionTightenWindow:
 		h := a.WindowHours
 		if h <= 0 || h >= base.Window.Hours() {

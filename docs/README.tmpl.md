@@ -19,11 +19,19 @@ The brief asks for one finance-ops loop closed across a batch of 50 or more synt
 
 | requirement | what this run did |
 |---|---|
-| 50+ record batch | **{{ n .S.Pools.TotalRecords }} records** across **{{ .S.Settlements }} settlements**, pools reaching **{{ n .S.Pools.RawMax }} records** before narrowing and **{{ .S.Pools.NarrowedMax }}** after |
+| 50+ record batch | **{{ n .S.Pools.TotalRecords }} source records** (payments, refunds, chargebacks and adjustments across four feeds) driving **{{ .S.Settlements }} settlements**. Each settlement's record universe reaches **{{ n .S.Pools.RawMax }}** before narrowing and **{{ .S.Pools.NarrowedMax }}** after |
 | one loop, closed | bank credit to posted ledger entry, or to a named exception, end to end |
 | match rate reported | **{{ .S.AutoPosted }} of {{ .S.Settlements }}** auto-posted, {{ pct .D.PostRate }}, with **{{ .S.AutoPostedWrong }} wrong** |
 | exceptions it could not resolve | **{{ .S.Exceptions }}**, each with a named cause, a computed remedy and a price. [The list is below.](#the-exception-list-is-the-deliverable) |
-| throughput | **{{ ni .S.PerHour }} settlements per hour**, {{ f1 .S.MedianLatencyMS }} ms median, peak {{ i .S.PeakMemoryMB }} MB |
+| throughput | **{{ ni .S.PerHour }} settlements per hour**, {{ f1 .S.MedianLatencyMS }} ms median, on {{ .D.Host }} |
+
+### What this run deliberately gets wrong
+
+Two operational misconfigurations are modelled, because a reconciliation benchmark on perfectly configured data measures nothing an agent could help with. Both are things a **deployment gets wrong on its own side**, not things a counterparty did, and both are the most common of their kind:
+
+{{ range .D.Conditions }}- {{ . }}
+{{ end }}
+The obvious criticism of any agent benchmark is that the author created the problem the agent solves. The answer is not to argue, it is to [publish the agent's contribution as a function of how much misconfiguration there is](#what-the-agent-is-worth-and-when-it-is-worth-nothing). At zero it repairs nothing through narrowing, and that is the loop being unnecessary rather than the loop failing.
 
 ---
 
@@ -33,26 +41,62 @@ Everyone at a payments company asks the same thing, so it goes above everything 
 
 > **"We already ship that mapping. Optimizer's Single View Recon gives you settlement_id to payments. What is the solver for?"**
 
-Correct, and where the report is complete this project is unnecessary. So the benchmark runs that answer as a third system. **B1 reads the settlement report's stated mapping and posts it.** No search, no solver, instant, free.
+Correct. So the benchmark runs that answer as a system of its own, and then builds on it rather than arguing with it.
 
-| {{ .S.Settlements }} settlements | B1, trust the report | Manhattan |
+**B1** reads the settlement report's stated mapping and posts it. No search, instant, free.
+**Manhattan** ignores the mapping entirely and reconstructs the credit from the merchant's own records.
+**M1** is both: post Manhattan's reconstruction where it proved one, otherwise **check** the report's claim against the money and post it when it holds, hold when it does not.
+
+| {{ .S.Settlements }} settlements | B1, trust the report | Manhattan alone | **M1, the composite** |
+|---|---:|---:|---:|
+| posted | {{ .D.B1Posted }} | {{ .S.AutoPosted }} | **{{ .D.M1Posted }}** ({{ pct .D.M1PostRate }}) |
+| **posted wrong** | **{{ .D.B1Wrong }}** | **{{ .S.AutoPostedWrong }}** | **{{ .D.M1Wrong }}** |
+| defective reports it would flag | 0 of {{ .D.Defects }} | | **{{ .D.M1Contradicted }} of {{ .D.Defects }}** |
+| false alarms on {{ .D.M1CleanChecked }} clean reports | | | **{{ .D.M1FalseAlarms }}** |
+
+**That third column is the product.** It sits on top of Single View Recon instead of replacing it: {{ .D.M1FromProof }} of its postings are Manhattan's own proofs and {{ .D.M1FromClaim }} are the report's claim, checked. It posts {{ .D.ClaimUplift }} more settlements than reconstruction alone and {{ sub .D.B1Posted .D.M1Posted }} fewer than the lookup, and the ones it declines to post are the ones the lookup gets wrong.
+
+### Why checking reaches so much further than deriving
+
+> **Deriving a batch is a search. Checking a batch somebody claimed is not.**
+
+Reconstruction costs C(n, k) and is only decisive in a narrow regime, which is why two of six merchant archetypes reconstruct nothing at all. Verifying a claimed batch costs O(claim): do these records exist, do they belong to this merchant, were they already posted in a prior cycle, do their signed contributions sum to the credit, does the count agree with the declaration. None of that touches the combinatorics.
+
+So the claim check works exactly where reconstruction cannot. A subscription merchant with two hundred identical charges has settlements no method can **derive** from amounts, and the gateway's mapping for those settlements can still be **checked** against the money in microseconds.
+
+The verdict it produces is deliberately weaker than a proof, and the receipt never blurs them:
+
+| | |
+|---|---|
+| `VERIFIED` | exactly one batch in the searched region produces this credit, counted exhaustively. Nobody had to be trusted. |
+| `CLAIM_CONSISTENT` | the batch the report named does produce this credit. Others may too; this one was checked, not derived. |
+| `CLAIM_CONTRADICTED` | the report's own account of this settlement does not survive checking. Here is the residual. |
+| `CLAIM_UNCHECKABLE` | part of the claim lives in a feed nobody joined, so the check could not run. Our problem, not the report's. |
+
+**The defects modelled are ordinary, and the first has a documented cause.** A dispute is raised against the original transaction and debited in whatever cycle the network resolves it in, which is routinely not the cycle that carried the payment, so a settlement report whose own join is by capture date has a structural reason to omit a debit that genuinely moved money. The other two are a payment named from the previous cycle and a mapping short by one record, which is what a truncated file looks like downstream. Causes and their limits are in [LIMITATIONS.md](LIMITATIONS.md); the code is in [`internal/generate/generate.go`](internal/generate/generate.go).
+
+### The false-alarm rate is the number that decides this
+
+A composite that holds settlements a lookup would have posted correctly is worse than the lookup. Measured: **{{ .D.M1FalseAlarms }} false alarms on {{ .D.M1CleanChecked }} clean reports** ({{ pct1 .D.M1FalseAlarmPct }}).
+
+That figure is optimistic by construction and the reason must be stated. The generator's fee model and the verifier's contribution model are **the same model**, so a real report that is defect-free can still disagree with Manhattan's arithmetic over a fee slab, a promotional rate or a rounding convention, and every one of those would be a false alarm this benchmark cannot produce. The `CLAIM_UNCHECKABLE` verdict exists precisely because the first version did not make this distinction and reported 84 contradictions on {{ .D.M1CleanChecked }} clean reports, every one of them a chargeback in an unjoined feed rather than an error in the report.
+
+### And it does not rest on the defect rate
+
+The modelled rate of defective reports is {{ pct1 .D.DefectRatePct }}, which is a **choice made in this repository's generator**, not an observation of any real gateway. If Razorpay's true rate is a tenth of it, the volume argument shrinks by a factor of ten. So the claim is made rate-independent instead of defended:
+
+| report defect rate | B1 posts wrong | M1 posts wrong |
 |---|---:|---:|
-| posted | {{ .D.B1Posted }} | {{ .S.AutoPosted }} |
-| **posted wrong** | **{{ .D.B1Wrong }}** | **{{ .S.AutoPostedWrong }}** |
-| reports that were defective | {{ .D.Defects }} ({{ pct1 .D.DefectRatePct }} of the batch) | |
-| **defective reports it would flag** | **0 of {{ .D.Defects }}** | **{{ .D.DefectsCaught }} of {{ .D.Defects }}** |
+{{- range .Sensitivity }}{{ if eq .SlackScale 1.0 }}
+| {{ pct1 (mul .DefectRate 100) }} | {{ .B1Wrong }} of {{ .Defects }} defective | {{ .M1Wrong }} |
+{{- end }}{{ end }}
+| 0% | 0 of 0 | 0 |
 
-B1 is right {{ pct1 .D.B1CorrectPct }} of the time. That is not a strawman and it is not being disputed: for most settlements, at most gateways, the lookup is the right answer and the solver is dead weight.
-
-What B1 cannot do is notice the other {{ pct1 (sub100 .D.B1CorrectPct) }}. It has no independent account of the money, so its output is a restatement of its input, and the only thing it can check the report against is the report. Manhattan reconstructs the credit from the merchant's own records and then compares. It flagged **{{ .D.DefectsCaught }} of {{ .D.Defects }}** and missed **{{ .D.DefectsMissed }}**.
-
-The defects modelled are the ones that actually happen, not exotic ones: a chargeback debited this cycle but raised against an earlier one, which the report omits because its own join is by capture date; a payment named in the mapping that settled in the previous cycle; a mapping short by one record, which is what a partial write looks like downstream. Details in [`internal/generate/generate.go`](internal/generate/generate.go).
+The structural point does not move with the rate, and it is the one that matters: **a reconciliation whose only check on the settlement report is the settlement report cannot detect a defective one at any rate, including zero.** The value of independent verification tracks the cost of an undetected wrong posting, not its frequency.
 
 > **The settlement report is a claim. Manhattan verifies the claim independently, from the merchant's own records.** A reconciliation system that trusts its input is not reconciling, it is transcribing.
 
-At {{ i .D.B1SilentPer1000 }} silent wrong postings per thousand settlements, on a gateway doing millions, that is the entire case. The demo posture follows from it: per-payment fee rows are retained and the `settlement_id` mapping is **withheld from the pipeline**, so the system is not handed the answer it exists to derive. The mapping is still generated, and B1 still reads it, which is how the row above is measured.
-
-**And the solver earns its place outright** wherever that mapping is absent: a bank credit whose narration carries no usable settlement reference; a merchant reconciling their own OMS against a lump credit; multi-gateway merchants where one aggregator ships a transaction-level mapping and another ships only a net figure; historical backfill, migrations and disputed periods.
+The demo posture follows: per-payment fee rows are retained and the `settlement_id` mapping is **withheld from the search**, so the reconstruction is not handed the answer it exists to derive. The mapping is still generated, and B1 and the claim check both read it, which is how the table above is measured. Withholding it from one stage and feeding it to another is how a control is built, not how one is hidden.
 
 ---
 
@@ -138,6 +182,8 @@ It posts above a threshold of {{ f2 .D.B0Shipped.Threshold }}, the value such to
 | shipped | {{ f2 .D.B0Shipped.Threshold }} | {{ .D.B0Shipped.Posted }} | {{ .D.B0Shipped.Wrong }} | {{ rate .D.B0Shipped.Precision }} | {{ f2 .D.B0Shipped.F1 }} |
 | best F1, where a team tuning it would land | {{ f2 .D.B0Best.Threshold }} | {{ .D.B0Best.Posted }} | {{ .D.B0Best.Wrong }} | {{ rate .D.B0Best.Precision }} | {{ f2 .D.B0Best.F1 }} |
 
+**The right-hand column is flat at {{ .D.B0MaxRight }} from 0.10 to 0.90 and that is the sharpest fact in the table, not a bug.** B0's correct proposals are exact integer hits, and an exact hit scores at or above 0.90 under its own scoring function. So every threshold below that admits only additional WRONG postings: lowering the bar never finds another right answer, it just posts more. The score carries no information about correctness anywhere in the range a team would actually tune within.
+
 The curve is the argument, not the operating point. **Tuned to its own best F1, B0 still posts {{ .D.B0Best.Wrong }} wrong out of {{ .D.B0Best.Posted }}.** Its precision never exceeds {{ rate .D.B0Best.Precision }} anywhere on the curve, because the confidence score measures *how good the match looks*, not *whether it is the only one*, and those come apart exactly where the money is. Raising the threshold does not find the rivals; it posts fewer things without knowing which.
 
 And one number falls out of the sweep that settles the comparison:
@@ -168,7 +214,7 @@ The honest commercial reading, which is in [LIMITATIONS.md](LIMITATIONS.md) and 
 
 This is also the commercial claim: one pass over a merchant's historical settlement amounts yields the spread and the twin mass, which yield the collision index, which yields the expected status mix, before any integration.
 
-**[RESULTS.md](RESULTS.md) carries the calibration that backs it**, and it carries the claim's limits with it. Across all {{ len .Sweep }} swept configurations the index does **not** order outcomes cleanly, and the reason is that it is being read against the wrong variable. Segmented by batch cardinality, which is the variable it has to be read against, the verified rate is monotone in the index at cardinality {{ ints .D.MonotoneAt }} and not at {{ ints .D.NotMonotoneAt }}.
+**[RESULTS.md](RESULTS.md) carries the calibration that backs it**, and it carries the claim's limits with it. Across all {{ .D.TotalSweptConfigs }} swept configurations the index does **not** order outcomes cleanly, and the reason is that it is being read against the wrong variable. Segmented by batch cardinality, which is the variable it has to be read against, the verified rate is monotone in the index at cardinality {{ ints .D.MonotoneAt }} and not at {{ ints .D.NotMonotoneAt }}.
 
 Where it breaks it breaks in one direction. The index is an *expected* number of colliding subsets, and at small cardinality the enumeration is small enough that the realised count is often one where the expectation is five, so the estimator is conservative exactly where the search is cheapest. **The wrong-posting rate is zero in every band of every cardinality**{{ if .D.AnyBandWrong }}, except where noted{{ end }}, so the failure costs recall and never precision.
 
@@ -248,7 +294,7 @@ One property is easy to miss: **the gate runs before the solver, not after it.**
 | ![head to head](docs/screenshots/02-head-to-head.jpg) | **Head to head.** One credit, identical inputs to both systems. B0 proposes six records at 0.95 confidence and posts, and is wrong. Manhattan finds a witness, closes the identity to zero, then widens the pool and finds a rival, so it holds. |
 | ![calibration](docs/screenshots/03-calibration.jpg) | **Calibration.** Outcome mix against the collision index predicted *before* any search ran, in bands of roughly equal population. Verified gives way to ambiguous and then to refusal as the index climbs, and the wrong-posting rate stays at zero across every band while B0's reaches {{ pct .D.TopBandB0Wrong }}. |
 | ![exceptions](docs/screenshots/06-exceptions.jpg) | **The exception queue.** {{ .S.Exceptions }} held settlements grouped by cause, each group priced and carrying the single change that would clear it, then the queue itself ordered by value cleared per analyst hour. |
-| ![receipt](docs/screenshots/04-receipt.jpg) | **A receipt.** The full derivation for one settlement: the narrowing waterfall with a reason per dropped record, both collision-index estimators plotted against the refusal threshold, the witness, the completeness checks and the identity. |
+| ![receipt](docs/screenshots/04-receipt.jpg) | **A receipt.** The full derivation for one settlement: the accounting identity re-derived from raw records, the fee check, and the gateway's own claim checked separately afterwards. `consistent` is not `verified` and the panel says so. |
 | ![mobile](docs/screenshots/05-mobile.png) | **At 390px.** Every view is usable on a phone. Wide tables scroll inside their own panel rather than compressing to nothing. |
 
 ---
@@ -273,7 +319,7 @@ Flags are **orthogonal** to status: a settlement can be `VERIFIED` and carry `FE
 | `{{ .Flag }}` | {{ .Count }} |
 {{- end }}
 
-{{ if not .D.TwinSwapInCases }}`TWIN_SWAP` does not appear in this batch and does in adversarial case 5, which is not a contradiction: the batch generator draws merchant amount distributions that rarely produce an exact twin *inside a witness*, while case 5 constructs one deliberately. A flag absent from a run is not a flag that cannot fire, which is why the case suite exists separately from the batch.{{ end }}
+{{ if and .D.TwinSwapInCases (not .D.TwinSwapInBatch) }}**The table above covers the {{ .S.Settlements }}-settlement batch only.** `TWIN_SWAP` is absent from it and present in adversarial case 5, which is not a contradiction: the batch draws merchant amount distributions that rarely put an exact twin *inside a witness*, while case 5 constructs one deliberately. The eleven cases are a separate fixture for exactly this reason, and a flag absent from a run is not a flag that cannot fire.{{ end }}
 
 ---
 
@@ -282,8 +328,6 @@ Flags are **orthogonal** to status: a settlement can be `VERIFIED` and carry `FE
 The track asks for an agent. What distinguishes this one is not that a model is in the loop, it is *where* the model sits relative to the decision.
 
 *(The loop as a diagram is in [docs/DESIGN.md](docs/DESIGN.md); the shape is: triage, observe, choose one action, apply it as an overlay, re-run the entire stack, keep the result only if it improved.)*
-
-```
 
 ### What it did, as a flow
 
@@ -304,23 +348,48 @@ The counts do not read as a partition and a reader who tries will conclude somet
 
 **{{ pct .D.TriagePct }} of the queue is settled without a model call at all**, because a cheap deterministic check establishes that no action in the vocabulary could change the outcome: the amounts do not distinguish the transactions, or a rival already appears when the pool is widened, or there is nothing left to search or tighten. Paying a model to conclude that nothing can help, across most of a queue, is the same mistake as paying it to add up a column.
 
+### What the agent is worth, and when it is worth nothing
+
+Repairs split by the action that produced them, because a single total hides which mechanism did the work:
+
+| action | repairs | corroborated by |
+|---|---:|---|
+{{- range .D.RepairsByAction }}
+| `{{ .Flag }}` | {{ .Count }} | {{ if eq .Flag "SEARCH_FEED" }}a real record, cited by id, in a feed nobody joined{{ else if eq .Flag "NARROW_TO_HISTORY" }}this merchant's own prior VERIFIED settlements{{ else }}nothing; this action cannot post{{ end }} |
+{{- end }}
+
+And the honest version of "does the agent matter", as a curve rather than a number. The batch is re-run with the modelled misconfiguration scaled from zero:
+
+| scenario | verified | wrong | repairs | of which narrowing | proven cures |
+|---|---:|---:|---:|---:|---:|
+{{- range .Sensitivity }}
+| {{ .Scenario }} | {{ .Verified }} | {{ .Wrong }} | {{ .Repaired }} | {{ index .RepairedBy "NARROW_TO_HISTORY" }} | {{ .Cures }} |
+{{- end }}
+
+Three things to read off it. **At zero misconfiguration the narrowing action repairs {{ .D.ControlNarrow }}**, which is correct: a correctly configured deployment has no window slack to recover and an agent that invented some would be dangerous. **Wrong postings are zero in every scenario**, including the ones where the agent is doing the most work. And at the worst misconfiguration the narrowing repairs fall back toward zero, which is a real limitation rather than noise: a merchant so badly configured that it proves almost nothing cannot accumulate the twelve proofs a profile needs, so corroborated narrowing has nothing to corroborate against. It is in [LIMITATIONS.md](LIMITATIONS.md).
+
 ### The action space is closed
 
 | Action | What it does | May post? |
 |---|---|---|
 | `SEARCH_FEED` | looks in a source nobody joined, for a named class of record | **yes, with the citation** |
-| `TIGHTEN_WINDOW` | narrows the value-date window | no |
+| `NARROW_TO_HISTORY` | narrows the window to a bound this merchant's own proved settlements demonstrate | **yes, with the history** |
+| `TIGHTEN_WINDOW` | narrows the value-date window on the model's judgement alone | no |
 | `WIDEN_WINDOW` | loosens it, for a batch partly cut out | no |
 | `SPLIT_BY_INSTRUMENT` | restricts to the payout's own payment method | no |
 | `RELAX_RECONCILED` | admits records posted in a prior cycle | no |
 | `PROPOSE_ADJUSTMENT` | asserts an unmodelled event | no |
 | `ESCALATE` | stops, deliberately, with everything tried recorded | no |
 
-**Only a corroborated action may post, and that rule was learned rather than designed.** The first version let narrowing changes post if the identity closed, and produced **two wrong postings in three hundred settlements** (a figure from that earlier build, recorded by hand; it is the one number in this file not emitted by run `{{ .S.RunID }}`, because the build that produced it no longer exists): the agent tightened a window, the pool fell from 44 records to 40, an `AMBIGUOUS` settlement became `VERIFIED`, every check passed, and the answer was wrong because the tightening had cut real records out of the batch.
+**Only a corroborated action may post, and that rule was learned rather than designed.** The first version let narrowing changes post if the identity closed, and produced **two wrong postings in three hundred settlements** (a figure recorded by hand from that earlier build, and the one number in this file not emitted by run `{{ .S.RunID }}`; the failure it describes is rebuilt as a committed test in [`internal/agent/corroboration_test.go`](internal/agent/corroboration_test.go), which fails if `TIGHTEN_WINDOW` is ever made postable again): the agent tightened a window, the pool fell from 44 records to 40, an `AMBIGUOUS` settlement became `VERIFIED`, every check passed, and the answer was wrong because the tightening had cut real records out of the batch.
 
 > Removing candidates cannot make the survivor unique. It makes it **unexamined**.
 
 So narrowing actions are assertions about a merchant's settlement behaviour, and assertions need corroboration. A second rule has the same shape: if the feed holds more candidates of the named class than the agent can afford to test and exactly one of the tested ones verifies, **that still does not post**, because an untested record might have verified too.
+
+**Prohibition was the right default and it was not the right permanent answer.** The gap it left was that the system had no way to establish an assertion about a merchant's behaviour, so it banned the action instead. `NARROW_TO_HISTORY` closes that: a merchant's own prior `VERIFIED` settlements are a second source, and they are a strong one, because each was established by exhaustive enumeration without reference to any window hypothesis. If the last {{ .D.NarrowRepairs }}-odd proved batches for a merchant all closed inside nine hours, "this merchant settles within nine hours" is a measurement over proofs rather than the model's opinion.
+
+Three properties keep it honest. The profile is built **only** from `VERIFIED` receipts, so it cannot bootstrap from guesses. At least twelve proofs are required before any bound is offered. And the proposed bound may never be **tighter** than the widest offset those proofs actually show, so the agent cannot invent a rule the merchant's own history contradicts. The verifier still decides: the window is applied as an overlay, the whole stack re-runs, and if the result is not unique with the identity closing then nothing posts. Corroboration buys the right to be tested, not the right to be believed.
 
 ### The loop closed, end to end
 
@@ -365,6 +434,8 @@ So the queue is ordered by **value cleared per analyst hour**, which is what "wo
 The {{ n .D.RemediationEachINR }} INR is an assumption, printed so it can be replaced. It is roughly two hours of a mid-level finance analyst at Indian metro rates: noticing the error, usually at month end and from a reconciliation difference rather than from the posting itself; finding which credit it belonged to; reversing the journal; re-posting; explaining the movement to whoever signs the accounts. It excludes any case that reaches an auditor.
 
 Substitute your own figure; the arithmetic is one multiplication. The conclusion survives a wide range, because B0 only comes out ahead if unwinding a wrong posting costs under {{ ni .D.BreakEvenINR }} INR, which is well under an hour of analyst time for an error nobody knows about yet.
+
+**And that break-even is conservative in our own favour, which is worth saying.** It charges B0 nothing for its own {{ sub .S.Settlements .S.B0Posted }} held settlements, which a real team would also have to work. Counting them would move the number further in this direction, so the figure above is a floor rather than a best case.
 
 So {{ pct .D.PostRate }} is not a philosophical position. It is the cheaper one.
 

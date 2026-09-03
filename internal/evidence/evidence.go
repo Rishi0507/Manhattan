@@ -249,6 +249,56 @@ type CostBlock struct {
 	INRMicros    int64 `json:"inr_micros"`
 }
 
+// ClaimVerdict is the outcome of checking a mapping somebody else asserted.
+type ClaimVerdict string
+
+const (
+	// ClaimConsistent means the named batch does produce this credit. It is
+	// deliberately weaker than VERIFIED: consistent is not unique, because
+	// nothing was searched for.
+	ClaimConsistent ClaimVerdict = "CLAIM_CONSISTENT"
+	// ClaimContradicted means the report's own account of this settlement does
+	// not survive checking against the merchant's records.
+	ClaimContradicted ClaimVerdict = "CLAIM_CONTRADICTED"
+	// ClaimUncheckable means the claim names a record that exists in a source
+	// nobody joined, so the check could not be performed.
+	//
+	// This verdict was added after measuring, and the measurement is the
+	// reason it exists. Without it the claim check reported 84 contradictions
+	// on 469 clean reports, an 18 per cent false-alarm rate that would have
+	// made the composite unshippable. Every one of the 84 was a chargeback
+	// sitting in an unjoined disputes feed: the report was right, the money
+	// was right, and the record was simply not in the data the checker could
+	// see.
+	//
+	// Calling that a contradiction would blame the counterparty for a
+	// connection nobody made on this side, which is the same error the feed
+	// completeness guard exists to avoid. The honest verdict is that the check
+	// did not run, and the remedy is to join the feed.
+	ClaimUncheckable ClaimVerdict = "CLAIM_UNCHECKABLE"
+)
+
+// ClaimCheck records the verification of an externally supplied mapping.
+//
+// It exists because deriving a batch and checking a claimed one are different
+// problems with different costs, and only the first is hard. See
+// pipeline.CheckClaim.
+type ClaimCheck struct {
+	Source      string       `json:"source"`
+	Verdict     ClaimVerdict `json:"verdict"`
+	ClaimedSize int          `json:"claimed_size"`
+
+	SumPaise      int64 `json:"claimed_sum_paise"`
+	TargetPaise   int64 `json:"target_paise"`
+	ResidualPaise int64 `json:"residual_paise"`
+
+	ZeroContribution int      `json:"zero_contribution_records,omitempty"`
+	Missing          []string `json:"named_but_absent,omitempty"`
+	Unjoined         []string `json:"named_but_in_an_unjoined_feed,omitempty"`
+	Findings         []string `json:"findings,omitempty"`
+	Note             string   `json:"note"`
+}
+
 // Receipt is the complete evidence object for one settlement.
 type Receipt struct {
 	SettlementRef string         `json:"settlement_ref"`
@@ -291,6 +341,12 @@ type Receipt struct {
 	// was simpler and it was also useless: every row costing the same makes
 	// "sort the queue by cost" sort by nothing, and a queue that cannot be
 	// ordered is a list rather than a work plan.
+	// ReportClaim is the verification of the gateway's own stated mapping,
+	// where one is available. It is computed by a separate entry point AFTER
+	// the reconstruction above reached its own conclusion, and the search
+	// never sees it.
+	ReportClaim *ClaimCheck `json:"report_claim,omitempty"`
+
 	ExceptionCostINR int `json:"exception_cost_inr,omitempty"`
 	ExceptionMinutes int `json:"exception_handling_minutes,omitempty"`
 	// ExceptionBasis names every term that produced the estimate, so an

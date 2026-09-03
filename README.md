@@ -11,7 +11,7 @@ git clone <this repo> && cd manhattan
 ./run.sh demo          # or:  .\run.ps1 demo    or:  make demo
 ```
 
-No API key required. **Every number in this file, in [RESULTS.md](RESULTS.md) and in [LIMITATIONS.md](LIMITATIONS.md) is emitted by that command.** None of the three is typed by hand; all three are rendered from the same run, in the same command, so they cannot drift apart. This one is generated from run `run_20260903_0459`, seed `20260826`.
+No API key required. **Every number in this file, in [RESULTS.md](RESULTS.md) and in [LIMITATIONS.md](LIMITATIONS.md) is emitted by that command.** None of the three is typed by hand; all three are rendered from the same run, in the same command, so they cannot drift apart. This one is generated from run `run_20260903_0925`, seed `20260826`.
 
 ### Track compliance, stated first
 
@@ -19,11 +19,22 @@ The brief asks for one finance-ops loop closed across a batch of 50 or more synt
 
 | requirement | what this run did |
 |---|---|
-| 50+ record batch | **21,965 records** across **498 settlements**, pools reaching **3,778 records** before narrowing and **49** after |
+| 50+ record batch | **21,965 source records** (payments, refunds, chargebacks and adjustments across four feeds) driving **498 settlements**. Each settlement's record universe reaches **3,778** before narrowing and **95** after |
 | one loop, closed | bank credit to posted ledger entry, or to a named exception, end to end |
-| match rate reported | **151 of 498** auto-posted, 30%, with **0 wrong** |
-| exceptions it could not resolve | **347**, each with a named cause, a computed remedy and a price. [The list is below.](#the-exception-list-is-the-deliverable) |
-| throughput | **80,529 settlements per hour**, 13.6 ms median, peak 15 MB |
+| match rate reported | **104 of 498** auto-posted, 21%, with **0 wrong** |
+| exceptions it could not resolve | **394**, each with a named cause, a computed remedy and a price. [The list is below.](#the-exception-list-is-the-deliverable) |
+| throughput | **41,432 settlements per hour**, 24.7 ms median, on windows/amd64, 4 logical cores, go1.27.0 |
+
+### What this run deliberately gets wrong
+
+Two operational misconfigurations are modelled, because a reconciliation benchmark on perfectly configured data measures nothing an agent could help with. Both are things a **deployment gets wrong on its own side**, not things a counterparty did, and both are the most common of their kind:
+
+- d2c_ecommerce: reconciliation window misconfigured to plus or minus 24 hours
+- marketplace: disputes feed never joined into the pool
+- quick_commerce: disputes feed never joined into the pool
+- travel: reconciliation window misconfigured to plus or minus 22 hours
+
+The obvious criticism of any agent benchmark is that the author created the problem the agent solves. The answer is not to argue, it is to [publish the agent's contribution as a function of how much misconfiguration there is](#what-the-agent-is-worth-and-when-it-is-worth-nothing). At zero it repairs nothing through narrowing, and that is the loop being unnecessary rather than the loop failing.
 
 ---
 
@@ -33,26 +44,61 @@ Everyone at a payments company asks the same thing, so it goes above everything 
 
 > **"We already ship that mapping. Optimizer's Single View Recon gives you settlement_id to payments. What is the solver for?"**
 
-Correct, and where the report is complete this project is unnecessary. So the benchmark runs that answer as a third system. **B1 reads the settlement report's stated mapping and posts it.** No search, no solver, instant, free.
+Correct. So the benchmark runs that answer as a system of its own, and then builds on it rather than arguing with it.
 
-| 498 settlements | B1, trust the report | Manhattan |
+**B1** reads the settlement report's stated mapping and posts it. No search, instant, free.
+**Manhattan** ignores the mapping entirely and reconstructs the credit from the merchant's own records.
+**M1** is both: post Manhattan's reconstruction where it proved one, otherwise **check** the report's claim against the money and post it when it holds, hold when it does not.
+
+| 498 settlements | B1, trust the report | Manhattan alone | **M1, the composite** |
+|---|---:|---:|---:|
+| posted | 498 | 104 | **406** (82%) |
+| **posted wrong** | **29** | **0** | **0** |
+| defective reports it would flag | 0 of 29 | | **25 of 29** |
+| false alarms on 469 clean reports | | | **0** |
+
+**That third column is the product.** It sits on top of Single View Recon instead of replacing it: 104 of its postings are Manhattan's own proofs and 302 are the report's claim, checked. It posts 302 more settlements than reconstruction alone and 92 fewer than the lookup, and the ones it declines to post are the ones the lookup gets wrong.
+
+### Why checking reaches so much further than deriving
+
+> **Deriving a batch is a search. Checking a batch somebody claimed is not.**
+
+Reconstruction costs C(n, k) and is only decisive in a narrow regime, which is why two of six merchant archetypes reconstruct nothing at all. Verifying a claimed batch costs O(claim): do these records exist, do they belong to this merchant, were they already posted in a prior cycle, do their signed contributions sum to the credit, does the count agree with the declaration. None of that touches the combinatorics.
+
+So the claim check works exactly where reconstruction cannot. A subscription merchant with two hundred identical charges has settlements no method can **derive** from amounts, and the gateway's mapping for those settlements can still be **checked** against the money in microseconds.
+
+The verdict it produces is deliberately weaker than a proof, and the receipt never blurs them:
+
+| | |
+|---|---|
+| `VERIFIED` | exactly one batch in the searched region produces this credit, counted exhaustively. Nobody had to be trusted. |
+| `CLAIM_CONSISTENT` | the batch the report named does produce this credit. Others may too; this one was checked, not derived. |
+| `CLAIM_CONTRADICTED` | the report's own account of this settlement does not survive checking. Here is the residual. |
+| `CLAIM_UNCHECKABLE` | part of the claim lives in a feed nobody joined, so the check could not run. Our problem, not the report's. |
+
+**The defects modelled are ordinary, and the first has a documented cause.** A dispute is raised against the original transaction and debited in whatever cycle the network resolves it in, which is routinely not the cycle that carried the payment, so a settlement report whose own join is by capture date has a structural reason to omit a debit that genuinely moved money. The other two are a payment named from the previous cycle and a mapping short by one record, which is what a truncated file looks like downstream. Causes and their limits are in [LIMITATIONS.md](LIMITATIONS.md); the code is in [`internal/generate/generate.go`](internal/generate/generate.go).
+
+### The false-alarm rate is the number that decides this
+
+A composite that holds settlements a lookup would have posted correctly is worse than the lookup. Measured: **0 false alarms on 469 clean reports** (0.0%).
+
+That figure is optimistic by construction and the reason must be stated. The generator's fee model and the verifier's contribution model are **the same model**, so a real report that is defect-free can still disagree with Manhattan's arithmetic over a fee slab, a promotional rate or a rounding convention, and every one of those would be a false alarm this benchmark cannot produce. The `CLAIM_UNCHECKABLE` verdict exists precisely because the first version did not make this distinction and reported 84 contradictions on 469 clean reports, every one of them a chargeback in an unjoined feed rather than an error in the report.
+
+### And it does not rest on the defect rate
+
+The modelled rate of defective reports is 5.8%, which is a **choice made in this repository's generator**, not an observation of any real gateway. If Razorpay's true rate is a tenth of it, the volume argument shrinks by a factor of ten. So the claim is made rate-independent instead of defended:
+
+| report defect rate | B1 posts wrong | M1 posts wrong |
 |---|---:|---:|
-| posted | 498 | 151 |
-| **posted wrong** | **29** | **0** |
-| reports that were defective | 29 (5.8% of the batch) | |
-| **defective reports it would flag** | **0 of 29** | **29 of 29** |
+| 6.0% | 22 of 22 defective | 0 |
+| 0.6% | 1 of 1 defective | 0 |
+| 0% | 0 of 0 | 0 |
 
-B1 is right 94.2% of the time. That is not a strawman and it is not being disputed: for most settlements, at most gateways, the lookup is the right answer and the solver is dead weight.
-
-What B1 cannot do is notice the other 5.8%. It has no independent account of the money, so its output is a restatement of its input, and the only thing it can check the report against is the report. Manhattan reconstructs the credit from the merchant's own records and then compares. It flagged **29 of 29** and missed **0**.
-
-The defects modelled are the ones that actually happen, not exotic ones: a chargeback debited this cycle but raised against an earlier one, which the report omits because its own join is by capture date; a payment named in the mapping that settled in the previous cycle; a mapping short by one record, which is what a partial write looks like downstream. Details in [`internal/generate/generate.go`](internal/generate/generate.go).
+The structural point does not move with the rate, and it is the one that matters: **a reconciliation whose only check on the settlement report is the settlement report cannot detect a defective one at any rate, including zero.** The value of independent verification tracks the cost of an undetected wrong posting, not its frequency.
 
 > **The settlement report is a claim. Manhattan verifies the claim independently, from the merchant's own records.** A reconciliation system that trusts its input is not reconciling, it is transcribing.
 
-At 58 silent wrong postings per thousand settlements, on a gateway doing millions, that is the entire case. The demo posture follows from it: per-payment fee rows are retained and the `settlement_id` mapping is **withheld from the pipeline**, so the system is not handed the answer it exists to derive. The mapping is still generated, and B1 still reads it, which is how the row above is measured.
-
-**And the solver earns its place outright** wherever that mapping is absent: a bank credit whose narration carries no usable settlement reference; a merchant reconciling their own OMS against a lump credit; multi-gateway merchants where one aggregator ships a transaction-level mapping and another ships only a net figure; historical backfill, migrations and disputed periods.
+The demo posture follows: per-payment fee rows are retained and the `settlement_id` mapping is **withheld from the search**, so the reconstruction is not handed the answer it exists to derive. The mapping is still generated, and B1 and the claim check both read it, which is how the table above is measured. Withholding it from one stage and feeding it to another is how a control is built, not how one is hidden.
 
 ---
 
@@ -80,25 +126,25 @@ Finding one subset that sums correctly is easy and nearly worthless: subsets gro
 
 | 498 settlements | Manhattan | B0 |
 |---|---:|---:|
-| `VERIFIED` | **151** | |
-| `AMBIGUOUS` | 114 | |
-| `UNDERDETERMINED` | 202 | |
+| `VERIFIED` | **104** | |
+| `AMBIGUOUS` | 128 | |
+| `UNDERDETERMINED` | 235 | |
 | `NARROWING_SENSITIVE` | 3 | |
-| `UNRESOLVED` | 28 | 140 |
+| `UNRESOLVED` | 28 | 184 |
 | | | |
-| **auto-posted** | **151** (30%) | **358** (72%) |
-| **auto-posted WRONG** | **0** | **216** (60% of its postings) |
-| held for review | 347 | 140 |
-| median latency | 13.6 ms | 4.0 ms |
-| throughput | 80,529 / hour | |
-| input tokens per 1k | 0.83 M | 1.56 M |
-| cost per 1k settlements | 516 INR | 951 INR |
+| **auto-posted** | **104** (21%) | **314** (63%) |
+| **auto-posted WRONG** | **0** | **237** (75% of its postings) |
+| held for review | 394 | 184 |
+| median latency | 24.7 ms | 8.4 ms |
+| throughput | 41,432 / hour | |
+| input tokens per 1k | 1.56 M | 1.98 M |
+| cost per 1k settlements | 906 INR | 1,134 INR |
 
-The five statuses are above the headline on purpose. `AMBIGUOUS` at 114 and `UNDERDETERMINED` at 202 are real, sized populations rather than rhetoric: 316 settlements where rivals were found or proved to exist. A tool reporting those as matches is reporting a coin flip.
+The five statuses are above the headline on purpose. `AMBIGUOUS` at 128 and `UNDERDETERMINED` at 235 are real, sized populations rather than rhetoric: 363 settlements where rivals were found or proved to exist. A tool reporting those as matches is reporting a coin flip.
 
-**Manhattan posts fewer, and that is an operating point rather than a concession.** B0's 358 postings contain 216 errors nobody can identify, so all 358 have to be checked and the coverage was worth nothing. 151 postings with 0 errors is 151 a finance team never touches.
+**Manhattan posts fewer, and that is an operating point rather than a concession.** B0's 314 postings contain 237 errors nobody can identify, so all 314 have to be checked and the coverage was worth nothing. 104 postings with 0 errors is 104 a finance team never touches.
 
-**Throughput** is measured end to end: 498 settlements in 22.3 seconds of wall clock, including the agent loop, B0 running alongside, and receipt serialisation. That divides to 44.7 ms per settlement against a 13.6 ms median, and the gap is not an error: the median is *pipeline* time for one settlement, while wall clock also carries generation, the baseline, the agent's re-verification passes and I/O. Both are printed rather than the flattering one.
+**Throughput** is measured end to end: 498 settlements in 43.3 seconds of wall clock, including the agent loop, B0 running alongside, and receipt serialisation. That divides to 86.9 ms per settlement against a 24.7 ms median, and the gap is not an error: the median is *pipeline* time for one settlement, while wall clock also carries generation, the baseline, the agent's re-verification passes and I/O. Both are printed rather than the flattering one.
 
 <details>
 <summary><b>The cost row, derived</b></summary>
@@ -107,19 +153,19 @@ Priced at published `claude-opus-5` rates, `modelled: no model was billed on thi
 
 | | |
 |---|---:|
-| input, uncached | 411,762 tok @ $5.00/Mtok |
+| input, uncached | 778,419 tok @ $5.00/Mtok |
 | input, cache reads | 0 tok @ $0.50/Mtok |
 | cache writes | 0 tok @ $6.25/Mtok |
-| output | 34,434 tok @ $25.00/Mtok |
-| model calls | 812 over 498 settlements |
+| output | 49,307 tok @ $25.00/Mtok |
+| model calls | 1,065 over 498 settlements |
 | cache hit rate | 0.0% |
 | USD to INR | 88 |
-| **Manhattan** | **$5.86 = 516 INR per 1k** |
-| **B0** | **$10.81 = 951 INR per 1k** |
+| **Manhattan** | **$10.29 = 906 INR per 1k** |
+| **B0** | **$12.89 = 1,134 INR per 1k** |
 
 The cache hit rate is 0.0% because a replay run reports no cache reads, so every input token here is priced at the **uncached** rate. A live run caches the parse system block, byte-identical across every settlement, so the real figure is below the one published. The claim is made against Manhattan deliberately.
 
-**B0's token model, since it decides the comparison.** 200 tokens of instruction plus 40 per candidate record, over a mean narrowed pool of 34.0, giving 1,562 input tokens per settlement against Manhattan's 827. Forty tokens covers one candidate rendered as an id, an amount, a timestamp, an instrument and a kind.
+**B0's token model, since it decides the comparison.** 200 tokens of instruction plus 40 per candidate record, over a mean narrowed pool of 44.4, giving 1,977 input tokens per settlement against Manhattan's 1,563. Forty tokens covers one candidate rendered as an id, an amount, a timestamp, an instrument and a kind.
 
 That is low on purpose. **B0 is handed Manhattan's narrowing for free**, so it reads a few dozen records rather than the 3645.7 in the mean unnarrowed universe. Without that narrowing it would pay roughly 146,028 tokens per settlement and the gap reported here would be several times wider. A cost advantage argued from a handicapped baseline is not an advantage.
 
@@ -127,7 +173,7 @@ That is low on purpose. **B0 is handed Manhattan's narrowing for free**, so it r
 
 ### The baseline, published so it can be attacked
 
-216 wrong out of 358 posted is 60%, and nobody who has built a fuzzy matcher should accept that on assertion. So here is everything B0 scores on:
+237 wrong out of 314 posted is 75%, and nobody who has built a fuzzy matcher should accept that on assertion. So here is everything B0 scores on:
 
 - exact integer hit on the target contribution sum (confidence 0.90)
 - near hit within 1 basis point of the target (0.72)
@@ -139,14 +185,16 @@ It posts above a threshold of 0.80, the value such tools typically ship with. **
 
 | | threshold | posted | wrong | precision | F1 |
 |---|---:|---:|---:|---:|---:|
-| shipped | 0.80 | 358 | 216 | 40% | 0.33 |
-| best F1, where a team tuning it would land | 0.95 | 267 | 139 | 48% | 0.33 |
+| shipped | 0.80 | 314 | 237 | 25% | 0.19 |
+| best F1, where a team tuning it would land | 0.95 | 219 | 151 | 31% | 0.19 |
 
-The curve is the argument, not the operating point. **Tuned to its own best F1, B0 still posts 139 wrong out of 267.** Its precision never exceeds 48% anywhere on the curve, because the confidence score measures *how good the match looks*, not *whether it is the only one*, and those come apart exactly where the money is. Raising the threshold does not find the rivals; it posts fewer things without knowing which.
+**The right-hand column is flat at 77 from 0.10 to 0.90 and that is the sharpest fact in the table, not a bug.** B0's correct proposals are exact integer hits, and an exact hit scores at or above 0.90 under its own scoring function. So every threshold below that admits only additional WRONG postings: lowering the bar never finds another right answer, it just posts more. The score carries no information about correctness anywhere in the range a team would actually tune within.
+
+The curve is the argument, not the operating point. **Tuned to its own best F1, B0 still posts 151 wrong out of 219.** Its precision never exceeds 31% anywhere on the curve, because the confidence score measures *how good the match looks*, not *whether it is the only one*, and those come apart exactly where the money is. Raising the threshold does not find the rivals; it posts fewer things without knowing which.
 
 And one number falls out of the sweep that settles the comparison:
 
-> **At no threshold does B0 produce more correct postings than Manhattan.** Its maximum is 142 right answers, at threshold 0.10, against Manhattan's 151. Every extra posting the baseline appears to offer is a wrong one, and it cannot tell you which.
+> **At no threshold does B0 produce more correct postings than Manhattan.** Its maximum is 77 right answers, at threshold 0.10, against Manhattan's 104. Every extra posting the baseline appears to offer is a wrong one, and it cannot tell you which.
 
 That is why Manhattan's 0 means something. The baseline is not trading accuracy for coverage; it has no more coverage of the truth to trade.
 
@@ -154,12 +202,12 @@ That is why Manhattan's 0 means something. The baseline is not trading accuracy 
 
 | merchant type | expected regime | spread sigma (paise) | twin mass | auto-post | wrong | B0 posts | B0 wrong |
 |---|---|---:|---:|---:|---:|---:|---:|
-| travel | wide ticket spread; amounts separate cleanly | 3.44e+06 | 0.00 | **75%** | 0 | 63% | 1% |
-| marketplace | amounts separate; a disputes feed is unjoined | 7.68e+05 | 0.00 | **45%** | 0 | 66% | 30% |
-| d2c_ecommerce | narrow spread; narrowing decides | 1.66e+05 | 0.00 | **46%** | 0 | 83% | 28% |
+| travel | wide ticket spread; amounts separate cleanly | 3.44e+06 | 0.00 | **57%** | 0 | 28% | 6% |
+| marketplace | amounts separate; a disputes feed is unjoined | 7.7e+05 | 0.00 | **45%** | 0 | 66% | 30% |
+| d2c_ecommerce | narrow spread; narrowing decides | 1.74e+05 | 0.00 | **7%** | 0 | 65% | 48% |
 | utility_billpay | repeated price points; entropy gate refuses | 4.19e+04 | 0.76 | **0%** | 0 | 83% | 83% |
 | subscription_saas | three price points; entropy gate refuses | 6.55e+04 | 0.94 | **0%** | 0 | 65% | 65% |
-| quick_commerce | tight spread; a disputes feed is unjoined | 1.83e+04 | 0.00 | **17%** | 0 | 71% | 53% |
+| quick_commerce | tight spread; a disputes feed is unjoined | 1.85e+04 | 0.00 | **17%** | 0 | 71% | 53% |
 
 Read the right-hand columns against the left. Where amounts genuinely fail to distinguish transactions, Manhattan's auto-post rate falls to zero and B0's wrong-posting rate climbs. Both systems see the same data. One reacts to it.
 
@@ -185,7 +233,7 @@ The commercial claim is scoped to match: the index predicts a merchant's auto-po
 
 `AMOUNT_ENTROPY_INSUFFICIENT` is **166**, which is exactly the 2 zero-auto-post archetypes at 83 settlements each. The flag is set per settlement in the entropy gate; the archetype totals come from a different loop in a different package. Nothing makes them agree, and a miscount in either would show up here.
 
-(There is a second pair, `RESOLVED_BY_HYPOTHESIS` at **16** against **16** agent repairs. They match, and they match **by construction**: every repair sets that flag and nothing else does. That is a consistency assertion, not independent corroboration, and calling it evidence would be overclaiming.)
+(There is a second pair, `RESOLVED_BY_HYPOTHESIS` at **32** against **32** agent repairs. They match, and they match **by construction**: every repair sets that flag and nothing else does. That is a consistency assertion, not independent corroboration, and calling it evidence would be overclaiming.)
 
 ---
 
@@ -254,8 +302,8 @@ One property is easy to miss: **the gate runs before the solver, not after it.**
 |---|---|
 | ![head to head](docs/screenshots/02-head-to-head.jpg) | **Head to head.** One credit, identical inputs to both systems. B0 proposes six records at 0.95 confidence and posts, and is wrong. Manhattan finds a witness, closes the identity to zero, then widens the pool and finds a rival, so it holds. |
 | ![calibration](docs/screenshots/03-calibration.jpg) | **Calibration.** Outcome mix against the collision index predicted *before* any search ran, in bands of roughly equal population. Verified gives way to ambiguous and then to refusal as the index climbs, and the wrong-posting rate stays at zero across every band while B0's reaches 23%. |
-| ![exceptions](docs/screenshots/06-exceptions.jpg) | **The exception queue.** 347 held settlements grouped by cause, each group priced and carrying the single change that would clear it, then the queue itself ordered by value cleared per analyst hour. |
-| ![receipt](docs/screenshots/04-receipt.jpg) | **A receipt.** The full derivation for one settlement: the narrowing waterfall with a reason per dropped record, both collision-index estimators plotted against the refusal threshold, the witness, the completeness checks and the identity. |
+| ![exceptions](docs/screenshots/06-exceptions.jpg) | **The exception queue.** 394 held settlements grouped by cause, each group priced and carrying the single change that would clear it, then the queue itself ordered by value cleared per analyst hour. |
+| ![receipt](docs/screenshots/04-receipt.jpg) | **A receipt.** The full derivation for one settlement: the accounting identity re-derived from raw records, the fee check, and the gateway's own claim checked separately afterwards. `consistent` is not `verified` and the panel says so. |
 | ![mobile](docs/screenshots/05-mobile.png) | **At 390px.** Every view is usable on a phone. Wide tables scroll inside their own panel rather than compressing to nothing. |
 
 ---
@@ -276,12 +324,12 @@ Flags are **orthogonal** to status: a settlement can be `VERIFIED` and carry `FE
 
 | flag | settlements |
 |---|---:|
-| `SIGNED_ITEMS_PRESENT` | 200 |
+| `SIGNED_ITEMS_PRESENT` | 224 |
 | `AMOUNT_ENTROPY_INSUFFICIENT` | 166 |
 | `LATTICE_CORRECTED` | 69 |
-| `RESOLVED_BY_HYPOTHESIS` | 16 |
+| `RESOLVED_BY_HYPOTHESIS` | 32 |
 
-
+**The table above covers the 498-settlement batch only.** `TWIN_SWAP` is absent from it and present in adversarial case 5, which is not a contradiction: the batch draws merchant amount distributions that rarely put an exact twin *inside a witness*, while case 5 constructs one deliberately. The eleven cases are a separate fixture for exactly this reason, and a flag absent from a run is not a flag that cannot fire.
 
 ---
 
@@ -291,48 +339,72 @@ The track asks for an agent. What distinguishes this one is not that a model is 
 
 *(The loop as a diagram is in [docs/DESIGN.md](docs/DESIGN.md); the shape is: triage, observe, choose one action, apply it as an overlay, re-run the entire stack, keep the result only if it improved.)*
 
-```
-
 ### What it did, as a flow
 
 The counts do not read as a partition and a reader who tries will conclude something is broken, so here they are in the order they happen:
 
 ```
-363  settlements entered the loop as unresolved
-210  settled by deterministic triage, with no model call        (58%)
-153  reached the agent                                          (42%)
-314  actions taken
- 16  repaired into a posting, each citing a real record
-  4  given a proven cure: verified remedy, deliberately not posted
-347  remain held for review
+426  settlements entered the loop as unresolved
+166  settled by deterministic triage, with no model call        (39%)
+260  reached the agent                                          (61%)
+567  actions taken
+ 32  repaired into a posting, each citing a real record
+ 50  given a proven cure: verified remedy, deliberately not posted
+394  remain held for review
   0  wrong postings caused
 ```
 
-363 in, 16 out as postings, 347 held. That is where the missing 16 went.
+426 in, 32 out as postings, 394 held. That is where the missing 32 went.
 
-**58% of the queue is settled without a model call at all**, because a cheap deterministic check establishes that no action in the vocabulary could change the outcome: the amounts do not distinguish the transactions, or a rival already appears when the pool is widened, or there is nothing left to search or tighten. Paying a model to conclude that nothing can help, across most of a queue, is the same mistake as paying it to add up a column.
+**39% of the queue is settled without a model call at all**, because a cheap deterministic check establishes that no action in the vocabulary could change the outcome: the amounts do not distinguish the transactions, or a rival already appears when the pool is widened, or there is nothing left to search or tighten. Paying a model to conclude that nothing can help, across most of a queue, is the same mistake as paying it to add up a column.
+
+### What the agent is worth, and when it is worth nothing
+
+Repairs split by the action that produced them, because a single total hides which mechanism did the work:
+
+| action | repairs | corroborated by |
+|---|---:|---|
+| `NARROW_TO_HISTORY` | 16 | this merchant's own prior VERIFIED settlements |
+| `SEARCH_FEED` | 16 | a real record, cited by id, in a feed nobody joined |
+
+And the honest version of "does the agent matter", as a curve rather than a number. The batch is re-run with the modelled misconfiguration scaled from zero:
+
+| scenario | verified | wrong | repairs | of which narrowing | proven cures |
+|---|---:|---:|---:|---:|---:|
+| correctly configured, reports clean | 120 | 0 | 16 | 0 | 1 |
+| correctly configured, reports as modelled | 110 | 0 | 11 | 0 | 0 |
+| window misconfiguration as modelled | 73 | 0 | 18 | 7 | 38 |
+| window misconfiguration, reports ten times cleaner | 83 | 0 | 20 | 8 | 36 |
+| window misconfiguration twice as bad | 51 | 0 | 11 | 0 | 59 |
+
+Three things to read off it. **At zero misconfiguration the narrowing action repairs 0**, which is correct: a correctly configured deployment has no window slack to recover and an agent that invented some would be dangerous. **Wrong postings are zero in every scenario**, including the ones where the agent is doing the most work. And at the worst misconfiguration the narrowing repairs fall back toward zero, which is a real limitation rather than noise: a merchant so badly configured that it proves almost nothing cannot accumulate the twelve proofs a profile needs, so corroborated narrowing has nothing to corroborate against. It is in [LIMITATIONS.md](LIMITATIONS.md).
 
 ### The action space is closed
 
 | Action | What it does | May post? |
 |---|---|---|
 | `SEARCH_FEED` | looks in a source nobody joined, for a named class of record | **yes, with the citation** |
-| `TIGHTEN_WINDOW` | narrows the value-date window | no |
+| `NARROW_TO_HISTORY` | narrows the window to a bound this merchant's own proved settlements demonstrate | **yes, with the history** |
+| `TIGHTEN_WINDOW` | narrows the value-date window on the model's judgement alone | no |
 | `WIDEN_WINDOW` | loosens it, for a batch partly cut out | no |
 | `SPLIT_BY_INSTRUMENT` | restricts to the payout's own payment method | no |
 | `RELAX_RECONCILED` | admits records posted in a prior cycle | no |
 | `PROPOSE_ADJUSTMENT` | asserts an unmodelled event | no |
 | `ESCALATE` | stops, deliberately, with everything tried recorded | no |
 
-**Only a corroborated action may post, and that rule was learned rather than designed.** The first version let narrowing changes post if the identity closed, and produced **two wrong postings in three hundred settlements** (a figure from that earlier build, recorded by hand; it is the one number in this file not emitted by run `run_20260903_0459`, because the build that produced it no longer exists): the agent tightened a window, the pool fell from 44 records to 40, an `AMBIGUOUS` settlement became `VERIFIED`, every check passed, and the answer was wrong because the tightening had cut real records out of the batch.
+**Only a corroborated action may post, and that rule was learned rather than designed.** The first version let narrowing changes post if the identity closed, and produced **two wrong postings in three hundred settlements** (a figure recorded by hand from that earlier build, and the one number in this file not emitted by run `run_20260903_0925`; the failure it describes is rebuilt as a committed test in [`internal/agent/corroboration_test.go`](internal/agent/corroboration_test.go), which fails if `TIGHTEN_WINDOW` is ever made postable again): the agent tightened a window, the pool fell from 44 records to 40, an `AMBIGUOUS` settlement became `VERIFIED`, every check passed, and the answer was wrong because the tightening had cut real records out of the batch.
 
 > Removing candidates cannot make the survivor unique. It makes it **unexamined**.
 
 So narrowing actions are assertions about a merchant's settlement behaviour, and assertions need corroboration. A second rule has the same shape: if the feed holds more candidates of the named class than the agent can afford to test and exactly one of the tested ones verifies, **that still does not post**, because an untested record might have verified too.
 
+**Prohibition was the right default and it was not the right permanent answer.** The gap it left was that the system had no way to establish an assertion about a merchant's behaviour, so it banned the action instead. `NARROW_TO_HISTORY` closes that: a merchant's own prior `VERIFIED` settlements are a second source, and they are a strong one, because each was established by exhaustive enumeration without reference to any window hypothesis. If the last 16-odd proved batches for a merchant all closed inside nine hours, "this merchant settles within nine hours" is a measurement over proofs rather than the model's opinion.
+
+Three properties keep it honest. The profile is built **only** from `VERIFIED` receipts, so it cannot bootstrap from guesses. At least twelve proofs are required before any bound is offered. And the proposed bound may never be **tighter** than the widest offset those proofs actually show, so the agent cannot invent a rule the merchant's own history contradicts. The verifier still decides: the window is applied as an overlay, the whole stack re-runs, and if the result is not unique with the identity closing then nothing posts. Corroboration buys the right to be tested, not the right to be believed.
+
 ### The loop closed, end to end
 
-This is adversarial case 9 and it is what the 16 repairs look like. A chargeback exists in a disputes feed nobody wired into the candidate pool, so nothing reconstructs the credit.
+This is adversarial case 9 and it is what the 32 repairs look like. A chargeback exists in a disputes feed nobody wired into the candidate pool, so nothing reconstructs the credit.
 
 The verifier searches under `k(S)` at most 7 and finds nothing, with the nearest achievable sum 1038851 paise away. It hands the agent the exact residual, its sign and its cardinality. The agent answers `CHARGEBACK_DEBIT, add_item`, typed, from a closed vocabulary. The verifier searches the unjoined feed itself, finds `cbk_000223`, applies it, and re-runs the entire stack unmodified. It closes exactly and uniquely, and the hypothesis cites a real record, so it posts as `VERIFIED / RESOLVED_BY_HYPOTHESIS / cites cbk_000223`.
 
@@ -352,32 +424,34 @@ That last part is the one that makes the queue a work plan rather than a list. H
 
 So the queue is ordered by **value cleared per analyst hour**, which is what "work the most valuable thing first" actually means. Ordering by handling cost alone would put a forty-five minute investigation of a small credit above a five minute data fix on a large one.
 
-**[The full top 15 is in RESULTS.md](RESULTS.md#the-exception-queue); all 347 are in `out/receipts.ndjson`.**
+**[The full top 15 is in RESULTS.md](RESULTS.md#the-exception-queue); all 394 are in `out/receipts.ndjson`.**
 
 | settlement | status | at stake | mins | INR/hour | cause | computed remedy |
 |---|---|---:|---:|---:|---|---|
-| `bank_credit_travel_2026_09_16_1044` | `AMBIGUOUS` | 559,346 | 47 | **714,059** | 5 distinct reconstructions of this credit... | none available |
-| `bank_credit_marketplace_2026_09_19_1047` | `UNDERDETERMINED` | 57,759 | 5 | **693,106** | this batch is claimed to be 9 records of a... | supply the settlement reference, or the... |
-| `bank_credit_marketplace_2026_10_14_1072` | `UNDERDETERMINED` | 54,936 | 5 | **659,237** | this batch is claimed to be 9 records of a... | supply the settlement reference, or the... |
-| `bank_credit_marketplace_2026_09_03_1031` | `UNDERDETERMINED` | 54,815 | 5 | **657,783** | this batch is claimed to be 9 records of a... | supply the settlement reference, or the... |
-| `bank_credit_travel_2026_09_13_1041` | `AMBIGUOUS` | 380,791 | 35 | **652,784** | 2 distinct reconstructions of this credit... | none available |
-| `bank_credit_travel_2026_10_17_1075` | `AMBIGUOUS` | 352,869 | 35 | **604,918** | 2 distinct reconstructions of this credit... | none available |
+| `bank_credit_travel_2026_09_02_1030` | `UNDERDETERMINED` | 428,322 | 6 | **4,283,216** | this batch is claimed to be 9 records of a... | supply the settlement reference, or the... |
+| `bank_credit_travel_2026_08_07_1004` | `UNDERDETERMINED` | 250,516 | 5 | **3,006,186** | this batch is claimed to be 9 records of a... | supply the settlement reference, or the... |
+| `bank_credit_travel_2026_08_13_1010` | `UNDERDETERMINED` | 241,964 | 5 | **2,903,567** | this batch is claimed to be 9 records of a... | supply the settlement reference, or the... |
+| `bank_credit_travel_2026_08_15_1012` | `UNDERDETERMINED` | 254,447 | 6 | **2,544,467** | this batch is claimed to be 7 records of a... | supply the settlement reference, or the... |
+| `bank_credit_travel_2026_08_18_1015` | `UNDERDETERMINED` | 226,261 | 6 | **2,262,609** | this batch is claimed to be 7 records of a... | supply the settlement reference, or the... |
+| `bank_credit_travel_2026_08_12_1009` | `UNDERDETERMINED` | 252,773 | 7 | **2,166,627** | this batch is claimed to be 6 records of a... | supply the settlement reference, or the... |
 
 ### What refusing is worth
 
 | | |
 |---|---:|
-| money sitting unposted in the queue | 8,518,619 INR |
-| analyst time to clear it | 125 hours |
-| the whole held queue, at the configured rate | **125,009 INR** |
-| B0's 216 wrong postings, at 2,400 INR each to unwind | **518,400 INR** |
-| difference | **393,391 INR in Manhattan's favour, per 498 settlements** |
+| money sitting unposted in the queue | 12,212,637 INR |
+| analyst time to clear it | 139 hours |
+| the whole held queue, at the configured rate | **138,689 INR** |
+| B0's 237 wrong postings, at 2,400 INR each to unwind | **568,800 INR** |
+| difference | **430,111 INR in Manhattan's favour, per 498 settlements** |
 
 The 2,400 INR is an assumption, printed so it can be replaced. It is roughly two hours of a mid-level finance analyst at Indian metro rates: noticing the error, usually at month end and from a reconciliation difference rather than from the posting itself; finding which credit it belonged to; reversing the journal; re-posting; explaining the movement to whoever signs the accounts. It excludes any case that reaches an auditor.
 
-Substitute your own figure; the arithmetic is one multiplication. The conclusion survives a wide range, because B0 only comes out ahead if unwinding a wrong posting costs under 579 INR, which is well under an hour of analyst time for an error nobody knows about yet.
+Substitute your own figure; the arithmetic is one multiplication. The conclusion survives a wide range, because B0 only comes out ahead if unwinding a wrong posting costs under 585 INR, which is well under an hour of analyst time for an error nobody knows about yet.
 
-So 30% is not a philosophical position. It is the cheaper one.
+**And that break-even is conservative in our own favour, which is worth saying.** It charges B0 nothing for its own 184 held settlements, which a real team would also have to work. Counting them would move the number further in this direction, so the figure above is a floor rather than a best case.
+
+So 21% is not a philosophical position. It is the cheaper one.
 
 ---
 
@@ -388,34 +462,34 @@ The receipt store is queryable, and the Q&A agent answers only from stored evide
 
 > **Q. which constraint dropped the most records?**
 >
-> outside the value-date window removed the most, at 1,394,110 records across 498 settlements, which is 76.8% of everything narrowing looked at.
+> outside the value-date window removed the most, at 1,390,906 records across 498 settlements, which is 76.6% of everything narrowing looked at.
 > 
 > The full breakdown:
->   outside the value-date window       1,394,110  (76.8%)
+>   outside the value-date window       1,390,906  (76.6%)
 >   a different merchant                  248,004  (13.7%)
 >   already posted in a prior cycle       156,704  (8.6%)
->   nets to exactly zero                       44  (0.0%)
+>   nets to exactly zero                       52  (0.0%)
 > 
 > This matters more than it...
 >
 > `deterministic, no model call`
-> `aggregated across the store · narrowing.dropped.outside_settlement_window = 1,394,110`
+> `aggregated across the store · narrowing.dropped.outside_settlement_window = 1,390,906`
 > `aggregated across the store · narrowing.dropped.mid_mismatch = 248,004`
 
 > **Q. what is the backlog costing us?**
 >
-> The queue holds 347 settlements worth ₹84,52,841.61, and clearing it costs about INR 125,009 at the configured analyst handling time.
+> The queue holds 394 settlements worth ₹1,21,46,859.19, and clearing it costs about INR 138,689 at the configured analyst handling time.
 > 
 > By cause, most expensive first:
->   AMBIGUOUS               114 settlements   INR   81,745
->   UNDERDETERMINED         202 settlements   INR   25,066
+>   AMBIGUOUS               128 settlements   INR   92,001
+>   UNDERDETERMINED         235 settlements   INR   28,490
 >   UNRESOLVED               28 settlements   INR   16,950
 >   NARROWING_SENSITIVE       3 settlements   INR    1,248
 > 
 > Every row carries a...
 >
 > `deterministic, no model call`
-> `aggregated across the store · exception_cost_inr = 125,009`
+> `aggregated across the store · exception_cost_inr = 138,689`
 
 > **Q. which analyst approved settlement 5502?**
 >
@@ -444,13 +518,13 @@ A full annotated `VERIFIED` receipt and the `UNRESOLVED` and `NARROWING_SENSITIV
 
 ### On how much of the outcome the model is responsible for
 
-A fair reading of the numbers above is that the model moves 16 settlements out of 498, that 58% of the exception queue never calls it, and that the agent is therefore doing very little. That reading is correct about the arithmetic and wrong about the architecture, and it is worth being direct about which.
+A fair reading of the numbers above is that the model moves 32 settlements out of 498, that 39% of the exception queue never calls it, and that the agent is therefore doing very little. That reading is correct about the arithmetic and wrong about the architecture, and it is worth being direct about which.
 
 **The model is not load-bearing for correctness, deliberately and permanently.** A model that could change whether a settlement is correctly posted would be a model that can put wrong numbers in a general ledger, and no amount of capability fixes that, because the failure is silent. Any design where a better model produces more correct postings is a design where a worse one produces incorrect ones. This system is built so that swapping the model changes throughput and never accuracy, and the eleven-case suite passing on a deliberately unintelligent stub is the proof that it worked.
 
 **The model is load-bearing for the loop closing at all.** Reading `NEFT-RAZORPAY SOFTWARE PVT LTD-UTR3491-CR` into typed fields is not something a solver does. Looking at an unexplained residual and knowing that a chargeback debit is the shape of thing that produces it is not something a solver does. Choosing which of seven actions to try on a stuck settlement, and answering a finance lead's question from a store of receipts, are not things a solver does. Remove the model and there is no pipeline, only a subset-sum library.
 
-**And deciding not to call it is itself an agent design decision**, not an absence of one. 210 deterministic skips is 210 times the system established, cheaply and provably, that no action in its vocabulary could change the outcome. An agent that burns a model call to rediscover that on every item is not more agentic, it is worse engineered and more expensive.
+**And deciding not to call it is itself an agent design decision**, not an absence of one. 166 deterministic skips is 166 times the system established, cheaply and provably, that no action in its vocabulary could change the outcome. An agent that burns a model call to rediscover that on every item is not more agentic, it is worse engineered and more expensive.
 
 The claim being made is not that the model does little. It is that **the model does the open-ended work and the arithmetic does the deciding, and that this is the only arrangement in which an agent may touch a ledger at all.**
 

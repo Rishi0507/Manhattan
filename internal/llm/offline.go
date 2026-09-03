@@ -194,10 +194,6 @@ func (offlineProvider) plan(user string) (map[string]any, error) {
 	window := grabFloat(user, `window currently: plus or minus (\d+(?:\.\d+)?) hours`)
 	twin := grabFloat(user, `twin mass: (\d+(?:\.\d+)?)`)
 	residual := int64(grabInt(user, `RESIDUAL_PAISE=(-?\d+)`))
-	triedTighten := strings.Contains(user, "TIGHTEN_WINDOW")
-	hasFeed := strings.Contains(user, "UNJOINED FEEDS AVAILABLE: chargeback") ||
-		strings.Contains(user, "(") && strings.Contains(user, "records) ")
-
 	act := func(kind, rationale string, extra map[string]any) (map[string]any, error) {
 		out := map[string]any{"kind": kind, "rationale": rationale}
 		for k, v := range extra {
@@ -205,6 +201,13 @@ func (offlineProvider) plan(user string) (map[string]any, error) {
 		}
 		return out, nil
 	}
+
+	triedTighten := strings.Contains(user, "TIGHTEN_WINDOW")
+	corroborated := grabFloat(user, `CORROBORATED_WINDOW_HOURS=(\d+(?:\.\d+)?)`)
+	proofs := grabInt(user, `PROVED_SETTLEMENTS=(\d+)`)
+
+	hasFeed := strings.Contains(user, "UNJOINED FEEDS AVAILABLE: chargeback") ||
+		strings.Contains(user, "(") && strings.Contains(user, "records) ")
 
 	switch status {
 	case "NARROWING_SENSITIVE":
@@ -215,6 +218,18 @@ func (offlineProvider) plan(user string) (map[string]any, error) {
 			"a rival reconstruction exists once the pool is widened, so the answer came from filtering rather than arithmetic and needs a human to confirm the constraint", nil)
 
 	case "UNDERDETERMINED", "AMBIGUOUS":
+		// The one narrowing move that may post, tried before the one that
+		// cannot. Only here: UNDERDETERMINED and AMBIGUOUS are pool-too-wide
+		// problems, which is what narrowing addresses. UNRESOLVED is a
+		// missing-record problem, and an earlier version that tried this
+		// first on every status pre-empted SEARCH_FEED and cost seven
+		// repairs.
+		if corroborated > 0 && proofs > 0 && corroborated < window &&
+			!strings.Contains(user, "chose NARROW_TO_HISTORY") {
+			return act("NARROW_TO_HISTORY",
+				"this merchant's own proved settlements all closed inside a narrower window than the one in use, so narrowing to the bound that history demonstrates removes candidates without removing anything a proof has shown belongs",
+				map[string]any{"window_hours": corroborated})
+		}
 		if twin > 0.30 {
 			return act("ESCALATE",
 				"twin mass is high, so the amounts genuinely do not distinguish these transactions and no narrowing will help; this needs a settlement reference", nil)

@@ -95,15 +95,19 @@ func runBench(ctx context.Context, args []string) error {
 		sweep = bench.Sweep(bench.DefaultSweep())
 	}
 
+	fmt.Fprintln(os.Stderr, "sweeping the agent's contribution against operational misconfiguration")
+	sensitivity := bench.Sensitivity(ctx, spec, provider)
+
 	fmt.Fprintln(os.Stderr, "measuring the solver resource envelope")
 	envelope := bench.Envelope()
 
 	arts := map[string]any{
-		"summary":  summary,
-		"cases":    cases,
-		"sweep":    sweep,
-		"envelope": envelope,
-		"buckets":  bench.LogSpaced(sweep, 8),
+		"summary":     summary,
+		"cases":       cases,
+		"sweep":       sweep,
+		"envelope":    envelope,
+		"sensitivity": sensitivity,
+		"buckets":     bench.LogSpaced(sweep, 8),
 		// The same curve segmented by batch cardinality, because that is the
 		// variable the index has to be read against.
 		"cardinality_bands": bench.CardinalityBands(sweep, 4),
@@ -118,7 +122,7 @@ func runBench(ctx context.Context, args []string) error {
 		}
 	}
 
-	doc := renderResults(summary, cases, sweep, envelope)
+	doc := renderResults(summary, cases, sweep, envelope, sensitivity)
 	if err := os.WriteFile(*results, []byte(doc), 0o644); err != nil {
 		return err
 	}
@@ -126,7 +130,7 @@ func runBench(ctx context.Context, args []string) error {
 	// README.md and LIMITATIONS.md are regenerated in the same command that
 	// produced the numbers, so the three documents cannot disagree. Leaving
 	// this as a separate step is what let them drift apart once already.
-	if err := renderNarrativeDocs(ctx, summary, cases, sweep, envelope, store, provider); err != nil {
+	if err := renderNarrativeDocs(ctx, summary, cases, sweep, envelope, sensitivity, store, provider); err != nil {
 		return err
 	}
 

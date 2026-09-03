@@ -255,6 +255,19 @@ export interface Receipt {
   claim: string;
   note?: string;
   remediation?: Remediation[];
+  report_claim?: {
+    source: string;
+    verdict: "CLAIM_CONSISTENT" | "CLAIM_CONTRADICTED" | "CLAIM_UNCHECKABLE";
+    claimed_size: number;
+    claimed_sum_paise: number;
+    target_paise: number;
+    residual_paise: number;
+    zero_contribution_records?: number;
+    named_but_absent?: string[];
+    named_but_in_an_unjoined_feed?: string[];
+    findings?: string[];
+    note: string;
+  };
   exception_cost_inr?: number;
   exception_handling_minutes?: number;
   exception_cost_basis?: string[];

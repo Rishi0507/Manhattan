@@ -1,45 +1,45 @@
 {
-  "run_id": "run_20260903_0459",
+  "run_id": "run_20260903_0925",
   "settlements": 498,
   "flags": null,
   "status_counts": {
-    "AMBIGUOUS": 114,
+    "AMBIGUOUS": 128,
     "NARROWING_SENSITIVE": 3,
-    "UNDERDETERMINED": 202,
+    "UNDERDETERMINED": 235,
     "UNRESOLVED": 28,
-    "VERIFIED": 151
+    "VERIFIED": 104
   },
   "flag_counts": {
     "AMOUNT_ENTROPY_INSUFFICIENT": 166,
     "LATTICE_CORRECTED": 69,
-    "RESOLVED_BY_HYPOTHESIS": 16,
-    "SIGNED_ITEMS_PRESENT": 200
+    "RESOLVED_BY_HYPOTHESIS": 32,
+    "SIGNED_ITEMS_PRESENT": 224
   },
-  "auto_posted": 151,
+  "auto_posted": 104,
   "auto_posted_wrong": 0,
-  "exceptions": 347,
+  "exceptions": 394,
   "throughput": {
-    "wall_clock_s": 22.2628148,
-    "settlements_per_hour": 80528.90059526525,
-    "median_latency_ms": 13.638,
-    "p95_latency_ms": 206.991,
-    "peak_memory_mb": 15.059127807617188
+    "wall_clock_s": 43.2704757,
+    "settlements_per_hour": 41432.40791780803,
+    "median_latency_ms": 24.701,
+    "p95_latency_ms": 318.444,
+    "peak_memory_mb": 479.1030044555664
   },
   "cost": {
-    "model_calls": 812,
+    "model_calls": 1065,
     "parse_calls": 498,
-    "agent_calls": 314,
-    "exception_rate": 0.6967871485943775,
-    "input_tokens": 411762,
-    "output_tokens": 34434,
+    "agent_calls": 567,
+    "exception_rate": 0.7911646586345381,
+    "input_tokens": 778419,
+    "output_tokens": 49307,
     "inr": 0,
-    "inr_per_1k_settlements": 515.9238534136546
+    "inr_per_1k_settlements": 905.5818473895582
   },
   "aggregate_drop_rates": {
     "already_reconciled": 0.08631175649579909,
     "mid_mismatch": 0.13659932648805492,
-    "outside_settlement_window": 0.7678686111928124,
-    "zero_net_contribution": 0.00002423497349024377
+    "outside_settlement_window": 0.766103864486841,
+    "zero_net_contribution": 0.000028641332306651728
   },
   "replay_seed": 20260826,
   "policy_version": "fees_2026_08"

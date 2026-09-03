@@ -539,6 +539,69 @@ export function ReceiptView({ r }: { r: Receipt }) {
         </Panel>
       )}
 
+      {/* The gateway's own claim, checked.
+
+          This is a different question from the reconstruction above and the
+          panel keeps them apart deliberately. Reconstruction derives the batch
+          and proves nothing else does; this checks a batch somebody else
+          named. A consistent claim is worth posting and is not a proof, and
+          conflating the two would give away the only thing this system has. */}
+      {r.report_claim && (
+        <Panel
+          title="The report's own claim, checked"
+          hint="the search never saw this; it is verified afterwards, separately"
+        >
+          {(() => {
+            const c = r.report_claim!;
+            const tone =
+              c.verdict === "CLAIM_CONSISTENT"
+                ? "var(--color-verified)"
+                : c.verdict === "CLAIM_UNCHECKABLE"
+                  ? "var(--color-underdetermined)"
+                  : "var(--color-sensitive)";
+            return (
+              <div className="space-y-2.5">
+                <div className="flex flex-wrap items-baseline justify-between gap-3">
+                  <span className="tnum text-[13px]" style={{ color: tone }}>
+                    {c.verdict.replace("CLAIM_", "").toLowerCase()}
+                  </span>
+                  <span className="tnum text-[12.5px] text-ink-faint">
+                    {c.claimed_size} records named
+                  </span>
+                </div>
+                <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
+                  <Field label="claimed sum" value={rupees(c.claimed_sum_paise)} />
+                  <Field label="the credit" value={rupees(c.target_paise)} />
+                  <Field
+                    label="residual"
+                    value={rupees(c.residual_paise)}
+                    tone={c.residual_paise === 0 ? undefined : tone}
+                  />
+                </div>
+                <p className="text-[12.5px] leading-relaxed text-ink-dim">{c.note}</p>
+                {c.findings && c.findings.length > 0 && (
+                  <ul className="space-y-1 border-t border-line-soft pt-2.5">
+                    {c.findings.map((f, i) => (
+                      <li key={i} className="text-[12.5px] text-ink-faint">
+                        {f}
+                      </li>
+                    ))}
+                  </ul>
+                )}
+                {c.verdict === "CLAIM_CONSISTENT" && (
+                  <Note>
+                    Consistent is weaker than verified and the difference matters. The named batch
+                    does produce this credit; other batches may also produce it, and none was
+                    searched for. A posting on this basis is a checked claim rather than a proof,
+                    and the receipt says which.
+                  </Note>
+                )}
+              </div>
+            );
+          })()}
+        </Panel>
+      )}
+
       {/* What holding this costs, and why that number and not another. */}
       {r.exception_cost_inr !== undefined && r.exception_cost_inr > 0 && (
         <Fold

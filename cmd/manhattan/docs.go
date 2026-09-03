@@ -9,6 +9,7 @@ import (
 	"os"
 	"path/filepath"
 	"reflect"
+	"sort"
 	"strings"
 	"text/template"
 
@@ -89,6 +90,47 @@ type Derived struct {
 	EntropyArchCount int
 	PerArchetype     int
 	CrossChecksHold  bool
+
+	// TotalSweptConfigs is every configuration in the sweep. SweptConfigs
+	// below is the SUBSET where exhaustive counting ran, which is what the
+	// estimator can be scored against. Two different numbers describing "the
+	// sweep" is exactly the drift this project claims to prevent, so they are
+	// named apart and each claim uses the one it means.
+	TotalSweptConfigs int
+
+	// The composite, which is the product.
+	M1Posted        int
+	M1Wrong         int
+	M1FromProof     int
+	M1FromClaim     int
+	M1Held          int
+	M1PostRate      float64
+	M1FalseAlarms   int
+	M1CleanChecked  int
+	M1FalseAlarmPct float64
+	M1Contradicted  int
+	M1Uncheckable   int
+	M1PostedDefect  int
+	ClaimUplift     int
+
+	// What the agent contributed, and under what conditions.
+	RepairsByAction []FlagRow
+	Conditions      []string
+	Sensitivity     []bench.SensitivityPoint
+	NarrowRepairs   int
+	FeedRepairs     int
+	ControlNarrow   int
+	ControlDefects  int
+	B1WrongAtTenth  int
+	DefectsAtTenth  int
+
+	PeakSampledMB float64
+	PeakSolverMB  float64
+	Host          string
+
+	// TwinSwapInBatch says whether the flag appears in the 498-settlement
+	// batch, as opposed to in the eleven-case fixture.
+	TwinSwapInBatch bool
 
 	// The lookup, which is the answer everybody gives.
 	B1Posted        int
@@ -172,12 +214,13 @@ type QAExchange struct {
 
 // docData is what the templates see.
 type docData struct {
-	S        bench.Summary
-	Cases    []bench.CaseOutcome
-	Sweep    []bench.SweepPoint
-	Buckets  []bench.Bucket
-	Envelope []bench.EnvelopePoint
-	D        Derived
+	S           bench.Summary
+	Cases       []bench.CaseOutcome
+	Sweep       []bench.SweepPoint
+	Buckets     []bench.Bucket
+	Envelope    []bench.EnvelopePoint
+	Sensitivity []bench.SensitivityPoint
+	D           Derived
 }
 
 // The cost of unwinding one wrong posting, stated as an assumption rather
@@ -270,6 +313,7 @@ func deriveDocs(sum bench.Summary, cases []bench.CaseOutcome, sweep []bench.Swee
 	// Two counters that are incremented in different packages, for different
 	// reasons, and have no reason to agree unless the instrumentation is
 	// telling the truth. Naming them is free evidence and costs one line.
+	d.TwinSwapInBatch = sum.FlagCounts[evidence.FlagTwinSwap] > 0
 	d.HypothesisFlag = sum.FlagCounts[evidence.FlagResolvedByHypothesis]
 	d.EntropyFlag = sum.FlagCounts[evidence.FlagEntropyInsufficient]
 	d.AgentRepairedCrossFlag = d.HypothesisFlag == sum.AgentRepaired
@@ -281,6 +325,36 @@ func deriveDocs(sum bench.Summary, cases []bench.CaseOutcome, sweep []bench.Swee
 	}
 	d.CrossChecksHold = d.AgentRepairedCrossFlag &&
 		d.EntropyFlag == d.EntropyArchCount*d.PerArchetype
+
+	d.TotalSweptConfigs = len(sweep)
+	d.PeakSampledMB, d.PeakSolverMB, d.Host = sum.PeakMemoryMB, sum.PeakSolverMB, sum.Host
+	d.Conditions = sum.Conditions
+
+	d.M1Posted, d.M1Wrong = sum.M1Posted, sum.M1PostedWrong
+	d.M1FromProof, d.M1FromClaim, d.M1Held = sum.M1FromProof, sum.M1FromClaim, sum.M1Held
+	d.M1FalseAlarms, d.M1CleanChecked = sum.M1FalseAlarms, sum.M1CleanReports
+	d.M1Contradicted, d.M1Uncheckable = sum.M1CaughtDefects, sum.M1HeldUncheckable
+	d.M1PostedDefect = sum.M1PostedDefects
+	d.ClaimUplift = sum.M1Posted - sum.AutoPosted
+	if sum.Settlements > 0 {
+		d.M1PostRate = 100 * float64(sum.M1Posted) / float64(sum.Settlements)
+	}
+	if sum.M1CleanReports > 0 {
+		d.M1FalseAlarmPct = 100 * float64(sum.M1FalseAlarms) / float64(sum.M1CleanReports)
+	}
+
+	for k, n := range sum.AgentRepairedByAction {
+		d.RepairsByAction = append(d.RepairsByAction, FlagRow{Flag: k, Count: n})
+		switch k {
+		case "NARROW_TO_HISTORY":
+			d.NarrowRepairs = n
+		case "SEARCH_FEED":
+			d.FeedRepairs = n
+		}
+	}
+	sort.Slice(d.RepairsByAction, func(i, j int) bool {
+		return d.RepairsByAction[i].Count > d.RepairsByAction[j].Count
+	})
 
 	d.B1Posted, d.B1Wrong = sum.B1Posted, sum.B1PostedWrong
 	if sum.B1Posted > 0 {
@@ -566,15 +640,25 @@ func renderDoc(tmplPath, outPath string, data docData) error {
 
 // renderNarrativeDocs writes README.md and LIMITATIONS.md from the run.
 func renderNarrativeDocs(ctx context.Context, sum bench.Summary, cases []bench.CaseOutcome,
-	sweep []bench.SweepPoint, env []bench.EnvelopePoint, store *evidence.Store, p llm.Provider) error {
+	sweep []bench.SweepPoint, env []bench.EnvelopePoint, sens []bench.SensitivityPoint,
+	store *evidence.Store, p llm.Provider) error {
 
 	d := deriveDocs(sum, cases, sweep, env)
+	d.Sensitivity = sens
+	for _, sp := range sens {
+		if sp.SlackScale == 0 && sp.DefectRate == 0 {
+			d.ControlNarrow = sp.RepairedBy["NARROW_TO_HISTORY"]
+		}
+		if sp.SlackScale > 0 && sp.DefectRate > 0 && sp.DefectRate < 0.01 {
+			d.B1WrongAtTenth, d.DefectsAtTenth = sp.B1Wrong, sp.Defects
+		}
+	}
 	if store != nil {
 		d.QATranscript = recordQA(ctx, store, p)
 	}
 	data := docData{
 		S: sum, Cases: cases, Sweep: sweep,
-		Buckets: bench.LogSpaced(sweep, 8), Envelope: env, D: d,
+		Buckets: bench.LogSpaced(sweep, 8), Envelope: env, Sensitivity: sens, D: d,
 	}
 	for _, pair := range [][2]string{
 		{filepath.Join("docs", "README.tmpl.md"), "README.md"},
@@ -606,8 +690,10 @@ func runDocs(ctx context.Context, args []string) error {
 	var cases []bench.CaseOutcome
 	var sweep []bench.SweepPoint
 	var env []bench.EnvelopePoint
+	var sens []bench.SensitivityPoint
 	for name, dst := range map[string]any{
-		"summary": &sum, "cases": &cases, "sweep": &sweep, "envelope": &env,
+		"summary": &sum, "cases": &cases, "sweep": &sweep,
+		"envelope": &env, "sensitivity": &sens,
 	} {
 		b, err := os.ReadFile(filepath.Join(*dir, name+".json"))
 		if err != nil {
@@ -631,5 +717,5 @@ func runDocs(ctx context.Context, args []string) error {
 	if err != nil {
 		return err
 	}
-	return renderNarrativeDocs(ctx, sum, cases, sweep, env, store, provider)
+	return renderNarrativeDocs(ctx, sum, cases, sweep, env, sens, store, provider)
 }

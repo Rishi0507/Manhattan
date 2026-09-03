@@ -57,12 +57,58 @@ type Summary struct {
 	B1CaughtByUs int `json:"report_defects_manhattan_would_flag"`
 	B1MissedByUs int `json:"report_defects_manhattan_would_miss"`
 
+	// M1 is the composite, and it is the shape of the actual product.
+	//
+	// Post Manhattan's own reconstruction where it proved one. Otherwise, if
+	// the gateway report names a batch, CHECK that batch against the money and
+	// post it when it holds. Hold only where the report is contradicted or
+	// absent.
+	//
+	// The reason this reaches so much further than reconstruction alone is
+	// that checking a claimed batch is O(claim) while deriving one is
+	// C(n, k). The claim check therefore works on the UNDERDETERMINED
+	// population and on the archetypes that reconstruct nothing, which is most
+	// of what reconstruction has to refuse.
+	M1Posted      int `json:"m1_auto_posted"`
+	M1PostedWrong int `json:"m1_auto_posted_wrong"`
+	M1FromProof   int `json:"m1_posted_from_reconstruction"`
+	M1FromClaim   int `json:"m1_posted_from_checked_claim"`
+	M1Held        int `json:"m1_held"`
+	// Defective reports split three ways, because "missed" would otherwise
+	// cover two very different outcomes. Contradicted is the composite finding
+	// the error and saying so. Held-uncheckable is the composite declining to
+	// judge because part of the claim lives in a feed nobody joined, which is
+	// safe but is not a detection. Posted is the only failure, and it is the
+	// number to read.
+	M1CaughtDefects   int `json:"m1_report_defects_contradicted"`
+	M1HeldUncheckable int `json:"m1_report_defects_held_uncheckable"`
+	M1PostedDefects   int `json:"m1_report_defects_posted_anyway"`
+	// M1FalseAlarms counts CLEAN reports the claim check contradicted. This is
+	// the number that decides whether the composite is shippable, because a
+	// false alarm is a settlement a lookup would have posted correctly and the
+	// composite held. It is measured rather than assumed.
+	M1FalseAlarms  int `json:"m1_false_alarms_on_clean_reports"`
+	M1CleanReports int `json:"m1_clean_reports_checked"`
+
 	MedianLatencyMS float64 `json:"median_latency_ms"`
 	P95LatencyMS    float64 `json:"p95_latency_ms"`
 	B0MedianMS      float64 `json:"b0_median_latency_ms"`
 	WallClockS      float64 `json:"wall_clock_s"`
 	PerHour         float64 `json:"settlements_per_hour"`
-	PeakMemoryMB    float64 `json:"peak_memory_mb"`
+	// PeakMemoryMB is a SAMPLED heap high-water mark and it varies between
+	// runs of the same commit on the same seed, because where it lands depends
+	// on when the garbage collector happened to run. Two runs an hour apart
+	// have reported 15 MB and 119 MB for an identical batch.
+	//
+	// It is kept because it is the number an operator asks for, and it is
+	// labelled everywhere it appears. PeakSolverMB beside it is the figure
+	// that does not move: the largest enumeration any single settlement in
+	// this batch actually allocated, computed from the entry counts on the
+	// receipts at twelve bytes each. That is the quantity the resource
+	// envelope is built on and the one a capacity estimate should use.
+	PeakMemoryMB  float64 `json:"peak_memory_mb_sampled"`
+	PeakSolverMB  float64 `json:"peak_solver_mb_deterministic"`
+	PeakSolverRef string  `json:"peak_solver_settlement"`
 
 	// Cost is reported as a decomposition rather than as a single typed
 	// total, because a typed aggregate is exactly the kind of number that
@@ -96,6 +142,17 @@ type Summary struct {
 	B0INRPer1k     float64 `json:"b0_inr_per_1k_settlements"`
 	Provider       string  `json:"provider"`
 	ProviderModels string  `json:"provider_models"`
+	// Host names the machine a timing was measured on. A throughput figure
+	// without one is not a measurement, it is a number.
+	Host string `json:"measured_on"`
+
+	// Conditions names the operational misconfigurations this run modelled,
+	// so no reader has to discover them in the source. Both are things a
+	// deployment gets wrong on its own side.
+	Conditions []string `json:"modelled_operational_conditions"`
+	// AgentRepairedByAction splits repairs by the action that produced them,
+	// which is the only honest way to report what the agent contributed.
+	AgentRepairedByAction map[string]int `json:"agent_repairs_by_action"`
 
 	Drift []guards.DriftFinding `json:"narrowing_drift,omitempty"`
 
@@ -263,6 +320,42 @@ type BatchSpec struct {
 	// Baseline compares against a stored per-constraint drop rate, so the
 	// run-level drift monitor has something to deviate from.
 	Baseline guards.DriftBaseline
+	// WindowSlack overrides the modelled per-merchant window misconfiguration.
+	// Nil uses the shipped map; an empty map means every merchant is
+	// configured correctly, which is the control.
+	WindowSlack map[string]float64
+	// ReportDefectRate overrides the generator's rate of defective settlement
+	// reports. Nil uses the generator default.
+	ReportDefectRate *float64
+}
+
+// windowSlackHours widens the reconciliation window for merchants whose
+// configuration was set too loosely.
+//
+// This is a modelled OPERATIONAL CONDITION, not a defect invented to give the
+// agent something to do, and the distinction is worth stating because the
+// obvious criticism of any agent benchmark is that the author created the
+// problem the agent solves.
+//
+// An over-wide value-date window is the single most common misconfiguration in
+// a reconciliation deployment. Somebody sets it to plus or minus 36 hours
+// during onboarding to stop a merchant's edge cases falling out of the window,
+// nobody revisits it, and the pool that reaches the solver is three capture
+// days wide instead of one. The system is then refusing settlements for a
+// reason that has nothing to do with the merchant's data.
+//
+// It is the exact counterpart of the unjoined disputes feed already modelled:
+// both are things a deployment gets wrong on this side rather than things the
+// counterparty did. Neither is exotic and both are recoverable.
+//
+// The honest way to publish an agent's contribution against a condition like
+// this is as a FUNCTION of how much of it there is, not as a single number
+// from a configuration the author chose. `manhattan bench -window-slack N`
+// sweeps it, and RESULTS.md carries the curve. At zero slack the agent repairs
+// nothing through narrowing, and that is the loop working rather than failing.
+var windowSlackHours = map[string]float64{
+	"d2c_ecommerce": 24,
+	"travel":        22,
 }
 
 // unjoinedFeed names the merchants whose disputes feed was never joined.
@@ -302,6 +395,7 @@ func RunBatch(ctx context.Context, spec BatchSpec, provider llm.Provider) (*evid
 		perArch = 1
 	}
 
+	repairedBy := map[string]int{}
 	var latencies, b0Latencies []float64
 	var usage llm.Usage
 	var b0Tokens int
@@ -341,6 +435,9 @@ func RunBatch(ctx context.Context, spec BatchSpec, provider llm.Provider) (*evid
 		// A realistic spread of difficulty. Pool jitter is what turns a single
 		// operating point into the distribution the track brief asks for.
 		gs.PoolTarget = 34
+		if spec.ReportDefectRate != nil {
+			gs.ReportDefectRate = *spec.ReportDefectRate
+		}
 		gs.PoolJitter = 14
 
 		// Two merchants run with their disputes feed never wired into the
@@ -357,6 +454,13 @@ func RunBatch(ctx context.Context, spec BatchSpec, provider llm.Provider) (*evid
 		ds := generate.Generate(gs)
 
 		cfg := pipeline.DefaultConfig()
+		slack := windowSlackHours
+		if spec.WindowSlack != nil {
+			slack = spec.WindowSlack
+		}
+		if h, ok := slack[arch]; ok && h > 0 {
+			cfg.Narrow.Window = time.Duration(h * float64(time.Hour))
+		}
 		cfg.RunID = spec.RunID
 		cfg.Seed = gs.Seed
 		eng := pipeline.New(ds, cfg)
@@ -364,6 +468,12 @@ func RunBatch(ctx context.Context, spec BatchSpec, provider llm.Provider) (*evid
 
 		parser := agent.NewParser(provider)
 		controller := agent.NewController(provider)
+
+		// Cross-settlement memory, scoped to one merchant's own proved
+		// settlements. It accumulates as the run proceeds, so early
+		// settlements have no history to draw on and late ones do, which is
+		// the same position a real deployment is in on day one.
+		profiles := agent.NewProfileStore()
 
 		for _, credit := range ds.Credits {
 			truth := attributable(ds.GroundTruth[credit.Ref], eng)
@@ -392,7 +502,7 @@ func RunBatch(ctx context.Context, spec BatchSpec, provider llm.Provider) (*evid
 			// is too wide, which is a narrowing decision the agent can act on
 			// and a hypothesis cannot.
 			if !rec.Status.Postable() {
-				worked, st, u := controller.Work(ctx, eng, credit, rec)
+				worked, st, u := controller.Work(ctx, eng, credit, rec, profiles.For(credit.MerchantID, eng.ByID, eng.Merchants[credit.MerchantID].SettlementCycleDays))
 				usage.Add(u)
 				sum.AgentCalls += u.Calls
 				sum.AgentSteps += len(st)
@@ -405,6 +515,7 @@ func RunBatch(ctx context.Context, spec BatchSpec, provider llm.Provider) (*evid
 				for _, s := range st {
 					if s.Accepted {
 						sum.AgentRepaired++
+						repairedBy[string(s.Action.Kind)]++
 					}
 					if s.Result == evidence.StatusVerified && !s.Accepted {
 						cured = true
@@ -422,6 +533,11 @@ func RunBatch(ctx context.Context, spec BatchSpec, provider llm.Provider) (*evid
 				InputTokens:  usage.InputTokens,
 				OutputTokens: usage.OutputTokens,
 			}
+			// Memory is written only from proved settlements, and only after
+			// the decision is final, so nothing the profile later corroborates
+			// can have been influenced by a guess.
+			profiles.Observe(rec)
+
 			if err := store.Put(rec); err != nil {
 				return nil, sum, fmt.Errorf("%s: %w", credit.Ref, err)
 			}
@@ -470,6 +586,46 @@ func RunBatch(ctx context.Context, spec BatchSpec, provider llm.Provider) (*evid
 
 			// B1, the lookup. It reads the report's mapping directly; the
 			// pipeline above never saw it.
+			if stated, ok := ds.ReportedMapping[credit.Ref]; ok {
+				// The composite. CheckClaim is a separate entry point called
+				// only now, after Reconcile has already reached its own
+				// conclusion from the merchant's records alone.
+				cc := eng.CheckClaim(credit, stated)
+				rec.ReportClaim = cc
+				defectiveRpt := ds.ReportDefects[credit.Ref] != ""
+
+				switch {
+				case rec.Status == evidence.StatusVerified:
+					sum.M1Posted++
+					sum.M1FromProof++
+					if !sameSet(rec.Witness, truth) {
+						sum.M1PostedWrong++
+					}
+				case cc != nil && cc.Verdict == evidence.ClaimConsistent:
+					sum.M1Posted++
+					sum.M1FromClaim++
+					if !sameSet(stated, ds.GroundTruth[credit.Ref]) {
+						sum.M1PostedWrong++
+					}
+				default:
+					sum.M1Held++
+				}
+				if defectiveRpt {
+					switch {
+					case cc != nil && cc.Verdict == evidence.ClaimContradicted:
+						sum.M1CaughtDefects++
+					case cc != nil && cc.Verdict == evidence.ClaimUncheckable:
+						sum.M1HeldUncheckable++
+					default:
+						sum.M1PostedDefects++
+					}
+				} else {
+					sum.M1CleanReports++
+					if cc != nil && cc.Verdict == evidence.ClaimContradicted {
+						sum.M1FalseAlarms++
+					}
+				}
+			}
 			if stated, ok := ds.ReportedMapping[credit.Ref]; ok {
 				b1 := baseline.TrustReport(credit, stated, byID)
 				defective := ds.ReportDefects[credit.Ref] != ""
@@ -565,6 +721,35 @@ func RunBatch(ctx context.Context, spec BatchSpec, provider llm.Provider) (*evid
 	sum.P95LatencyMS = percentile(latencies, 0.95)
 	sum.B0MedianMS = percentile(b0Latencies, 0.50)
 	sum.PeakMemoryMB = float64(peak) / (1 << 20)
+	for _, r := range store.All() {
+		if r.Solver == nil {
+			continue
+		}
+		mb := float64(r.Solver.EntriesLeft+r.Solver.EntriesRight) * 12 / (1 << 20)
+		if mb > sum.PeakSolverMB {
+			sum.PeakSolverMB, sum.PeakSolverRef = mb, r.SettlementRef
+		}
+	}
+
+	sum.AgentRepairedByAction = repairedBy
+	for arch, h := range func() map[string]float64 {
+		if spec.WindowSlack != nil {
+			return spec.WindowSlack
+		}
+		return windowSlackHours
+	}() {
+		if h > 0 {
+			sum.Conditions = append(sum.Conditions, fmt.Sprintf(
+				"%s: reconciliation window misconfigured to plus or minus %.0f hours", arch, h))
+		}
+	}
+	for arch := range unjoinedFeed {
+		sum.Conditions = append(sum.Conditions, arch+": disputes feed never joined into the pool")
+	}
+	sort.Strings(sum.Conditions)
+
+	sum.Host = fmt.Sprintf("%s/%s, %d logical cores, go%s",
+		runtime.GOOS, runtime.GOARCH, runtime.NumCPU(), runtime.Version()[2:])
 
 	sum.ModelCalls = usage.Calls
 	sum.InputTokens = usage.InputTokens

@@ -89,6 +89,18 @@ NARROWING_SENSITIVE means a reconstruction was found but a rival appears when th
 is widened. Do not try to make this post. The filtering decided it rather than the
 arithmetic, and a human needs to confirm the constraint. ESCALATE.
 
+MERCHANT HISTORY, when the observation shows one, is the most important block on the
+page. Only two actions in the whole vocabulary can turn a refusal into a posting, and
+this is one of them.
+
+NARROW_TO_HISTORY tightens the window to a bound this merchant's OWN PROVED settlements
+demonstrate. It is TIGHTEN_WINDOW with a second source attached, and the second source
+is what lets it post. Prefer it over TIGHTEN_WINDOW whenever CORROBORATED_WINDOW_HOURS
+is shown and is tighter than the window in use, and set window_hours to exactly that
+number. A tighter value is refused, because it would cut out records this system has
+already proved belong to a batch. TIGHTEN_WINDOW remains available and remains unable
+to post, so it is worth choosing only to establish a proven cure for an analyst.
+
 Choose ESCALATE whenever nothing in the action space plausibly helps. Recording that
 you considered the options and none applies is a useful outcome and costs an analyst
 less than a wrong suggestion.
@@ -102,6 +114,7 @@ func (c *Controller) Work(
 	eng *pipeline.Engine,
 	credit model.BankCredit,
 	rec *evidence.Receipt,
+	profile *Profile,
 ) (*evidence.Receipt, []Step, llm.Usage) {
 	var usage llm.Usage
 	var steps []Step
@@ -118,7 +131,7 @@ func (c *Controller) Work(
 	// refusals are pools whose amounts genuinely cannot distinguish their
 	// transactions, and no action in the vocabulary changes that. Invoking the
 	// agent on them tripled the run's model spend and repaired nothing.
-	if why, ok := triage(rec, eng); !ok {
+	if why, ok := triage(rec, eng, profile); !ok {
 		rec.Agent.Invoked = false
 		rec.Agent.Note = "the agent was not invoked: " + why
 		return rec, nil, usage
@@ -128,7 +141,7 @@ func (c *Controller) Work(
 	tried := map[ActionKind]int{}
 
 	for n := 1; n <= c.MaxSteps; n++ {
-		obs := observe(best, steps, eng)
+		obs := observe(best, steps, eng, profile)
 
 		res, err := c.Provider.Structured(ctx, llm.Request{
 			Role:       llm.RolePlan,
@@ -249,7 +262,7 @@ func (c *Controller) Work(
 				continue
 			}
 		} else {
-			ov, note, ok = a.apply(eng.Cfg.Narrow, eng.Merchants[credit.MerchantID], credit, eng.Unjoined)
+			ov, note, ok = a.apply(eng.Cfg.Narrow, eng.Merchants[credit.MerchantID], credit, eng.Unjoined, profile)
 			if !ok {
 				step.Note = "not applicable: " + note
 				steps = append(steps, step)
@@ -357,7 +370,14 @@ func (c *Controller) Work(
 // It is deliberately conservative about saying no: a false no costs recall on
 // one settlement, while a false yes costs a model call on every settlement
 // like it. The three cases where the answer is certain are cheap to detect.
-func triage(r *evidence.Receipt, eng *pipeline.Engine) (string, bool) {
+func triage(r *evidence.Receipt, eng *pipeline.Engine, profile *Profile) (string, bool) {
+	// A merchant with a corroborated window tighter than the one in use is
+	// worth a call regardless of what else is true, because that is the one
+	// narrowing move the system is allowed to post on and no cheaper check can
+	// establish whether it helps.
+	if profile != nil && profile.MaxOffsetHours < r.Narrowing.WindowHours {
+		return "", true
+	}
 	// Amounts that do not distinguish transactions cannot be fixed by any
 	// filter or any feed. This is the largest group by far and the remediation
 	// for it is already on the receipt: a settlement reference, or a split by
@@ -458,7 +478,7 @@ func improved(cur, trial *evidence.Receipt) bool {
 // context window, so its per-settlement spend scales with merchant size. This
 // observation is a few hundred tokens whether the pool holds 30 records or
 // 3,000.
-func observe(r *evidence.Receipt, steps []Step, eng *pipeline.Engine) string {
+func observe(r *evidence.Receipt, steps []Step, eng *pipeline.Engine, profile *Profile) string {
 	var b strings.Builder
 
 	fmt.Fprintf(&b, "SETTLEMENT %s\n", r.SettlementRef)
@@ -477,6 +497,27 @@ func observe(r *evidence.Receipt, steps []Step, eng *pipeline.Engine) string {
 		r.AmountEntropy.TwinMass, r.AmountEntropy.TwinMassThreshold)
 	fmt.Fprintf(&b, "  distinct contribution values: %d\n", r.AmountEntropy.DistinctValues)
 	fmt.Fprintf(&b, "  value-date window currently: plus or minus %.0f hours\n", r.Narrowing.WindowHours)
+
+	// What this merchant's own proved settlements demonstrate. This is the
+	// only block in the observation that is not about the settlement in hand,
+	// and it is the one that makes a narrowing proposal corroborable.
+	fmt.Fprintf(&b, "\nMERCHANT HISTORY\n")
+	if profile == nil {
+		fmt.Fprintf(&b, "  none yet: fewer than %d proved settlements for this merchant, so no\n",
+			MinProofsForProfile)
+		fmt.Fprintf(&b, "  narrowing proposal can be corroborated and NARROW_TO_HISTORY is unavailable\n")
+	} else {
+		fmt.Fprintf(&b, "  PROVED_SETTLEMENTS=%d\n", profile.Proofs)
+		fmt.Fprintf(&b, "  proved batch sizes: %d to %d records\n", profile.MinBatch, profile.MaxBatch)
+		fmt.Fprintf(&b, "  CORROBORATED_WINDOW_HOURS=%.1f (widest gap ever observed between a record\n",
+			profile.MaxOffsetHours)
+		fmt.Fprintf(&b, "    in a proved batch and its credit; median %.1f)\n", profile.MedianOffsetHours)
+		fmt.Fprintf(&b, "  %.0f%% of proved batches contained a signed item\n", profile.SignedShare*100)
+		fmt.Fprintf(&b, "  NARROW_TO_HISTORY may post. A window at or above %.1fh is supported by this\n",
+			profile.MaxOffsetHours)
+		fmt.Fprintf(&b, "    history; anything tighter is refused, because it would cut out records\n")
+		fmt.Fprintf(&b, "    this system has already proved belong to a batch\n")
+	}
 
 	fmt.Fprintf(&b, "\nNARROWING REMOVED\n")
 	type kv struct {
@@ -586,7 +627,7 @@ func actionSchema() map[string]any {
 			},
 			"window_hours": map[string]any{
 				"type":        "number",
-				"description": "For TIGHTEN_WINDOW or WIDEN_WINDOW: the new half-width in hours, either side of the capture day's midpoint. A full trading day is about 14.",
+				"description": "For TIGHTEN_WINDOW, WIDEN_WINDOW or NARROW_TO_HISTORY: the new half-width in hours, either side of the capture day's midpoint. A full trading day is about 14. For NARROW_TO_HISTORY, use CORROBORATED_WINDOW_HOURS from the observation exactly; anything tighter is refused.",
 			},
 			"record_kind": map[string]any{
 				"type": "string", "enum": []string{"chargeback", "refund", "adjustment", "payment"},
