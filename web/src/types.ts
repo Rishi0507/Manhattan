@@ -267,6 +267,21 @@ export interface Receipt {
     named_but_in_an_unjoined_feed?: string[];
     findings?: string[];
     note: string;
+    diagnosis?: {
+      defect_class: string;
+      rationale: string;
+      remedy_action: string;
+      remedy_effect: string;
+      provider: string;
+    };
+  };
+  analyst_note?: {
+    what_to_do?: string;
+    why_it_works?: string;
+    what_it_will_not_fix?: string;
+    what_to_ask_the_merchant?: string;
+    provider?: string;
+    rejected?: string;
   };
   exception_cost_inr?: number;
   exception_handling_minutes?: number;

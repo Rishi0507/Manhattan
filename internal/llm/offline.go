@@ -47,6 +47,10 @@ func (o offlineProvider) Structured(ctx context.Context, req Request) (*Result, 
 		out, err = o.answer(req.User)
 	case RoleExplain:
 		out, err = o.explain(req.User)
+	case RoleTriage:
+		out, err = o.triage(req.User)
+	case RoleRemediate:
+		out, err = o.remediate(req.User)
 	default:
 		err = fmt.Errorf("llm: offline provider has no behaviour for role %q", req.Role)
 	}
@@ -67,6 +71,7 @@ func (o offlineProvider) Structured(ctx context.Context, req Request) (*Result, 
 			InputTokens:  (len(req.System) + len(req.User)) / 4,
 			OutputTokens: len(b) / 4,
 			Calls:        1,
+			ByRole:       map[Role]int{req.Role: 1},
 		},
 	}, nil
 }
@@ -294,13 +299,71 @@ func grabFloat(s, pattern string) float64 {
 
 // answer responds to a question over the receipt store. The stub returns the
 // grounded facts it was handed, with no interpretation layered on top.
+// answer composes a grounded answer from the retrieved receipts.
+//
+// It is a stub and it reads like one, deliberately. It counts statuses across
+// what retrieval handed it, names the dominant cause, quotes the remedy the
+// receipts already carry, and stops. It cannot notice that two merchant types
+// fail for the same underlying reason, cannot rank two remedies against each
+// other, and cannot tell a finance lead which one to do on Monday.
+//
+// An earlier version returned "the offline stub cannot compose a narrative
+// answer", which was honest and useless: it put an apology in the one place a
+// reader looks for the model. Composing a flat answer from the evidence is
+// both more honest about what the path does and a measurable baseline for
+// `manhattan live` to beat, which is the only way the value of a real model
+// here becomes a number rather than an assertion.
 func (offlineProvider) answer(user string) (map[string]any, error) {
+	counts := map[string]int{}
+	for _, st := range []string{
+		"VERIFIED", "AMBIGUOUS", "UNDERDETERMINED", "NARROWING_SENSITIVE", "UNRESOLVED",
+	} {
+		counts[st] = strings.Count(user, st)
+	}
+	dominant, most := "", 0
+	for st, n := range counts {
+		if n > most || (n == most && st < dominant) {
+			dominant, most = st, n
+		}
+	}
+
+	refs := extractRefs(user)
+	var b strings.Builder
+	if most == 0 || len(refs) == 0 {
+		b.WriteString("The retrieved receipts do not carry enough to answer this. ")
+		b.WriteString("What they do carry is listed below.")
+		return map[string]any{
+			"answer": b.String(), "citations": refs, "answerable": false,
+		}, nil
+	}
+
+	fmt.Fprintf(&b, "Across the %d receipts retrieved for this question, the most common "+
+		"outcome is %s.\n\n", len(refs), dominant)
+
+	// Quote a remedy the receipts already computed, rather than inventing one.
+	if i := strings.Index(user, "remediation:"); i >= 0 {
+		line := user[i:]
+		if j := strings.IndexByte(line, '\n'); j > 0 {
+			line = line[:j]
+		}
+		fmt.Fprintf(&b, "The remedy those receipts already name: %s\n\n",
+			strings.TrimSpace(strings.TrimPrefix(line, "remediation:")))
+	}
+	for _, st := range []string{
+		"VERIFIED", "AMBIGUOUS", "UNDERDETERMINED", "NARROWING_SENSITIVE", "UNRESOLVED",
+	} {
+		if counts[st] > 0 {
+			fmt.Fprintf(&b, "  %-22s %d\n", strings.ToLower(st), counts[st])
+		}
+	}
+	b.WriteString("\nThis is the deterministic stub. It can count what the receipts say and " +
+		"quote a remedy they already carry. It cannot weigh two remedies against each " +
+		"other, notice that two merchant types fail for one underlying reason, or tell " +
+		"you which change to make first. Those are the judgements a live model makes, " +
+		"and `manhattan live` measures the difference.")
+
 	return map[string]any{
-		"answer": "The offline stub cannot compose a narrative answer. The receipt fields " +
-			"relevant to this question are listed in the citations below, and they are the " +
-			"complete basis on which any answer would have been given.",
-		"citations":  extractRefs(user),
-		"answerable": true,
+		"answer": b.String(), "citations": refs, "answerable": true,
 	}, nil
 }
 
@@ -326,4 +389,129 @@ func extractRefs(s string) []map[string]string {
 		out = []map[string]string{}
 	}
 	return out
+}
+
+// triage classifies a failed claim check, deterministically.
+//
+// The stub reads the same figures a model would and applies the obvious rules.
+// It is deliberately unintelligent: it looks at whether a chargeback is among
+// the records named but absent, whether the count contradicts the report's own
+// declaration, and whether the residual is a whole record or a fraction of a
+// fee. A real model does better on the ambiguous cases and cannot do better on
+// these, which is the point of the stub existing at all.
+func (o offlineProvider) triage(user string) (any, error) {
+	residual := int64(grabInt(user, `RESIDUAL_PAISE=(-?\d+)`))
+	abs := residual
+	if abs < 0 {
+		abs = -abs
+	}
+	claimed := grabInt(user, `the report names (\d+) records`)
+	declared := grabInt(user, `declares (\d+) transactions`)
+
+	class, why := "UNDIAGNOSED",
+		"the check is exact and none of the modelled defect classes matches its shape"
+
+	// The discriminating signal is the SIGN of the residual, not the count.
+	//
+	// An omission and a truncation both break the declared count, so counting
+	// cannot tell them apart. What separates them is what was left out. The
+	// claimed sum minus the target is positive when a DEBIT is missing from
+	// the mapping, because the remaining members over-explain the credit, and
+	// negative when a CREDIT is missing. A dispute is a debit.
+	//
+	// An earlier version checked the count first and classified all 25
+	// defects as truncation, which was a stub that agreed with itself rather
+	// than one that read the evidence.
+	switch {
+	case strings.Contains(user, "named and present only in an unjoined feed"):
+		class = "OMITTED_DISPUTE"
+		why = "the report names a record that is not in the joined data, which is the shape " +
+			"of a dispute debited in this cycle but raised against an earlier one"
+	case claimed > declared && declared > 0:
+		class = "CROSS_CYCLE_MEMBER"
+		why = "the report names more records than it declares, so one of them belongs to an " +
+			"adjacent settlement and posting this mapping would double-count it"
+	case strings.Contains(user, "already posted in a prior cycle"),
+		strings.Contains(user, "belongs to a different merchant"):
+		class = "CROSS_CYCLE_MEMBER"
+		why = "the report names a record that belongs to an adjacent settlement, so posting " +
+			"this mapping unchanged would double-count it across two cycles"
+	case abs > 0 && abs < 500_00 && claimed == declared:
+		class = "FEE_POLICY_MISMATCH"
+		why = "the membership matches the declaration and only the arithmetic disagrees, by " +
+			"far less than any whole record, which points at the fee schedule on this side"
+	case residual > 0:
+		class = "OMITTED_DISPUTE"
+		why = "the named records over-explain the credit, so a debit that moved money in " +
+			"this cycle is missing from the mapping, and a dispute is the usual cause"
+	case residual < 0:
+		class = "TRUNCATED_MAPPING"
+		why = "the named records under-explain the credit and the count contradicts the " +
+			"report's own declaration, which is what a partial file looks like"
+	}
+	return map[string]any{"defect_class": class, "rationale": why}, nil
+}
+
+// remediate drafts the analyst note, deterministically and without figures.
+//
+// Every sentence here is assembled from phrases rather than written, which is
+// exactly the limitation being demonstrated: the stub cannot decide which fact
+// an analyst needs first, so it uses a fixed order. That the eleven-case suite
+// and every published number survive this is a statement about the verifier.
+// The quality of these notes is the clearest thing a live model would improve,
+// and it cannot change a single posting.
+func (o offlineProvider) remediate(user string) (any, error) {
+	var do, why, not, ask string
+
+	switch {
+	case strings.Contains(user, "join the disputes feed"):
+		do = "Connect this merchant's disputes feed to the reconciliation inputs."
+		why = "The debit is already available to this run, so joining it lets both the " +
+			"independent reconstruction and the report's own claim be checked against " +
+			"the whole batch rather than part of it."
+		not = "It will not help settlements held because the amounts themselves do not " +
+			"distinguish the transactions, which is a different and larger population."
+	case strings.Contains(user, "confirm that window narrowed"),
+		strings.Contains(user, "value-date window"):
+		do = "Confirm the value-date window this merchant actually settles within."
+		why = "Narrowing to the bound their own proved settlements demonstrate leaves a " +
+			"single reconstruction with the accounting identity closing exactly, and that " +
+			"was re-verified rather than estimated."
+		not = "It will not post on its own, because a window is an assertion about the " +
+			"merchant's behaviour and one of you has to own it."
+		ask = "Ask the merchant to confirm their capture cutoff time."
+	case strings.Contains(user, "supply the settlement reference"),
+		strings.Contains(user, "settlement_id to payment_id"):
+		do = "Request the settlement reference, or the mapping from settlement to payment."
+		why = "The amounts in this pool repeat, so no arithmetic method can distinguish " +
+			"one candidate batch from another; a reference collapses the whole leg from a " +
+			"search to a lookup."
+		not = "It will not make the existing amount-based reconstruction work, and nothing " +
+			"will, because the information is not present in the amounts."
+		ask = "Ask for the settlement reference on the credit narration."
+	case strings.Contains(user, "re-fetch the settlement report"):
+		do = "Re-fetch the settlement report for this reference."
+		why = "The stated mapping contradicts its own declared count, which is what a " +
+			"partial transfer looks like downstream rather than a reconciliation fault."
+		not = "It will not resolve anything if the refetched file is identical, in which " +
+			"case the discrepancy is real and belongs with the gateway."
+	case strings.Contains(user, "confirm the fee schedule"):
+		do = "Confirm the fee schedule configured for this merchant."
+		why = "The membership the report states is consistent and only the arithmetic " +
+			"disagrees, by a fraction of a per-transaction fee, which points at the policy " +
+			"on this side."
+		not = "It will not change the report, and if the schedule here is correct then the " +
+			"gap is a pricing question for the gateway."
+	default:
+		do = "Route this to an analyst with the residual and the failed checks attached."
+		why = "The check is exact and its cause is not established, so the evidence is " +
+			"more useful than a diagnosis would be."
+		not = "It will not clear itself, and nothing in the action vocabulary changes that."
+	}
+	return map[string]any{
+		"what_to_do":               do,
+		"why_it_works":             why,
+		"what_it_will_not_fix":     not,
+		"what_to_ask_the_merchant": ask,
+	}, nil
 }

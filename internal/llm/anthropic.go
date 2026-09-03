@@ -32,6 +32,15 @@ func DefaultAnthropicConfig() AnthropicConfig {
 			RolePlan:    "claude-opus-5",
 			RoleAnswer:  "claude-opus-5",
 			RoleExplain: "claude-opus-5",
+			// The two newest roles are the cheapest jobs in the system and
+			// the highest volume of them, so they are pointed at a smaller
+			// model by default. Diagnosis picks from five classes given the
+			// arithmetic; drafting writes three sentences from supplied facts.
+			// Neither needs frontier reasoning, and paying for it on the
+			// highest-volume call would be the same mistake as paying a model
+			// to add up a column.
+			RoleTriage:    "claude-sonnet-5",
+			RoleRemediate: "claude-sonnet-5",
 		},
 	}
 }
@@ -127,6 +136,7 @@ func (p *anthropicProvider) Structured(ctx context.Context, req Request) (*Resul
 		CacheReadTokens:  int(resp.Usage.CacheReadInputTokens),
 		CacheWriteTokens: int(resp.Usage.CacheCreationInputTokens),
 		Calls:            1,
+		ByRole:           map[Role]int{req.Role: 1},
 	}
 	u.INRMicros = CostMicrosINR(model, u)
 

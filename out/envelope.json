@@ -6,7 +6,7 @@
     "observed_entries": 1943424,
     "predicted_mb": 33.361083984375,
     "observed_mb": 29.768646240234375,
-    "solve_and_prove_ms": 303.152,
+    "solve_and_prove_ms": 146.234,
     "uniqueness_included": true
   },
   {
@@ -16,7 +16,7 @@
     "observed_entries": 627824,
     "predicted_mb": 10.777313232421875,
     "observed_mb": 9.819648742675781,
-    "solve_and_prove_ms": 60.047,
+    "solve_and_prove_ms": 44.394,
     "uniqueness_included": true
   },
   {
@@ -26,7 +26,7 @@
     "observed_entries": 4739872,
     "predicted_mb": 81.36529541015625,
     "observed_mb": 78.49081420898438,
-    "solve_and_prove_ms": 537.645,
+    "solve_and_prove_ms": 365.044,
     "uniqueness_included": true
   },
   {
@@ -36,7 +36,7 @@
     "observed_entries": 1365602,
     "predicted_mb": 23.44211196899414,
     "observed_mb": 23.294700622558594,
-    "solve_and_prove_ms": 141.041,
+    "solve_and_prove_ms": 86.457,
     "uniqueness_included": true
   },
   {
@@ -46,7 +46,7 @@
     "observed_entries": 5208752,
     "predicted_mb": 89.41415405273438,
     "observed_mb": 89.05508422851562,
-    "solve_and_prove_ms": 501.226,
+    "solve_and_prove_ms": 352.754,
     "uniqueness_included": true
   },
   {
@@ -56,7 +56,7 @@
     "observed_entries": 41667502,
     "predicted_mb": 715.270076751709,
     "observed_mb": 713.8366928100586,
-    "solve_and_prove_ms": 5219.205,
+    "solve_and_prove_ms": 3560.441,
     "uniqueness_included": true
   }
 ]

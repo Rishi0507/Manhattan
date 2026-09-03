@@ -122,7 +122,7 @@ The band is scaled by the **witness** cardinality, not the pool size. A pool-wid
 
 An action that cites a real record in a real feed may post. An action that changes a filter, a window or a constraint may not, however cleanly the accounting identity closes afterwards.
 
-That rule exists because of a measured failure rather than a principle chosen in advance. Without it, an agent able to retune narrowing produced **two wrong postings in three hundred settlements**. That figure is recorded by hand from an earlier build and is the only number in this document not emitted by run `run_20260903_0925`. The build that produced it is gone, so the failure it describes is rebuilt as a committed test in `internal/agent/corroboration_test.go`: the property that prevents it is asserted directly, and the test fails if `TIGHTEN_WINDOW` is ever made postable again. What happened: it tightened a value-date window, the candidate pool fell from 44 records to 40, an `AMBIGUOUS` settlement became `VERIFIED`, and the answer was wrong because the tightening had cut real records out of the batch. Every check passed, including the completeness probe, because the surviving rival differed from the found witness by more than the probe's depth bound.
+That rule exists because of a measured failure rather than a principle chosen in advance. Without it, an agent able to retune narrowing produced **two wrong postings in three hundred settlements**. That figure is recorded by hand from an earlier build and is the only number in this document not emitted by run `run_20260903_1536`. The build that produced it is gone, so the failure it describes is rebuilt as a committed test in `internal/agent/corroboration_test.go`: the property that prevents it is asserted directly, and the test fails if `TIGHTEN_WINDOW` is ever made postable again. What happened: it tightened a value-date window, the candidate pool fell from 44 records to 40, an `AMBIGUOUS` settlement became `VERIFIED`, and the answer was wrong because the tightening had cut real records out of the batch. Every check passed, including the completeness probe, because the surviving rival differed from the found witness by more than the probe's depth bound.
 
 The consequence is a real ceiling, and it is a ceiling on the mechanism rather than a shortfall in the result. Most refusals are `UNDERDETERMINED`, caused by a pool that is too wide, and the agent can prove exactly what would fix them but is not permitted to act on it. On the shipped benchmark it repairs **32** settlements into postings and produces **50** proven cures, out of the 426 that entered the loop.
 
@@ -161,6 +161,18 @@ Three memory figures appear in this repository and they measure different things
 **479 MB** is a *sampled* process heap high-water mark, and it moves. Two runs of the same commit on the same seed have reported 15 MB and 119 MB for an identical batch, because where the sample lands depends on when the garbage collector happened to run. It is published because it is the number an operator asks for, and it is labelled as sampled everywhere it appears. It should never be quoted as a bound.
 
 **714 MB** is the top of the resource envelope, which deliberately probes a 1,000-candidate pool at k=3 that no merchant in this benchmark has. It is a ceiling for a pool size the batch does not contain.
+
+---
+
+## A checked claim is not a proof, and the composite's headline rests on checked claims
+
+302 of the composite's 406 postings are the gateway's own mapping, verified against the money. That is much stronger than posting it unchecked, which is what a lookup does, and it is materially weaker than `VERIFIED`.
+
+`CLAIM_CONSISTENT` means the named batch produces this credit. It does not mean no other batch would. On a flat-price merchant, where the composite does its best work, a great many other batches would, and the claim check does not enumerate them because enumerating them is the intractable problem it exists to route around.
+
+So the honest reading of 82% is: **21% of settlements carry a proof that nobody had to be trusted for, and the rest carry a counterparty's claim that has been checked against an independent account of the money.** Both are worth posting. They are not the same claim and the receipt never says they are.
+
+What this cannot detect is a report that is wrong in a way that still balances: a substituted record of identical contribution, or a fee error that exactly offsets a membership error. The reconstruction can catch some of those and only where it is decisive at all.
 
 ---
 
@@ -225,11 +237,19 @@ What does not depend on these conditions is the safety property. Wrong postings 
 
 ## No live model run at batch scale
 
-Every published figure comes from the deterministic offline path (`offline-stub`, parse=replay resolve=replay answer=replay). The live Anthropic path is implemented, schema-forced and cassette-recording, and it runs. What has not been done is a full 498-settlement batch against the live API.
+Every published figure comes from the deterministic offline path (`offline-stub`, parse=replay resolve=replay answer=replay). The live Anthropic path is implemented, schema-forced and cassette-recording, and it runs. What has not been done is a batch against the live API.
+
+`manhattan live -n 60` exists precisely to close this. It runs the same batch on both providers and asserts the property that matters, that wrong postings are **identical**, while reporting the figures that are free to move: diagnosis accuracy, agent repairs, note quality and actual billed cost. It exits non-zero if the wrong-posting column moves, because that would be a leak in the trust boundary rather than an interesting result.
+
+Until it has been run, the honest summary of this repository's AI evidence is: **the architecture is demonstrated and the model quality is not measured.**
 
 Two consequences, stated rather than glossed.
 
-**The cost figures are modelled, not billed.** Measured token counts priced at published rates. The direction of that error is known: the replay path reports no cache reads, so every input token is priced at the uncached rate, and a live run caching the byte-identical parse system block would come in under the 906 INR per thousand published here.
+**The cost figures are modelled, not billed.** Measured token counts priced at published rates. The direction of that error is known: the replay path reports no cache reads, so every input token is priced at the uncached rate, and a live run caching the byte-identical parse system block would come in under the 1,299 INR per thousand published here.
+
+**One model job is graded and the rest are not.** Defect diagnosis scores 72% against the generator's own record of what it injected, which is a real accuracy figure for a real model output. Every other role is constrained rather than scored: a parse that goes wrong produces an exception, an action that goes wrong is rejected by the verifier, a drafted note that goes wrong is a confusing sentence. Those constraints are the safety argument and they are not accuracy measurements, and a reader should not read them as one.
+
+**The drafted notes are unevaluated.** 336 of them, and nobody has read a sample and scored it. The digits guard rejects a draft that smuggles in a figure (0 this run), which catches the one failure mode that would put a wrong number in front of an analyst. It does not catch a note that is merely useless, and on the offline stub many of them are, because the stub assembles sentences from a fixed table rather than writing them.
 
 **No delta is published for what a capable model buys over the stub.** The offline stub proposes from a fixed list in a fixed order. It cannot change whether a posting is correct, because the model is never asked whether it was right, and the eleven-case suite passing on it is a statement about the verifier rather than about the stub. But how many more exceptions a real model would clear is unmeasured, and putting a number on it would be exactly the class of unverified claim this document exists to prevent.
 
@@ -259,4 +279,4 @@ Being able to name what was left out, why, and exactly which population it would
 
 ---
 
-*This document is generated from run `run_20260903_0925`, seed `20260826`, by `manhattan bench`. Its source is `docs/LIMITATIONS.tmpl.md`. No figure in it is typed by hand, so it cannot come to describe a run other than the one that produced [RESULTS.md](RESULTS.md) and [README.md](README.md).*
+*This document is generated from run `run_20260903_1536`, seed `20260826`, by `manhattan bench`. Its source is `docs/LIMITATIONS.tmpl.md`. No figure in it is typed by hand, so it cannot come to describe a run other than the one that produced [RESULTS.md](RESULTS.md) and [README.md](README.md).*

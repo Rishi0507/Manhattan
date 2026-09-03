@@ -44,6 +44,30 @@ const (
 	// RoleExplain renders a verified derivation into readable English. It
 	// writes from facts it is given; it never sources them.
 	RoleExplain Role = "explain"
+
+	// RoleTriage classifies WHY a settlement report's stated mapping failed
+	// its arithmetic check, from a closed vocabulary of defect classes.
+	//
+	// The check itself is arithmetic and the model has no vote in it: the
+	// residual, the missing ids and the count mismatch are all computed before
+	// this call is made. What the model contributes is the diagnosis, which is
+	// the part a human otherwise does. "The report is short by one record with
+	// a residual equal to a single chargeback" and "the report names a payment
+	// that settled last cycle" produce the same failed check and completely
+	// different remedies, and telling them apart is reading rather than
+	// counting.
+	RoleTriage Role = "triage"
+
+	// RoleRemediate drafts the merchant-facing action for a held settlement
+	// whose cure has already been computed and verified.
+	//
+	// This is the highest-volume place the model does something nobody else
+	// can. A proven cure is a fact: tightening this window to seven hours
+	// yields exactly one reconstruction with the identity closing to zero.
+	// What an operations lead needs is that fact turned into a sentence they
+	// can send, naming the change, its effect and what it will not fix. The
+	// facts are supplied and schema-checked; the model never sources them.
+	RoleRemediate Role = "remediate"
 )
 
 // Request is one structured call. The model is always given a JSON schema
@@ -67,12 +91,15 @@ type Request struct {
 
 // Usage is what a call cost.
 type Usage struct {
-	InputTokens      int   `json:"input_tokens"`
-	OutputTokens     int   `json:"output_tokens"`
-	CacheReadTokens  int   `json:"cache_read_input_tokens"`
-	CacheWriteTokens int   `json:"cache_creation_input_tokens"`
-	Calls            int   `json:"calls"`
-	INRMicros        int64 `json:"inr_micros"`
+	InputTokens      int `json:"input_tokens"`
+	OutputTokens     int `json:"output_tokens"`
+	CacheReadTokens  int `json:"cache_read_input_tokens"`
+	CacheWriteTokens int `json:"cache_creation_input_tokens"`
+	Calls            int `json:"calls"`
+	// ByRole counts calls per role, so a submission can state where the model
+	// is actually being used rather than quoting one aggregate.
+	ByRole    map[Role]int `json:"calls_by_role,omitempty"`
+	INRMicros int64        `json:"inr_micros"`
 }
 
 // Add accumulates usage across calls.
@@ -82,6 +109,14 @@ func (u *Usage) Add(o Usage) {
 	u.CacheReadTokens += o.CacheReadTokens
 	u.CacheWriteTokens += o.CacheWriteTokens
 	u.Calls += o.Calls
+	if len(o.ByRole) > 0 {
+		if u.ByRole == nil {
+			u.ByRole = map[Role]int{}
+		}
+		for r, n := range o.ByRole {
+			u.ByRole[r] += n
+		}
+	}
 	u.INRMicros += o.INRMicros
 }
 

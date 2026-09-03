@@ -226,6 +226,13 @@ type Dataset struct {
 	// would make the comparison circular and the whole exercise pointless.
 	ReportedMapping map[string][]string `json:"-"`
 	ReportDefects   map[string]string   `json:"-"`
+	// ReportDefectClass is the TRUE class of each injected defect, kept so the
+	// model's diagnosis can be scored against it rather than admired.
+	//
+	// A model job with no accuracy figure is a model job nobody can evaluate,
+	// and "the AI classifies the defect" is worth exactly as much as the
+	// measurement beside it.
+	ReportDefectClass map[string]string `json:"-"`
 }
 
 // Record is the uniform shape the pipeline works in after Stage 3. Every

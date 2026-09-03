@@ -579,6 +579,24 @@ export function ReceiptView({ r }: { r: Receipt }) {
                   />
                 </div>
                 <p className="text-[12.5px] leading-relaxed text-ink-dim">{c.note}</p>
+                {c.diagnosis && (
+                  <div className="rounded-md border border-line bg-raised/40 px-3.5 py-2.5">
+                    <div className="lbl">diagnosed by the model</div>
+                    <div className="tnum mt-1 text-[13px] text-ink">{c.diagnosis.defect_class}</div>
+                    <p className="mt-1.5 text-[12.5px] leading-relaxed text-ink-dim">
+                      {c.diagnosis.rationale}
+                    </p>
+                    <p className="mt-2 text-[12.5px] leading-relaxed text-ink-faint">
+                      <span className="text-ink-dim">Remedy for that class:</span>{" "}
+                      {c.diagnosis.remedy_action}. {c.diagnosis.remedy_effect}
+                    </p>
+                    <p className="mt-2 text-[12px] text-ink-faint">
+                      The check above is arithmetic and the model had no vote in it. The class is
+                      the model's reading; the remedy attached to each class is fixed by the system,
+                      never authored by the model.
+                    </p>
+                  </div>
+                )}
                 {c.findings && c.findings.length > 0 && (
                   <ul className="space-y-1 border-t border-line-soft pt-2.5">
                     {c.findings.map((f, i) => (
@@ -599,6 +617,47 @@ export function ReceiptView({ r }: { r: Receipt }) {
               </div>
             );
           })()}
+        </Panel>
+      )}
+
+      {/* The drafted, sendable note. */}
+      {r.analyst_note && (
+        <Panel
+          title="The note an analyst gets"
+          hint="facts computed and supplied; figures substituted, never typed by the model"
+        >
+          {r.analyst_note.rejected ? (
+            <Note>{r.analyst_note.rejected}</Note>
+          ) : (
+            <div className="space-y-2.5">
+              <div>
+                <div className="lbl">do this</div>
+                <p className="mt-1 text-[13.5px] leading-relaxed text-ink">
+                  {r.analyst_note.what_to_do}
+                </p>
+              </div>
+              <div className="border-t border-line-soft pt-2.5">
+                <div className="lbl">because</div>
+                <p className="mt-1 text-[13px] leading-relaxed text-ink-dim">
+                  {r.analyst_note.why_it_works}
+                </p>
+              </div>
+              <div className="border-t border-line-soft pt-2.5">
+                <div className="lbl">what it will not fix</div>
+                <p className="mt-1 text-[13px] leading-relaxed text-ink-dim">
+                  {r.analyst_note.what_it_will_not_fix}
+                </p>
+              </div>
+              {r.analyst_note.what_to_ask_the_merchant && (
+                <div className="border-t border-line-soft pt-2.5">
+                  <div className="lbl">ask the merchant</div>
+                  <p className="mt-1 text-[13px] leading-relaxed text-ink-dim">
+                    {r.analyst_note.what_to_ask_the_merchant}
+                  </p>
+                </div>
+              )}
+            </div>
+          )}
         </Panel>
       )}
 

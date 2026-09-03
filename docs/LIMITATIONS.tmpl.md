@@ -164,6 +164,18 @@ Three memory figures appear in this repository and they measure different things
 
 ---
 
+## A checked claim is not a proof, and the composite's headline rests on checked claims
+
+{{ .D.M1FromClaim }} of the composite's {{ .D.M1Posted }} postings are the gateway's own mapping, verified against the money. That is much stronger than posting it unchecked, which is what a lookup does, and it is materially weaker than `VERIFIED`.
+
+`CLAIM_CONSISTENT` means the named batch produces this credit. It does not mean no other batch would. On a flat-price merchant, where the composite does its best work, a great many other batches would, and the claim check does not enumerate them because enumerating them is the intractable problem it exists to route around.
+
+So the honest reading of {{ pct .D.M1PostRate }} is: **{{ pct .D.M1ProofSharePct }} of settlements carry a proof that nobody had to be trusted for, and the rest carry a counterparty's claim that has been checked against an independent account of the money.** Both are worth posting. They are not the same claim and the receipt never says they are.
+
+What this cannot detect is a report that is wrong in a way that still balances: a substituted record of identical contribution, or a fee error that exactly offsets a membership error. The reconstruction can catch some of those and only where it is decisive at all.
+
+---
+
 ## The report-defect rate is an assumption, and the comparison rests on it
 
 The measured answer to "we already ship that mapping" depends on a generated defect rate of {{ pct1 .D.DefectRatePct }}, and that figure is a modelling choice rather than an observation of any real gateway.
@@ -222,11 +234,19 @@ What does not depend on these conditions is the safety property. Wrong postings 
 
 ## No live model run at batch scale
 
-Every published figure comes from the deterministic offline path (`{{ .S.Provider }}`, {{ .S.ProviderModels }}). The live Anthropic path is implemented, schema-forced and cassette-recording, and it runs. What has not been done is a full {{ .S.Settlements }}-settlement batch against the live API.
+Every published figure comes from the deterministic offline path (`{{ .S.Provider }}`, {{ .S.ProviderModels }}). The live Anthropic path is implemented, schema-forced and cassette-recording, and it runs. What has not been done is a batch against the live API.
+
+`manhattan live -n 60` exists precisely to close this. It runs the same batch on both providers and asserts the property that matters, that wrong postings are **identical**, while reporting the figures that are free to move: diagnosis accuracy, agent repairs, note quality and actual billed cost. It exits non-zero if the wrong-posting column moves, because that would be a leak in the trust boundary rather than an interesting result.
+
+Until it has been run, the honest summary of this repository's AI evidence is: **the architecture is demonstrated and the model quality is not measured.**
 
 Two consequences, stated rather than glossed.
 
 **The cost figures are modelled, not billed.** Measured token counts priced at published rates. The direction of that error is known: the replay path reports no cache reads, so every input token is priced at the uncached rate, and a live run caching the byte-identical parse system block would come in under the {{ ni .D.INRPer1k }} INR per thousand published here.
+
+**One model job is graded and the rest are not.** Defect diagnosis scores {{ pct (mul .S.DiagnosisAccuracy 100) }} against the generator's own record of what it injected, which is a real accuracy figure for a real model output. Every other role is constrained rather than scored: a parse that goes wrong produces an exception, an action that goes wrong is rejected by the verifier, a drafted note that goes wrong is a confusing sentence. Those constraints are the safety argument and they are not accuracy measurements, and a reader should not read them as one.
+
+**The drafted notes are unevaluated.** {{ n .S.NotesDrafted }} of them, and nobody has read a sample and scored it. The digits guard rejects a draft that smuggles in a figure ({{ .S.NotesRejected }} this run), which catches the one failure mode that would put a wrong number in front of an analyst. It does not catch a note that is merely useless, and on the offline stub many of them are, because the stub assembles sentences from a fixed table rather than writing them.
 
 **No delta is published for what a capable model buys over the stub.** The offline stub proposes from a fixed list in a fixed order. It cannot change whether a posting is correct, because the model is never asked whether it was right, and the eleven-case suite passing on it is a statement about the verifier rather than about the stub. But how many more exceptions a real model would clear is unmeasured, and putting a number on it would be exactly the class of unverified claim this document exists to prevent.
 

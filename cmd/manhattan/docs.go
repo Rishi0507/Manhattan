@@ -103,6 +103,7 @@ type Derived struct {
 	M1Wrong         int
 	M1FromProof     int
 	M1FromClaim     int
+	M1ProofSharePct float64
 	M1Held          int
 	M1PostRate      float64
 	M1FalseAlarms   int
@@ -128,9 +129,34 @@ type Derived struct {
 	PeakSolverMB  float64
 	Host          string
 
-	// TwinSwapInBatch says whether the flag appears in the 498-settlement
-	// batch, as opposed to in the eleven-case fixture.
+	// TwinSwapInBatch says whether the flag appears in the batch, as opposed
+	// to in the eleven-case fixture.
 	TwinSwapInBatch bool
+
+	// Confusions renders the diagnosis errors as one sentence rather than one
+	// per pair, which read as a stutter when a map was ranged over directly.
+	Confusions string
+
+	// RoleRows is where the model is used, per job, with what it contributes
+	// and whether that contribution is graded. This is the table that answers
+	// "the AI does almost nothing" with an accounting rather than a rebuttal.
+	RoleRows []RoleRow
+
+	// The live-versus-stub delta, present only once `manhattan live` has run.
+	HasLive         bool
+	LiveSettlements int
+	LiveWrong       int
+	StubWrong       int
+	LiveM1Wrong     int
+	StubM1Wrong     int
+	LiveVerified    int
+	StubVerified    int
+	LiveRepairs     int
+	StubRepairs     int
+	LiveDiagAcc     float64
+	StubDiagAcc     float64
+	LiveINR         float64
+	ModelledINR     float64
 
 	// The lookup, which is the answer everybody gives.
 	B1Posted        int
@@ -194,6 +220,33 @@ type Derived struct {
 	GeneratedFromRun       string
 	FlagRows               []FlagRow
 	AgentRepairedCrossFlag bool
+}
+
+// RoleRow is one model job: how many calls it made, what it contributes that
+// nothing else can, and whether its output is graded against ground truth.
+//
+// The descriptions are fixed here rather than generated, because they are
+// claims about the architecture rather than measurements. The call counts and
+// the grading are measurements.
+type RoleRow struct {
+	Role   string
+	Calls  int
+	What   string
+	Graded string
+}
+
+// roleFacts describes each job. Ordered by what a reader should read first,
+// which is not the same as by volume.
+var roleFacts = []struct {
+	role, what, graded string
+}{
+	{"triage", "names WHY a report's stated mapping failed its arithmetic check, from a closed vocabulary of five defect classes. The same failed check has several causes needing different remedies, and telling them apart is reading rather than counting", "**yes**, against the generator's record of what it injected"},
+	{"resolve", "proposes the class of unmodelled event behind an exact residual, so the system knows what kind of record to go and look for", "indirectly: a proposal only clears an exception if the verifier re-proves it"},
+	{"plan", "chooses one action from a closed set of eight for a settlement that did not post, including whether this merchant's own proved history corroborates a tighter window", "indirectly: the entire stack re-runs and rejects anything that did not improve"},
+	{"remediate", "drafts the analyst-facing note: what to do, why it works in terms of what was measured, and what it will not fix. Facts supplied, figures substituted afterwards", "no, and it carries no safety risk: the settlement is held either way"},
+	{"parse", "reads an unstructured bank narration into typed fields. The highest volume and the lowest difficulty, and the one job a gateway would replace with a lookup table tomorrow", "indirectly: a mis-parse produces an exception, never a posting"},
+	{"answer", "answers a finance lead's question from the receipt store, or declines because the receipts do not record it", "no; declining correctly is the property that matters"},
+	{"explain", "renders a derivation into readable English from facts it is given", "no"},
 }
 
 // FlagRow is one flag with its count, sorted, so the template does not have
@@ -326,12 +379,40 @@ func deriveDocs(sum bench.Summary, cases []bench.CaseOutcome, sweep []bench.Swee
 	d.CrossChecksHold = d.AgentRepairedCrossFlag &&
 		d.EntropyFlag == d.EntropyArchCount*d.PerArchetype
 
+	for _, f := range roleFacts {
+		if n := sum.CallsByRole[f.role]; n > 0 {
+			d.RoleRows = append(d.RoleRows, RoleRow{
+				Role: f.role, Calls: n, What: f.what, Graded: f.graded,
+			})
+		}
+	}
+
+	var conf []string
+	for truth, row := range sum.DiagnosisConfusion {
+		for pred, n := range row {
+			if truth != pred {
+				conf = append(conf, fmt.Sprintf("%d `%s` read as `%s`", n, truth, pred))
+			}
+		}
+	}
+	sort.Strings(conf)
+	switch len(conf) {
+	case 0:
+	case 1:
+		d.Confusions = conf[0]
+	default:
+		d.Confusions = strings.Join(conf[:len(conf)-1], ", ") + " and " + conf[len(conf)-1]
+	}
+
 	d.TotalSweptConfigs = len(sweep)
 	d.PeakSampledMB, d.PeakSolverMB, d.Host = sum.PeakMemoryMB, sum.PeakSolverMB, sum.Host
 	d.Conditions = sum.Conditions
 
 	d.M1Posted, d.M1Wrong = sum.M1Posted, sum.M1PostedWrong
 	d.M1FromProof, d.M1FromClaim, d.M1Held = sum.M1FromProof, sum.M1FromClaim, sum.M1Held
+	if sum.Settlements > 0 {
+		d.M1ProofSharePct = 100 * float64(sum.M1FromProof) / float64(sum.Settlements)
+	}
 	d.M1FalseAlarms, d.M1CleanChecked = sum.M1FalseAlarms, sum.M1CleanReports
 	d.M1Contradicted, d.M1Uncheckable = sum.M1CaughtDefects, sum.M1HeldUncheckable
 	d.M1PostedDefect = sum.M1PostedDefects
@@ -470,9 +551,26 @@ func deriveDocs(sum bench.Summary, cases []bench.CaseOutcome, sweep []bench.Swee
 // receipts do not record the answer is. That distinction is the whole thesis
 // in ten lines, so it is exhibited rather than described.
 func recordQA(ctx context.Context, store *evidence.Store, p llm.Provider) []QAExchange {
+	// Four questions, chosen so that the transcript shows all three paths the
+	// Q&A side can take rather than only the cheap one.
+	//
+	// An earlier version showed three questions that all resolved
+	// deterministically, including the declining one, which meant the single
+	// place a reader looks for the model was the place the receipt said the
+	// model was not there. That was a correct fix to a smaller problem
+	// (the decline should not read as a stub limitation) that created a worse
+	// one.
 	questions := []string{
+		// Arithmetic over the store. Answering this with a model would be
+		// paying it to add up a column.
 		"which constraint dropped the most records?",
 		"what is the backlog costing us?",
+		// Open-ended. No deterministic handler can answer it, so it goes
+		// through retrieval and one grounded model call.
+		"why do the quick commerce settlements behave differently from the travel ones, " +
+			"and what would I change first?",
+		// Unanswerable from the receipts, which is the most important answer
+		// this agent gives.
 		"which analyst approved settlement 5502?",
 	}
 	var out []QAExchange
@@ -645,6 +743,23 @@ func renderNarrativeDocs(ctx context.Context, sum bench.Summary, cases []bench.C
 
 	d := deriveDocs(sum, cases, sweep, env)
 	d.Sensitivity = sens
+
+	// The live-versus-stub delta, folded in only if `manhattan live` has been
+	// run. Absent by default, and the documents say so plainly rather than
+	// leaving a reader to notice.
+	if b, err := os.ReadFile(filepath.Join("out", "live.json")); err == nil {
+		var ld bench.LiveDelta
+		if json.Unmarshal(b, &ld) == nil && ld.Settlements > 0 {
+			d.HasLive = true
+			d.LiveSettlements = ld.Settlements
+			d.LiveWrong, d.StubWrong = ld.LiveWrong, ld.StubWrong
+			d.LiveM1Wrong, d.StubM1Wrong = ld.LiveM1Wrong, ld.StubM1Wrong
+			d.LiveVerified, d.StubVerified = ld.LiveVerified, ld.StubVerified
+			d.LiveRepairs, d.StubRepairs = ld.LiveRepairs, ld.StubRepairs
+			d.LiveDiagAcc, d.StubDiagAcc = ld.LiveDiagnosisAcc, ld.StubDiagnosisAcc
+			d.LiveINR, d.ModelledINR = ld.LiveINRPer1k, ld.ModelledPer1k
+		}
+	}
 	for _, sp := range sens {
 		if sp.SlackScale == 0 && sp.DefectRate == 0 {
 			d.ControlNarrow = sp.RepairedBy["NARROW_TO_HISTORY"]

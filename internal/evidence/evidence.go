@@ -278,6 +278,44 @@ const (
 	ClaimUncheckable ClaimVerdict = "CLAIM_UNCHECKABLE"
 )
 
+// DraftedNote is the analyst-facing note for a held settlement.
+//
+// Prose only. Every figure in the rendered version is substituted from this
+// receipt afterwards, and a draft containing digits is rejected wholesale
+// rather than published, which is what makes the no-invented-numbers rule
+// enforceable instead of advisory. Rejected carries the reason when that
+// happens.
+//
+// A note can never change a posting: it is attached to a settlement that is
+// already held either way. This is the only model output in the system whose
+// failure mode is a confusing sentence rather than a wrong ledger.
+type DraftedNote struct {
+	Do       string `json:"what_to_do,omitempty"`
+	Because  string `json:"why_it_works,omitempty"`
+	NotFixed string `json:"what_it_will_not_fix,omitempty"`
+	Ask      string `json:"what_to_ask_the_merchant,omitempty"`
+	Provider string `json:"provider,omitempty"`
+	Rejected string `json:"rejected,omitempty"`
+}
+
+// ClaimDiagnosis is the model's reading of a failed claim check.
+//
+// The check is arithmetic and precedes this. The diagnosis is the part that is
+// reading rather than counting: the same failed check has three or four
+// completely different causes and therefore three or four different remedies,
+// and telling them apart is the judgement a solver cannot make.
+//
+// Class comes from a closed vocabulary. Action and Effect are owned by the
+// system and looked up from the class, never authored by the model, because a
+// remedy is an instruction somebody will follow.
+type ClaimDiagnosis struct {
+	Class     string `json:"defect_class"`
+	Rationale string `json:"rationale"`
+	Action    string `json:"remedy_action"`
+	Effect    string `json:"remedy_effect"`
+	Provider  string `json:"provider"`
+}
+
 // ClaimCheck records the verification of an externally supplied mapping.
 //
 // It exists because deriving a batch and checking a claimed one are different
@@ -297,6 +335,10 @@ type ClaimCheck struct {
 	Unjoined         []string `json:"named_but_in_an_unjoined_feed,omitempty"`
 	Findings         []string `json:"findings,omitempty"`
 	Note             string   `json:"note"`
+
+	// Diagnosis is why the check failed, where a model was asked. Absent on a
+	// consistent claim, because there is nothing to diagnose.
+	Diagnosis *ClaimDiagnosis `json:"diagnosis,omitempty"`
 }
 
 // Receipt is the complete evidence object for one settlement.
@@ -334,6 +376,16 @@ type Receipt struct {
 	Note        string        `json:"note,omitempty"`
 	Remediation []Remediation `json:"remediation,omitempty"`
 
+	// ReportClaim is the verification of the gateway's own stated mapping,
+	// where one is available. It is computed by a separate entry point AFTER
+	// the reconstruction above reached its own conclusion, and the search
+	// never sees it.
+	ReportClaim *ClaimCheck `json:"report_claim,omitempty"`
+
+	// AnalystNote is the drafted, sendable version of this settlement's
+	// remedy. Prose only; every figure is substituted from this receipt.
+	AnalystNote *DraftedNote `json:"analyst_note,omitempty"`
+
 	// ExceptionCostINR is what clearing this exception is estimated to cost,
 	// and ExceptionMinutes is the handling estimate behind it.
 	//
@@ -341,12 +393,6 @@ type Receipt struct {
 	// was simpler and it was also useless: every row costing the same makes
 	// "sort the queue by cost" sort by nothing, and a queue that cannot be
 	// ordered is a list rather than a work plan.
-	// ReportClaim is the verification of the gateway's own stated mapping,
-	// where one is available. It is computed by a separate entry point AFTER
-	// the reconstruction above reached its own conclusion, and the search
-	// never sees it.
-	ReportClaim *ClaimCheck `json:"report_claim,omitempty"`
-
 	ExceptionCostINR int `json:"exception_cost_inr,omitempty"`
 	ExceptionMinutes int `json:"exception_handling_minutes,omitempty"`
 	// ExceptionBasis names every term that produced the estimate, so an

@@ -128,12 +128,13 @@ func Generate(spec Spec) *model.Dataset {
 		arch: ByName(spec.Archetype),
 	}
 	b.ds = &model.Dataset{
-		Mode:            spec.Mode,
-		DisputesJoined:  spec.JoinDisputes,
-		GroundTruth:     map[string][]string{},
-		ReportedMapping: map[string][]string{},
-		ReportDefects:   map[string]string{},
-		Pathology:       spec.Pathology,
+		Mode:              spec.Mode,
+		DisputesJoined:    spec.JoinDisputes,
+		GroundTruth:       map[string][]string{},
+		ReportedMapping:   map[string][]string{},
+		ReportDefects:     map[string]string{},
+		ReportDefectClass: map[string]string{},
+		Pathology:         spec.Pathology,
 	}
 
 	merchant := model.Merchant{
@@ -459,7 +460,7 @@ func displayName(archetype string) string {
 // the report.
 func (b *builder) reportMapping(ref string, truth []string, merchantID string) {
 	stated := append([]string(nil), truth...)
-	defect := ""
+	defect, class := "", ""
 
 	if b.spec.ReportDefectRate > 0 && b.rng.Float64() < b.spec.ReportDefectRate && len(stated) > 1 {
 		switch b.rng.Intn(3) {
@@ -473,9 +474,16 @@ func (b *builder) reportMapping(ref string, truth []string, merchantID string) {
 				}
 			}
 			if drop < 0 {
+				// No signed item in this batch, so the defect that gets
+				// injected is a plain omission rather than a dispute. The
+				// label has to follow the data, not the intent.
 				drop = b.rng.Intn(len(stated))
+				class = "TRUNCATED_MAPPING"
 			}
 			defect = "omits " + stated[drop] + ", a record that moved money in this cycle"
+			// A dispute debited in this cycle but raised against an earlier
+			// one, which the report's capture-date join misses.
+			class = "OMITTED_DISPUTE"
 			stated = append(stated[:drop:drop], stated[drop+1:]...)
 
 		case 1:
@@ -492,11 +500,13 @@ func (b *builder) reportMapping(ref string, truth []string, merchantID string) {
 			sort.Strings(outside)
 			add := outside[b.rng.Intn(len(outside))]
 			defect = "names " + add + ", which settled in a different cycle"
+			class = "CROSS_CYCLE_MEMBER"
 			stated = append(stated, add)
 
 		case 2:
 			drop := b.rng.Intn(len(stated))
 			defect = "is short by one record, " + stated[drop]
+			class = "TRUNCATED_MAPPING"
 			stated = append(stated[:drop:drop], stated[drop+1:]...)
 		}
 	}
@@ -505,6 +515,7 @@ func (b *builder) reportMapping(ref string, truth []string, merchantID string) {
 	b.ds.ReportedMapping[ref] = stated
 	if defect != "" {
 		b.ds.ReportDefects[ref] = defect
+		b.ds.ReportDefectClass[ref] = class
 	}
 }
 

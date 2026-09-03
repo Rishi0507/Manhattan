@@ -26,9 +26,10 @@ and the sixty seconds are spent on the argument rather than on a progress bar:
 **On screen:** scroll to the two-column comparison on the landing page. Both
 figures are visible at once.
 
-> Most tools guess and report a confidence score. On the same 498 settlements,
-> the baseline posts 384 and 226 of them are wrong. Manhattan posts 161 and
-> none of them are.
+> Most tools trust the settlement report and post whatever it says. On these
+> 498 settlements that posts everything and gets 29 wrong, silently. Manhattan
+> posts 406 and gets none wrong, because it checks the report's claim against
+> the money before it believes it.
 
 ## 0:14 to 0:32  Why, in one settlement
 
@@ -48,7 +49,22 @@ panels sit on screen for a beat.
 > first answer was not unique, it was just the one that survived the filter.
 > Manhattan holds it and names the constraint responsible.
 
-## 0:32 to 0:44  It knows in advance
+## 0:32 to 0:40  The model, visibly
+
+**On screen:** Run tab, open a settlement whose report claim was contradicted.
+Scroll to the claim panel.
+
+> The gateway's own mapping for this settlement does not add up. That check is
+> arithmetic and it is already done. What the model does is say why: it names
+> the defect class, the system owns the remedy for that class, and it drafts the
+> note an analyst gets.
+
+**Point at the diagnosis block.**
+
+> The model reads. The arithmetic decides. Those are different jobs and this is
+> the only arrangement in which an agent should be allowed near a ledger.
+
+## 0:40 to 0:50  It knows in advance
 
 **On screen:** the Calibration tab, on the outcome-band chart.
 
@@ -62,7 +78,7 @@ panels sit on screen for a beat.
 > Which means the system can tell a merchant what fraction of their
 > settlements it will post before a single file is exchanged.
 
-## 0:44 to 0:54  The evidence
+## 0:50 to 0:56  The evidence
 
 **On screen:** back to Run, click any row to open a receipt. Expand Narrowing
 and Feasibility.
@@ -75,13 +91,13 @@ and Feasibility.
 > Nothing here is a score. It is a derivation somebody can be asked to defend
 > at audit.
 
-## 0:54 to 1:00  The close
+## 0:56 to 1:00  The close
 
 **On screen:** the Exceptions tab, sorted by cost.
 
-> And the 337 it refused are not an apology. Each one has a named cause, a
-> computed remedy and a price. Refusing costs 112,000 rupees of analyst time.
-> Unwinding the baseline's wrong postings costs 542,000.
+> And what it holds is not an apology. Each one has a named cause, a computed
+> remedy, a price, and a note an analyst can send. Refusing costs analyst time.
+> Unwinding a silent wrong posting costs more.
 >
 > Proving is not the expensive option. It is the cheap one.
 
@@ -89,9 +105,8 @@ and Feasibility.
 
 ## Notes for the take
 
-- The figures spoken above are from run `run_20260903_0358`. If you re-run the
-  benchmark, read them off the regenerated README rather than this file, which
-  is the only document here with numbers typed into it by hand.
+- Read the figures off the regenerated README before recording; they change
+  with every run and this file is the only document with numbers typed by hand.
 - Do not narrate the architecture. A judge who wants it will read the README,
   and sixty seconds spent on boxes and arrows is sixty seconds not spent on the
   one number that distinguishes the submission.

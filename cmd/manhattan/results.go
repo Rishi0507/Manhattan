@@ -272,6 +272,89 @@ func renderResults(
 			float64(sum.ExceptionCostINR)/math.Max(float64(sum.B0PostedWrong), 1))
 	}
 
+	// ---- Where the model is used -----------------------------------------
+	if len(sum.CallsByRole) > 0 {
+		fmt.Fprintf(&b, "## Where the model is used\n\n")
+		fmt.Fprintf(&b, "%s model calls across %d jobs. The distribution matters more than the\n",
+			commas(int64(sum.ModelCalls)), len(sum.CallsByRole))
+		fmt.Fprintf(&b, "total, because the jobs differ in what a wrong answer would cost.\n\n")
+		fmt.Fprintf(&b, "| role | calls | a wrong answer costs |\n|---|---:|---|\n")
+		type rc struct {
+			r string
+			n int
+		}
+		var rows []rc
+		for r, n := range sum.CallsByRole {
+			rows = append(rows, rc{r, n})
+		}
+		sort.Slice(rows, func(i, j int) bool { return rows[i].n > rows[j].n })
+		cost := map[string]string{
+			"parse":     "an exception. A mis-parsed narration cannot produce a posting",
+			"plan":      "one wasted iteration. The verifier re-runs and rejects it",
+			"resolve":   "one wasted iteration, and a suggestion an analyst ignores",
+			"triage":    "a misdirected remedy on a settlement that is held either way",
+			"remediate": "a confusing sentence in a work queue",
+			"answer":    "a wrong answer to a human, who can see the citations under it",
+			"explain":   "prose nobody relies on",
+		}
+		for _, r := range rows {
+			c := cost[r.r]
+			if c == "" {
+				c = "unclassified"
+			}
+			fmt.Fprintf(&b, "| `%s` | %d | %s |\n", r.r, r.n, c)
+		}
+		fmt.Fprintf(&b, "\nNot one of them is \"a wrong posting\", and that is the whole design. The\n")
+		fmt.Fprintf(&b, "verifier never asks the model whether it was right.\n\n")
+
+		if sum.DiagnosedDefects > 0 {
+			fmt.Fprintf(&b, "### The one graded model output\n\n")
+			fmt.Fprintf(&b, "When a settlement report's stated mapping fails its arithmetic check, the\n")
+			fmt.Fprintf(&b, "check is already known and the CAUSE is not. The model names the defect\n")
+			fmt.Fprintf(&b, "class from a closed vocabulary, and the generator recorded which defect it\n")
+			fmt.Fprintf(&b, "actually injected, so this is scored rather than described.\n\n")
+			fmt.Fprintf(&b, "**%d of %d correct, %.0f per cent.**\n\n",
+				sum.DiagnosisCorrect, sum.DiagnosedDefects, sum.DiagnosisAccuracy*100)
+			if len(sum.DiagnosisConfusion) > 0 {
+				fmt.Fprintf(&b, "| injected | diagnosed as | n |\n|---|---|---:|\n")
+				var trues []string
+				for t := range sum.DiagnosisConfusion {
+					trues = append(trues, t)
+				}
+				sort.Strings(trues)
+				for _, t := range trues {
+					var preds []string
+					for p := range sum.DiagnosisConfusion[t] {
+						preds = append(preds, p)
+					}
+					sort.Strings(preds)
+					for _, p := range preds {
+						mark := ""
+						if t != p {
+							mark = " **wrong**"
+						}
+						fmt.Fprintf(&b, "| `%s` | `%s`%s | %d |\n",
+							t, p, mark, sum.DiagnosisConfusion[t][p])
+					}
+				}
+				b.WriteString("\n")
+			}
+			fmt.Fprintf(&b, "The confusions are the pair that needs the CLASS of record involved rather\n")
+			fmt.Fprintf(&b, "than the sign of the residual, which is all the deterministic stub reads.\n")
+			fmt.Fprintf(&b, "That is the headroom a live model has, and `manhattan live` measures it.\n\n")
+		}
+		if sum.NotesDrafted > 0 {
+			fmt.Fprintf(&b, "### Drafted notes\n\n")
+			fmt.Fprintf(&b, "%d analyst-facing notes written for held settlements, %d rejected for\n",
+				sum.NotesDrafted, sum.NotesRejected)
+			fmt.Fprintf(&b, "containing a figure. The schema forbids digits because every number in a\n")
+			fmt.Fprintf(&b, "rendered note is substituted from the receipt afterwards, so a number the\n")
+			fmt.Fprintf(&b, "model types is a number that would be wrong. This is the highest-volume\n")
+			fmt.Fprintf(&b, "model job in the system and the only one whose failure mode is a confusing\n")
+			fmt.Fprintf(&b, "sentence rather than a wrong ledger.\n\n")
+		}
+	}
+
 	// ---- The agent ------------------------------------------------------
 	if sum.AgentCalls > 0 || sum.AgentSkipped > 0 {
 		fmt.Fprintf(&b, "## What the agent did\n\n")

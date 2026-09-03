@@ -38,6 +38,8 @@ func main() {
 		err = runAsk(ctx, args)
 	case "serve":
 		err = runServe(ctx, args)
+	case "live":
+		err = runLive(ctx, args)
 	case "docs":
 		err = runDocs(ctx, args)
 	case "help", "-h", "--help":
@@ -64,6 +66,7 @@ func usage() {
   manhattan ask      ask a question of the receipt store
   manhattan serve    serve the dashboard and the API
   manhattan docs     re-render README.md and LIMITATIONS.md from a saved run
+  manhattan live     run the same batch live and on the stub, and print the delta
 
 Every command takes --help.
 

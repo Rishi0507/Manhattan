@@ -1,5 +1,5 @@
 {
-  "run_id": "run_20260903_0925",
+  "run_id": "run_20260903_1536",
   "settlements": 498,
   "seed": 20260826,
   "status_counts": {
@@ -36,12 +36,12 @@
   "m1_report_defects_posted_anyway": 0,
   "m1_false_alarms_on_clean_reports": 0,
   "m1_clean_reports_checked": 469,
-  "median_latency_ms": 24.701,
-  "p95_latency_ms": 318.444,
-  "b0_median_latency_ms": 8.379,
-  "wall_clock_s": 43.2704757,
-  "settlements_per_hour": 41432.40791780803,
-  "peak_memory_mb_sampled": 479.1030044555664,
+  "median_latency_ms": 18.919,
+  "p95_latency_ms": 250.783,
+  "b0_median_latency_ms": 8.092,
+  "wall_clock_s": 32.599679,
+  "settlements_per_hour": 54994.40654001531,
+  "peak_memory_mb_sampled": 479.1297378540039,
   "peak_solver_mb_deterministic": 199.85614013671875,
   "peak_solver_settlement": "bank_credit_travel_2026_09_23_1051",
   "parse_calls": 498,
@@ -51,13 +51,13 @@
   "agent_invoked": 260,
   "agent_skipped": 166,
   "agent_proven_cures": 50,
-  "model_calls": 1065,
-  "input_tokens": 778419,
-  "output_tokens": 49307,
+  "model_calls": 1426,
+  "input_tokens": 1002359,
+  "output_tokens": 93468,
   "exception_rate": 0.7911646586345381,
-  "inr_per_1k_settlements": 905.5818473895582,
+  "inr_per_1k_settlements": 1298.529236947791,
   "b0_input_tokens_per_1k": 1977429.718875502,
-  "input_tokens_per_1k": 1563090.3614457832,
+  "input_tokens_per_1k": 2012769.076305221,
   "b0_inr_per_1k_settlements": 1134.069076305221,
   "provider": "offline-stub",
   "provider_models": "parse=replay resolve=replay answer=replay",
@@ -72,6 +72,35 @@
     "NARROW_TO_HISTORY": 16,
     "SEARCH_FEED": 16
   },
+  "model_calls_by_role": {
+    "parse": 498,
+    "plan": 567,
+    "remediate": 336,
+    "triage": 25
+  },
+  "report_defects_diagnosed": 25,
+  "report_defect_classes": {
+    "CROSS_CYCLE_MEMBER": 11,
+    "OMITTED_DISPUTE": 4,
+    "TRUNCATED_MAPPING": 10
+  },
+  "report_defects_diagnosed_correctly": 18,
+  "report_defect_diagnosis_accuracy": 0.72,
+  "report_defect_confusion": {
+    "CROSS_CYCLE_MEMBER": {
+      "CROSS_CYCLE_MEMBER": 11
+    },
+    "OMITTED_DISPUTE": {
+      "OMITTED_DISPUTE": 3,
+      "TRUNCATED_MAPPING": 6
+    },
+    "TRUNCATED_MAPPING": {
+      "OMITTED_DISPUTE": 1,
+      "TRUNCATED_MAPPING": 4
+    }
+  },
+  "analyst_notes_drafted": 336,
+  "analyst_notes_rejected": 0,
   "priced_at_model": "claude-opus-5",
   "price_is_real_spend": false,
   "b0_threshold_sweep": [
@@ -299,11 +328,11 @@
     "cache_read_usd_per_mtok": 0.5,
     "cache_write_usd_per_mtok": 6.25,
     "usd_to_inr": 88,
-    "uncached_input_tokens": 778419,
+    "uncached_input_tokens": 1002359,
     "cached_input_tokens": 0,
     "cache_write_tokens": 0,
-    "output_tokens": 49307,
-    "calls": 1065,
+    "output_tokens": 93468,
+    "calls": 1426,
     "cache_hit_rate": 0,
     "b0_input_tokens": 984760,
     "b0_output_tokens": 59760,
@@ -311,7 +340,7 @@
     "b0_tokens_overhead": 200,
     "b0_mean_narrowed_pool": 44.43574297188755,
     "b0_input_tokens_per_settlement": 1977.429718875502,
-    "manhattan_input_tokens_per_settlement": 1563.0903614457832
+    "manhattan_input_tokens_per_settlement": 2012.7690763052208
   },
   "pool_stats": {
     "total_records_generated": 21965,
@@ -553,7 +582,10 @@
       "mean_collision_index": 4.348753044585933,
       "entropy_gate_refusals": 0,
       "b0_post_rate": 0.27710843373493976,
-      "b0_wrong_post_rate": 0.060240963855421686
+      "b0_wrong_post_rate": 0.060240963855421686,
+      "m1_post_rate": 0.9518072289156626,
+      "m1_posted": 79,
+      "m1_posted_wrong": 0
     },
     {
       "archetype": "marketplace",
@@ -566,7 +598,10 @@
       "mean_collision_index": 4.648406995632949,
       "entropy_gate_refusals": 0,
       "b0_post_rate": 0.6626506024096386,
-      "b0_wrong_post_rate": 0.30120481927710846
+      "b0_wrong_post_rate": 0.30120481927710846,
+      "m1_post_rate": 0.6024096385542169,
+      "m1_posted": 50,
+      "m1_posted_wrong": 0
     },
     {
       "archetype": "d2c_ecommerce",
@@ -579,7 +614,10 @@
       "mean_collision_index": 4.145979833797948,
       "entropy_gate_refusals": 0,
       "b0_post_rate": 0.6506024096385542,
-      "b0_wrong_post_rate": 0.4819277108433735
+      "b0_wrong_post_rate": 0.4819277108433735,
+      "m1_post_rate": 0.963855421686747,
+      "m1_posted": 80,
+      "m1_posted_wrong": 0
     },
     {
       "archetype": "utility_billpay",
@@ -592,7 +630,10 @@
       "mean_collision_index": 0,
       "entropy_gate_refusals": 83,
       "b0_post_rate": 0.8313253012048193,
-      "b0_wrong_post_rate": 0.8313253012048193
+      "b0_wrong_post_rate": 0.8313253012048193,
+      "m1_post_rate": 0.9759036144578314,
+      "m1_posted": 81,
+      "m1_posted_wrong": 0
     },
     {
       "archetype": "subscription_saas",
@@ -605,7 +646,10 @@
       "mean_collision_index": 0,
       "entropy_gate_refusals": 83,
       "b0_post_rate": 0.6506024096385542,
-      "b0_wrong_post_rate": 0.6506024096385542
+      "b0_wrong_post_rate": 0.6506024096385542,
+      "m1_post_rate": 0.9397590361445783,
+      "m1_posted": 78,
+      "m1_posted_wrong": 0
     },
     {
       "archetype": "quick_commerce",
@@ -618,7 +662,10 @@
       "mean_collision_index": 3.7002112436958554,
       "entropy_gate_refusals": 0,
       "b0_post_rate": 0.7108433734939759,
-      "b0_wrong_post_rate": 0.5301204819277109
+      "b0_wrong_post_rate": 0.5301204819277109,
+      "m1_post_rate": 0.4578313253012048,
+      "m1_posted": 38,
+      "m1_posted_wrong": 0
     }
   ]
 }

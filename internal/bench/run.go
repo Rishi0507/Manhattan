@@ -154,6 +154,31 @@ type Summary struct {
 	// which is the only honest way to report what the agent contributed.
 	AgentRepairedByAction map[string]int `json:"agent_repairs_by_action"`
 
+	// CallsByRole is where the model is actually used, per job, so a reader
+	// does not have to accept one aggregate figure for "the AI".
+	CallsByRole map[string]int `json:"model_calls_by_role"`
+
+	// DiagnosedDefects counts contradicted report claims the model classified,
+	// and DefectClasses is the distribution of its diagnoses.
+	DiagnosedDefects int            `json:"report_defects_diagnosed"`
+	DefectClasses    map[string]int `json:"report_defect_classes"`
+	// DiagnosisCorrect scores the model's diagnosis against the generator's
+	// own record of what it injected. This is the one place in the repository
+	// where a model's OUTPUT is graded rather than merely constrained, and it
+	// is the number to quote about the model rather than about the verifier.
+	DiagnosisCorrect  int     `json:"report_defects_diagnosed_correctly"`
+	DiagnosisAccuracy float64 `json:"report_defect_diagnosis_accuracy"`
+	// DiagnosisConfusion is graded[true][predicted], so a reader can see which
+	// classes the model confuses rather than only how often it is right.
+	DiagnosisConfusion map[string]map[string]int `json:"report_defect_confusion"`
+
+	// NotesDrafted counts analyst-facing notes the model wrote for held
+	// settlements. NotesRejected counts drafts thrown away for containing a
+	// figure, which the schema forbids because every number in a rendered note
+	// is substituted from the receipt.
+	NotesDrafted  int `json:"analyst_notes_drafted"`
+	NotesRejected int `json:"analyst_notes_rejected"`
+
 	Drift []guards.DriftFinding `json:"narrowing_drift,omitempty"`
 
 	// PricedAt names the model whose published rates the cost figures use.
@@ -307,6 +332,15 @@ type ArchetypeResult struct {
 	EntropyRefused  int     `json:"entropy_gate_refusals"`
 	B0PostRate      float64 `json:"b0_post_rate"`
 	B0WrongRate     float64 `json:"b0_wrong_post_rate"`
+	// M1PostRate is the composite's rate for this merchant type, and it is
+	// the number that matters commercially. Reconstruction alone reports 0 per
+	// cent on the two flat-price archetypes, which reads as "we cannot help
+	// you"; the composite posts almost all of them, because checking a
+	// claimed batch of two hundred identical charges is trivial while
+	// deriving one is impossible.
+	M1PostRate  float64 `json:"m1_post_rate"`
+	M1PostedNum int     `json:"m1_posted"`
+	M1Wrong     int     `json:"m1_posted_wrong"`
 }
 
 // BatchSpec parameterises a benchmark run.
@@ -425,7 +459,7 @@ func RunBatch(ctx context.Context, spec BatchSpec, provider llm.Provider) (*evid
 			Archetype:      arch,
 			ExpectedRegime: generate.ByName(arch).ExpectedRegime,
 		}
-		var archPosted, archWrong, archB0, archB0Wrong int
+		var archPosted, archWrong, archB0, archB0Wrong, archM1, archM1Wrong int
 		var archSigma, archTwin, archIndex float64
 
 		gs := generate.DefaultSpec()
@@ -474,6 +508,8 @@ func RunBatch(ctx context.Context, spec BatchSpec, provider llm.Provider) (*evid
 		// settlements have no history to draw on and late ones do, which is
 		// the same position a real deployment is in on day one.
 		profiles := agent.NewProfileStore()
+		diagnostician := agent.NewDiagnostician(provider)
+		drafter := agent.NewDrafter(provider)
 
 		for _, credit := range ds.Credits {
 			truth := attributable(ds.GroundTruth[credit.Ref], eng)
@@ -533,6 +569,25 @@ func RunBatch(ctx context.Context, spec BatchSpec, provider llm.Provider) (*evid
 				InputTokens:  usage.InputTokens,
 				OutputTokens: usage.OutputTokens,
 			}
+			// The analyst-facing note, for held settlements that have
+			// something specific to act on. This is the highest-volume place
+			// the model does work nothing else can, and the only model output
+			// here whose failure mode is a confusing sentence rather than a
+			// wrong ledger, because it is attached to a settlement that is
+			// held either way.
+			if !rec.Status.Postable() {
+				note, u, err := drafter.Draft(ctx, rec)
+				usage.Add(u)
+				if err == nil && note != nil {
+					rec.AnalystNote = note
+					if note.Rejected != "" {
+						sum.NotesRejected++
+					} else {
+						sum.NotesDrafted++
+					}
+				}
+			}
+
 			// Memory is written only from proved settlements, and only after
 			// the decision is final, so nothing the profile later corroborates
 			// can have been influenced by a guess.
@@ -592,20 +647,60 @@ func RunBatch(ctx context.Context, spec BatchSpec, provider llm.Provider) (*evid
 				// conclusion from the merchant's records alone.
 				cc := eng.CheckClaim(credit, stated)
 				rec.ReportClaim = cc
+
+				// The check is arithmetic and has already run. What the model
+				// contributes is the diagnosis: the same failed check has
+				// several causes with completely different remedies, and
+				// telling them apart is reading rather than counting.
+				if cc != nil && cc.Verdict == evidence.ClaimContradicted {
+					dg, u, err := diagnostician.Diagnose(ctx, rec)
+					usage.Add(u)
+					if err == nil && dg != nil {
+						cc.Diagnosis = dg
+						rec.Remediation = append(rec.Remediation, evidence.Remediation{
+							Action: dg.Action,
+							Effect: dg.Effect,
+						})
+						sum.DiagnosedDefects++
+						if sum.DefectClasses == nil {
+							sum.DefectClasses = map[string]int{}
+						}
+						sum.DefectClasses[dg.Class]++
+
+						// Graded against the truth the generator recorded and
+						// the pipeline never saw.
+						if want := ds.ReportDefectClass[credit.Ref]; want != "" {
+							if sum.DiagnosisConfusion == nil {
+								sum.DiagnosisConfusion = map[string]map[string]int{}
+							}
+							if sum.DiagnosisConfusion[want] == nil {
+								sum.DiagnosisConfusion[want] = map[string]int{}
+							}
+							sum.DiagnosisConfusion[want][dg.Class]++
+							if dg.Class == want {
+								sum.DiagnosisCorrect++
+							}
+						}
+					}
+				}
 				defectiveRpt := ds.ReportDefects[credit.Ref] != ""
 
 				switch {
 				case rec.Status == evidence.StatusVerified:
 					sum.M1Posted++
 					sum.M1FromProof++
+					archM1++
 					if !sameSet(rec.Witness, truth) {
 						sum.M1PostedWrong++
+						archM1Wrong++
 					}
 				case cc != nil && cc.Verdict == evidence.ClaimConsistent:
 					sum.M1Posted++
 					sum.M1FromClaim++
+					archM1++
 					if !sameSet(stated, ds.GroundTruth[credit.Ref]) {
 						sum.M1PostedWrong++
+						archM1Wrong++
 					}
 				default:
 					sum.M1Held++
@@ -708,6 +803,9 @@ func RunBatch(ctx context.Context, spec BatchSpec, provider llm.Provider) (*evid
 			ar.MeanIndex = archIndex / f
 			ar.B0PostRate = float64(archB0) / f
 			ar.B0WrongRate = float64(archB0Wrong) / f
+			ar.M1PostRate = float64(archM1) / f
+			ar.M1PostedNum = archM1
+			ar.M1Wrong = archM1Wrong
 		}
 		sum.ByArchetype = append(sum.ByArchetype, ar)
 	}
@@ -751,7 +849,17 @@ func RunBatch(ctx context.Context, spec BatchSpec, provider llm.Provider) (*evid
 	sum.Host = fmt.Sprintf("%s/%s, %d logical cores, go%s",
 		runtime.GOOS, runtime.GOARCH, runtime.NumCPU(), runtime.Version()[2:])
 
+	if sum.DiagnosedDefects > 0 {
+		sum.DiagnosisAccuracy = float64(sum.DiagnosisCorrect) / float64(sum.DiagnosedDefects)
+	}
+
 	sum.ModelCalls = usage.Calls
+	if len(usage.ByRole) > 0 {
+		sum.CallsByRole = map[string]int{}
+		for r, n := range usage.ByRole {
+			sum.CallsByRole[string(r)] = n
+		}
+	}
 	sum.InputTokens = usage.InputTokens
 	sum.OutputTokens = usage.OutputTokens
 	if sum.Settlements > 0 {
