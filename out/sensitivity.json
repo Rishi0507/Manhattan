@@ -1,0 +1,94 @@
+[
+  {
+    "scenario": "correctly configured, reports clean",
+    "window_slack_scale": 0,
+    "report_defect_rate": 0,
+    "verified": 120,
+    "auto_posted_wrong": 0,
+    "agent_repaired": 16,
+    "agent_repairs_by_action": {
+      "SEARCH_FEED": 16
+    },
+    "agent_proven_cures": 1,
+    "agent_invoked": 123,
+    "m1_auto_posted": 317,
+    "m1_auto_posted_wrong": 0,
+    "m1_false_alarms": 0,
+    "b1_auto_posted_wrong": 0,
+    "report_defects_present": 0
+  },
+  {
+    "scenario": "correctly configured, reports as modelled",
+    "window_slack_scale": 0,
+    "report_defect_rate": 0.06,
+    "verified": 110,
+    "auto_posted_wrong": 0,
+    "agent_repaired": 11,
+    "agent_repairs_by_action": {
+      "SEARCH_FEED": 11
+    },
+    "agent_proven_cures": 0,
+    "agent_invoked": 128,
+    "m1_auto_posted": 298,
+    "m1_auto_posted_wrong": 0,
+    "m1_false_alarms": 0,
+    "b1_auto_posted_wrong": 22,
+    "report_defects_present": 22
+  },
+  {
+    "scenario": "window misconfiguration as modelled",
+    "window_slack_scale": 1,
+    "report_defect_rate": 0.06,
+    "verified": 73,
+    "auto_posted_wrong": 0,
+    "agent_repaired": 18,
+    "agent_repairs_by_action": {
+      "NARROW_TO_HISTORY": 7,
+      "SEARCH_FEED": 11
+    },
+    "agent_proven_cures": 38,
+    "agent_invoked": 185,
+    "m1_auto_posted": 292,
+    "m1_auto_posted_wrong": 0,
+    "m1_false_alarms": 0,
+    "b1_auto_posted_wrong": 22,
+    "report_defects_present": 22
+  },
+  {
+    "scenario": "window misconfiguration, reports ten times cleaner",
+    "window_slack_scale": 1,
+    "report_defect_rate": 0.006,
+    "verified": 83,
+    "auto_posted_wrong": 0,
+    "agent_repaired": 20,
+    "agent_repairs_by_action": {
+      "NARROW_TO_HISTORY": 8,
+      "SEARCH_FEED": 12
+    },
+    "agent_proven_cures": 36,
+    "agent_invoked": 177,
+    "m1_auto_posted": 312,
+    "m1_auto_posted_wrong": 0,
+    "m1_false_alarms": 0,
+    "b1_auto_posted_wrong": 1,
+    "report_defects_present": 1
+  },
+  {
+    "scenario": "window misconfiguration twice as bad",
+    "window_slack_scale": 1.5,
+    "report_defect_rate": 0.06,
+    "verified": 51,
+    "auto_posted_wrong": 0,
+    "agent_repaired": 11,
+    "agent_repairs_by_action": {
+      "SEARCH_FEED": 11
+    },
+    "agent_proven_cures": 59,
+    "agent_invoked": 200,
+    "m1_auto_posted": 290,
+    "m1_auto_posted_wrong": 0,
+    "m1_false_alarms": 0,
+    "b1_auto_posted_wrong": 22,
+    "report_defects_present": 22
+  }
+]
