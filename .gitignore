@@ -30,6 +30,7 @@
 !/out/sweep.json
 !/out/envelope.json
 !/out/buckets.json
+!/out/cardinality_bands.json
 !/out/run.json
 
 # The dashboard's build output IS committed, under cmd/manhattan/dist, because
