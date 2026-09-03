@@ -22,6 +22,7 @@
         "Mode": "report_present_mapping_withheld",
         "DeclareTxnCount": true,
         "JoinDisputes": true,
+        "ReportDefectRate": 0,
         "FeeDriftBps": 0,
         "Policy": {
           "version": "fees_2026_08",
@@ -53,9 +54,9 @@
     "pool_n": 40,
     "k_star": 12,
     "collision_index": 6.993192879457462,
-    "latency_ms": 22,
+    "latency_ms": 32,
     "receipt": {
-      "settlement_ref": "bank_credit_2026_08_25_1003",
+      "settlement_ref": "bank_credit_travel_2026_08_25_1003",
       "run_id": "case_01_clean_positive_only",
       "merchant_id": "mid_travel",
       "merchant_name": "Meridian Travel Pvt Ltd",
@@ -321,11 +322,11 @@
       },
       "timing_ms": {
         "entropy_gate": 0,
-        "feasibility": 7,
+        "feasibility": 12,
         "fee_check": 0,
         "narrow": 0,
-        "prove": 3,
-        "reconstruct": 10
+        "prove": 4,
+        "reconstruct": 16
       },
       "policy_version": "fees_2026_08",
       "replay_seed": 1001
@@ -366,6 +367,7 @@
         "Mode": "report_present_mapping_withheld",
         "DeclareTxnCount": true,
         "JoinDisputes": true,
+        "ReportDefectRate": 0,
         "FeeDriftBps": 0,
         "Policy": {
           "version": "fees_2026_08",
@@ -401,7 +403,7 @@
     "collision_index": 0.009569086072731547,
     "latency_ms": 12,
     "receipt": {
-      "settlement_ref": "bank_credit_2026_08_25_1003",
+      "settlement_ref": "bank_credit_travel_2026_08_25_1003",
       "run_id": "case_02_signed_items",
       "merchant_id": "mid_travel",
       "merchant_name": "Meridian Travel Pvt Ltd",
@@ -678,11 +680,11 @@
       },
       "timing_ms": {
         "entropy_gate": 0,
-        "feasibility": 7,
+        "feasibility": 8,
         "fee_check": 0,
         "narrow": 0,
         "prove": 0,
-        "reconstruct": 4
+        "reconstruct": 3
       },
       "policy_version": "fees_2026_08",
       "replay_seed": 1002
@@ -724,6 +726,7 @@
         "Mode": "report_present_mapping_withheld",
         "DeclareTxnCount": false,
         "JoinDisputes": true,
+        "ReportDefectRate": 0,
         "FeeDriftBps": 0,
         "Policy": {
           "version": "fees_2026_08",
@@ -758,9 +761,9 @@
     "pool_n": 258,
     "k_star": 3,
     "collision_index": 0.16817783731093572,
-    "latency_ms": 60,
+    "latency_ms": 88,
     "receipt": {
-      "settlement_ref": "bank_credit_2026_08_23_1001",
+      "settlement_ref": "bank_credit_travel_2026_08_23_1001",
       "run_id": "case_03_large_batch_complement",
       "merchant_id": "mid_travel",
       "merchant_name": "Meridian Travel Pvt Ltd",
@@ -1291,9 +1294,9 @@
         "entropy_gate": 0,
         "feasibility": 8,
         "fee_check": 0,
-        "narrow": 0,
-        "prove": 0,
-        "reconstruct": 51
+        "narrow": 1,
+        "prove": 4,
+        "reconstruct": 74
       },
       "policy_version": "fees_2026_08",
       "replay_seed": 1003
@@ -1337,6 +1340,7 @@
         "Mode": "report_present_mapping_withheld",
         "DeclareTxnCount": true,
         "JoinDisputes": true,
+        "ReportDefectRate": 0,
         "FeeDriftBps": 0,
         "Policy": {
           "version": "fees_2026_08",
@@ -1370,9 +1374,9 @@
     "pool_n": 318,
     "k_star": 4,
     "collision_index": 0.617929367521851,
-    "latency_ms": 9,
+    "latency_ms": 10,
     "receipt": {
-      "settlement_ref": "bank_credit_2026_08_23_1001",
+      "settlement_ref": "bank_credit_travel_2026_08_23_1001",
       "run_id": "case_04_underdetermined",
       "merchant_id": "mid_travel",
       "merchant_name": "Meridian Travel Pvt Ltd",
@@ -1551,7 +1555,14 @@
           "effect": "cuts the pool by the instrument mix, which lowers the index super-linearly"
         }
       ],
-      "exception_cost_inr": 333,
+      "exception_cost_inr": 266,
+      "exception_handling_minutes": 16,
+      "exception_cost_basis": [
+        "UNDERDETERMINED baseline 12 min",
+        "remedy re-verified, less 55%",
+        "refused before the search, so nothing to adjudicate",
+        "318 candidates to read, plus 11 min"
+      ],
       "cost": {
         "model_calls": 0,
         "input_tokens": 0,
@@ -1562,7 +1573,7 @@
         "entropy_gate": 0,
         "feasibility": 9,
         "fee_check": 0,
-        "narrow": 0
+        "narrow": 1
       },
       "policy_version": "fees_2026_08",
       "replay_seed": 1003
@@ -1761,6 +1772,7 @@
         "Mode": "report_present_mapping_withheld",
         "DeclareTxnCount": true,
         "JoinDisputes": true,
+        "ReportDefectRate": 0,
         "FeeDriftBps": 0,
         "Policy": {
           "version": "fees_2026_08",
@@ -1796,7 +1808,7 @@
     "collision_index": 1.343340077841329,
     "latency_ms": 10,
     "receipt": {
-      "settlement_ref": "bank_credit_2026_08_25_1003",
+      "settlement_ref": "bank_credit_travel_2026_08_25_1003",
       "run_id": "case_05_ambiguous_twin",
       "merchant_id": "mid_travel",
       "merchant_name": "Meridian Travel Pvt Ltd",
@@ -2030,7 +2042,13 @@
         "invoked": false
       },
       "claim": "2 distinct reconstructions of this credit exist within the searched region; the arithmetic cannot choose between them. pay_000253 and pay_000263 carry an identical contribution, so an alternative reconstruction is constructible by exchanging one for the other; this ambiguity is structural rather than incidental",
-      "exception_cost_inr": 333,
+      "exception_cost_inr": 583,
+      "exception_handling_minutes": 35,
+      "exception_cost_basis": [
+        "AMBIGUOUS baseline 25 min",
+        "nothing to act on, plus 25%",
+        "2 rivals to choose between, plus 4 min"
+      ],
       "cost": {
         "model_calls": 0,
         "input_tokens": 0,
@@ -2043,7 +2061,7 @@
         "fee_check": 0,
         "narrow": 0,
         "prove": 0,
-        "reconstruct": 2
+        "reconstruct": 3
       },
       "policy_version": "fees_2026_08",
       "replay_seed": 1005
@@ -2084,6 +2102,7 @@
         "Mode": "report_present_mapping_withheld",
         "DeclareTxnCount": true,
         "JoinDisputes": true,
+        "ReportDefectRate": 0,
         "FeeDriftBps": 8,
         "Policy": {
           "version": "fees_2026_08",
@@ -2117,9 +2136,9 @@
     "pool_n": 34,
     "k_star": 12,
     "collision_index": 2.4272189000134428,
-    "latency_ms": 9,
+    "latency_ms": 10,
     "receipt": {
-      "settlement_ref": "bank_credit_2026_08_25_1003",
+      "settlement_ref": "bank_credit_travel_2026_08_25_1003",
       "run_id": "case_06_fee_anomaly_observed",
       "merchant_id": "mid_travel",
       "merchant_name": "Meridian Travel Pvt Ltd",
@@ -2391,7 +2410,7 @@
         "fee_check": 0,
         "narrow": 0,
         "prove": 0,
-        "reconstruct": 3
+        "reconstruct": 4
       },
       "policy_version": "fees_2026_08",
       "replay_seed": 1006
@@ -2432,6 +2451,7 @@
         "Mode": "lump_credit_only",
         "DeclareTxnCount": true,
         "JoinDisputes": true,
+        "ReportDefectRate": 0,
         "FeeDriftBps": 8,
         "Policy": {
           "version": "fees_2026_08",
@@ -2465,9 +2485,9 @@
     "pool_n": 34,
     "k_star": 12,
     "collision_index": 2.424857733454302,
-    "latency_ms": 10,
+    "latency_ms": 18,
     "receipt": {
-      "settlement_ref": "bank_credit_2026_08_25_1003",
+      "settlement_ref": "bank_credit_travel_2026_08_25_1003",
       "run_id": "case_07_fee_check_circular",
       "merchant_id": "mid_travel",
       "merchant_name": "Meridian Travel Pvt Ltd",
@@ -2735,11 +2755,11 @@
       },
       "timing_ms": {
         "entropy_gate": 0,
-        "feasibility": 6,
+        "feasibility": 11,
         "fee_check": 0,
         "narrow": 0,
-        "prove": 0,
-        "reconstruct": 4
+        "prove": 1,
+        "reconstruct": 5
       },
       "policy_version": "fees_2026_08",
       "replay_seed": 1006
@@ -2780,6 +2800,7 @@
         "Mode": "report_present_mapping_withheld",
         "DeclareTxnCount": true,
         "JoinDisputes": true,
+        "ReportDefectRate": 0,
         "FeeDriftBps": 0,
         "Policy": {
           "version": "fees_2026_08",
@@ -2814,9 +2835,9 @@
     "pool_n": 26,
     "k_star": 12,
     "collision_index": 0.06644663346613545,
-    "latency_ms": 13,
+    "latency_ms": 8,
     "receipt": {
-      "settlement_ref": "bank_credit_2026_08_25_1003",
+      "settlement_ref": "bank_credit_travel_2026_08_25_1003",
       "run_id": "case_08_rounding_inferred",
       "merchant_id": "mid_travel",
       "merchant_name": "Meridian Travel Pvt Ltd",
@@ -3088,7 +3109,7 @@
       },
       "timing_ms": {
         "entropy_gate": 0,
-        "feasibility": 13,
+        "feasibility": 8,
         "fee_check": 0,
         "narrow": 0,
         "prove": 0,
@@ -3133,6 +3154,7 @@
         "Mode": "report_present_mapping_withheld",
         "DeclareTxnCount": true,
         "JoinDisputes": false,
+        "ReportDefectRate": 0,
         "FeeDriftBps": 0,
         "Policy": {
           "version": "fees_2026_08",
@@ -3167,9 +3189,9 @@
     "pool_n": 25,
     "k_star": 12,
     "collision_index": 0.019657506384222142,
-    "latency_ms": 27,
+    "latency_ms": 30,
     "receipt": {
-      "settlement_ref": "bank_credit_2026_08_25_1003",
+      "settlement_ref": "bank_credit_travel_2026_08_25_1003",
       "run_id": "case_09_unjoined_disputes_feed",
       "merchant_id": "mid_travel",
       "merchant_name": "Meridian Travel Pvt Ltd",
@@ -3473,11 +3495,11 @@
       },
       "timing_ms": {
         "entropy_gate": 0,
-        "feasibility": 10,
+        "feasibility": 8,
         "fee_check": 0,
         "narrow": 0,
-        "prove": 0,
-        "reconstruct": 10
+        "prove": 2,
+        "reconstruct": 4
       },
       "policy_version": "fees_2026_08",
       "replay_seed": 1009
@@ -3519,6 +3541,7 @@
         "Mode": "report_present_mapping_withheld",
         "DeclareTxnCount": true,
         "JoinDisputes": true,
+        "ReportDefectRate": 0,
         "FeeDriftBps": 0,
         "Policy": {
           "version": "fees_2026_08",
@@ -3550,9 +3573,9 @@
     "pool_n": 29,
     "k_star": 12,
     "collision_index": 0.3749135973981732,
-    "latency_ms": 15,
+    "latency_ms": 16,
     "receipt": {
-      "settlement_ref": "bank_credit_2026_08_25_1003",
+      "settlement_ref": "bank_credit_travel_2026_08_25_1003",
       "run_id": "case_10_narrowing_sensitive",
       "merchant_id": "mid_travel",
       "merchant_name": "Meridian Travel Pvt Ltd",
@@ -3828,7 +3851,12 @@
           "effect": "either the rival is genuinely ineligible, in which case the answer stands, or the batch is misidentified"
         }
       ],
-      "exception_cost_inr": 333,
+      "exception_cost_inr": 416,
+      "exception_handling_minutes": 25,
+      "exception_cost_basis": [
+        "NARROWING_SENSITIVE baseline 35 min",
+        "remedy computed, less 30%"
+      ],
       "cost": {
         "model_calls": 0,
         "input_tokens": 0,
@@ -3837,11 +3865,11 @@
       },
       "timing_ms": {
         "entropy_gate": 0,
-        "feasibility": 10,
+        "feasibility": 8,
         "fee_check": 0,
         "narrow": 0,
         "prove": 2,
-        "reconstruct": 3
+        "reconstruct": 5
       },
       "policy_version": "fees_2026_08",
       "replay_seed": 1010
@@ -3883,6 +3911,7 @@
         "Mode": "report_present_mapping_withheld",
         "DeclareTxnCount": true,
         "JoinDisputes": true,
+        "ReportDefectRate": 0,
         "FeeDriftBps": 0,
         "Policy": {
           "version": "fees_2026_08",
@@ -3919,7 +3948,7 @@
     "collision_index": 0,
     "latency_ms": 0,
     "receipt": {
-      "settlement_ref": "bank_credit_2026_08_25_1003",
+      "settlement_ref": "bank_credit_subscription_saas_2026_08_25_1003",
       "run_id": "case_11_subscription_entropy",
       "merchant_id": "mid_subscription_saas",
       "merchant_name": "Northwind SaaS Pvt Ltd",
@@ -4252,7 +4281,14 @@
           "effect": "removes the dependence on amounts entirely"
         }
       ],
-      "exception_cost_inr": 333,
+      "exception_cost_inr": 250,
+      "exception_handling_minutes": 15,
+      "exception_cost_basis": [
+        "UNDERDETERMINED baseline 12 min",
+        "remedy computed, less 30%",
+        "refused before the search, so nothing to adjudicate",
+        "210 candidates to read, plus 7 min"
+      ],
       "cost": {
         "model_calls": 0,
         "input_tokens": 0,

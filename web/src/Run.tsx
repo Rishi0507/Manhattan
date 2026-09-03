@@ -78,17 +78,17 @@ export function Run({
           { label: "held", value: num(n - posted), sub: "each with a cure" },
           {
             label: "per hour",
-            value: summary ? num(Math.round(summary.settlements_per_hour)) : "—",
+            value: summary ? num(Math.round(summary.settlements_per_hour)) : "n/a",
             sub: summary ? `${summary.median_latency_ms.toFixed(1)} ms median` : undefined,
           },
           {
             label: "cost / 1k",
-            value: summary ? `₹${summary.inr_per_1k_settlements.toFixed(0)}` : "—",
+            value: summary ? `₹${summary.inr_per_1k_settlements.toFixed(0)}` : "n/a",
             sub: summary ? `B0: ₹${summary.b0_inr_per_1k_settlements.toFixed(0)}` : undefined,
           },
           {
             label: "peak memory",
-            value: summary ? `${Math.round(summary.peak_memory_mb)} MB` : "—",
+            value: summary ? `${Math.round(summary.peak_memory_mb)} MB` : "n/a",
             sub: summary ? `p95 ${summary.p95_latency_ms.toFixed(0)} ms` : undefined,
           },
         ]}
@@ -210,7 +210,7 @@ export function Run({
             <tbody>
               {shown.map((r, i) => (
                 <tr
-                  key={r.settlement_ref}
+                  key={`${r.settlement_ref}:${i}`}
                   onClick={() => onOpen(r)}
                   className={cls(
                     "cursor-pointer hover:bg-raised",
@@ -228,7 +228,7 @@ export function Run({
                     {r.pool.n}
                   </Td>
                   <Td right mono dim>
-                    {r.witness_size || "—"}
+                    {r.witness_size || "·"}
                   </Td>
                   <Td right mono dim>
                     {idx(r.feasibility.collision_index_at_k_star)}

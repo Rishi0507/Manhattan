@@ -1,45 +1,45 @@
 {
-  "run_id": "run_20260903_0358",
+  "run_id": "run_20260903_0459",
   "settlements": 498,
   "flags": null,
   "status_counts": {
-    "AMBIGUOUS": 109,
+    "AMBIGUOUS": 114,
     "NARROWING_SENSITIVE": 3,
-    "UNDERDETERMINED": 208,
-    "UNRESOLVED": 17,
-    "VERIFIED": 161
+    "UNDERDETERMINED": 202,
+    "UNRESOLVED": 28,
+    "VERIFIED": 151
   },
   "flag_counts": {
     "AMOUNT_ENTROPY_INSUFFICIENT": 166,
-    "LATTICE_CORRECTED": 68,
-    "RESOLVED_BY_HYPOTHESIS": 18,
-    "SIGNED_ITEMS_PRESENT": 222
+    "LATTICE_CORRECTED": 69,
+    "RESOLVED_BY_HYPOTHESIS": 16,
+    "SIGNED_ITEMS_PRESENT": 200
   },
-  "auto_posted": 161,
+  "auto_posted": 151,
   "auto_posted_wrong": 0,
-  "exceptions": 337,
+  "exceptions": 347,
   "throughput": {
-    "wall_clock_s": 18.4820405,
-    "settlements_per_hour": 97002.27634497393,
-    "median_latency_ms": 13.442,
-    "p95_latency_ms": 100.895,
-    "peak_memory_mb": 118.67072296142578
+    "wall_clock_s": 22.2628148,
+    "settlements_per_hour": 80528.90059526525,
+    "median_latency_ms": 13.638,
+    "p95_latency_ms": 206.991,
+    "peak_memory_mb": 15.059127807617188
   },
   "cost": {
-    "model_calls": 794,
+    "model_calls": 812,
     "parse_calls": 498,
-    "agent_calls": 296,
-    "exception_rate": 0.6767068273092369,
-    "input_tokens": 395088,
-    "output_tokens": 33512,
+    "agent_calls": 314,
+    "exception_rate": 0.6967871485943775,
+    "input_tokens": 411762,
+    "output_tokens": 34434,
     "inr": 0,
-    "inr_per_1k_settlements": 497.1187148594378
+    "inr_per_1k_settlements": 515.9238534136546
   },
   "aggregate_drop_rates": {
-    "already_reconciled": 0.08495612033444187,
-    "mid_mismatch": 0.1341173953013056,
-    "outside_settlement_window": 0.7716401321521453,
-    "zero_net_contribution": 0.00002838694462580548
+    "already_reconciled": 0.08631175649579909,
+    "mid_mismatch": 0.13659932648805492,
+    "outside_settlement_window": 0.7678686111928124,
+    "zero_net_contribution": 0.00002423497349024377
   },
   "replay_seed": 20260826,
   "policy_version": "fees_2026_08"

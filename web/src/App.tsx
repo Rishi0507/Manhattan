@@ -31,6 +31,51 @@ export default function App() {
   const [sweep, setSweep] = useState<SweepPoint[]>([]);
   const [envelope, setEnvelope] = useState<EnvelopePoint[]>([]);
   const [open, setOpen] = useState<Receipt | null>(null);
+
+  // The drawer outlives its own dismissal by one animation.
+  //
+  // Unmounting on click makes a panel that slid in simply cease to exist,
+  // which reads as a glitch rather than as a close: the eye tracked it
+  // arriving and expects it to leave the same way. So `closing` keeps the last
+  // receipt mounted for the length of the exit, and `shown` is what actually
+  // renders. The timer is cleared if something reopens in the meantime, which
+  // is what stops a fast click-close-click from leaving a ghost behind.
+  const [closing, setClosing] = useState(false);
+  const [leaving, setLeaving] = useState<Receipt | null>(null);
+  const shown = open ?? (closing ? leaving : null);
+
+  const dismiss = useCallback(() => {
+    setOpen((cur) => {
+      if (cur) {
+        setLeaving(cur);
+        setClosing(true);
+      }
+      return null;
+    });
+  }, []);
+
+  useEffect(() => {
+    if (!closing) return;
+    const t = window.setTimeout(() => {
+      setClosing(false);
+      setLeaving(null);
+    }, 140);
+    return () => window.clearTimeout(t);
+  }, [closing]);
+
+  useEffect(() => {
+    if (open) setClosing(false);
+  }, [open]);
+
+  // Escape closes it, with the same animation as the button.
+  useEffect(() => {
+    if (!open) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") dismiss();
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [open, dismiss]);
   const [provider, setProvider] = useState<string>("");
   const [streaming, setStreaming] = useState(false);
   const [progress, setProgress] = useState<{ done: number; total: number } | null>(null);
@@ -200,31 +245,35 @@ export default function App() {
 
       {/* The evidence object, in a drawer rather than a new page, so the
           context a viewer was reading stays behind it. */}
-      {open && (
+      {shown && (
         <div
-          className="fixed inset-0 z-30 flex justify-end bg-[#2c2318]/25 backdrop-blur-[1px]"
-          onClick={() => setOpen(null)}
+          className={cls(
+            "fixed inset-0 z-30 flex justify-end bg-[#2c2318]/25 backdrop-blur-[1px]",
+            closing && "scrim-out",
+          )}
+          onClick={dismiss}
           role="dialog"
           aria-modal="true"
         >
           <div
             className={cls(
-              "panel-in h-full w-full max-w-[980px] overflow-y-auto border-line-strong bg-ground sm:border-l",
+              "h-full w-full max-w-[980px] overflow-y-auto border-line-strong bg-ground sm:border-l",
               "shadow-[-8px_0_28px_rgba(44,35,24,0.12)]",
+              closing ? "panel-out" : "panel-in",
             )}
             onClick={(e) => e.stopPropagation()}
           >
             <div className="sticky top-0 z-10 flex items-center justify-between border-b border-line bg-ground/95 px-4 py-2 backdrop-blur">
               <span className="lbl">evidence object</span>
               <button
-                onClick={() => setOpen(null)}
+                onClick={dismiss}
                 className="rounded-md border border-line px-2.5 py-1 text-[12.5px] text-ink-faint transition-colors hover:border-ink-faint hover:text-ink-dim"
               >
                 close
               </button>
             </div>
             <div className="p-3 sm:p-4">
-              <ReceiptView r={open} />
+              <ReceiptView r={shown} />
             </div>
           </div>
         </div>

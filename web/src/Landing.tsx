@@ -253,7 +253,7 @@ function Side({
           <p className="lbl">auto-posted</p>
           <p className="tnum mt-1 text-[27px] leading-none sm:text-[34px]">{num(posted)}</p>
           <p className="tnum mt-1 text-[12.5px] text-ink-faint">
-            {total > 0 ? pct(posted / total) : "—"}
+            {total > 0 ? pct(posted / total) : "n/a"}
           </p>
         </div>
         <div>

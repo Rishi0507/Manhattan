@@ -256,6 +256,8 @@ export interface Receipt {
   note?: string;
   remediation?: Remediation[];
   exception_cost_inr?: number;
+  exception_handling_minutes?: number;
+  exception_cost_basis?: string[];
   timing_ms: Record<string, number>;
   policy_version: string;
   replay_seed: number;

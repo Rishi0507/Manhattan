@@ -104,6 +104,9 @@ func runBench(ctx context.Context, args []string) error {
 		"sweep":    sweep,
 		"envelope": envelope,
 		"buckets":  bench.LogSpaced(sweep, 8),
+		// The same curve segmented by batch cardinality, because that is the
+		// variable the index has to be read against.
+		"cardinality_bands": bench.CardinalityBands(sweep, 4),
 	}
 	for name, v := range arts {
 		b, err := json.MarshalIndent(v, "", "  ")

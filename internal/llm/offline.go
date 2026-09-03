@@ -295,7 +295,7 @@ func (offlineProvider) explain(user string) (map[string]any, error) {
 	}, nil
 }
 
-var reRef = regexp.MustCompile(`bank_credit_[0-9_]+`)
+var reRef = regexp.MustCompile(`bank_credit_[a-z0-9_]+`)
 
 func extractRefs(s string) []map[string]string {
 	seen := map[string]bool{}

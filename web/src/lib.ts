@@ -43,7 +43,7 @@ export function rupeesShort(paise: number): string {
 
 /** Render a collision index, which spans twenty orders of magnitude. */
 export function idx(v: number | undefined): string {
-  if (v === undefined || v === null) return "—";
+  if (v === undefined || v === null) return "n/a";
   if (v >= 1e17) return "astronomical";
   if (v === 0) return "0";
   if (v < 0.001) return v.toExponential(1);

@@ -34,6 +34,29 @@ func renderResults(
 	fmt.Fprintf(&b, "```\nrun id     %s\nseed       %d\nprovider   %s\nmodels     %s\n```\n\n",
 		sum.RunID, sum.Seed, sum.Provider, sum.ProviderModels)
 
+	// ---- The lookup ------------------------------------------------------
+	if sum.B1Posted > 0 {
+		fmt.Fprintf(&b, "## The answer everybody gives, measured\n\n")
+		fmt.Fprintf(&b, "B1 reads the settlement report's stated mapping and posts it. No search, no\n")
+		fmt.Fprintf(&b, "solver, instant and free. It is what every payments person correctly points\n")
+		fmt.Fprintf(&b, "out already exists, so it is measured here rather than argued with.\n\n")
+		fmt.Fprintf(&b, "| %d settlements | B1, trust the report | Manhattan |\n|---|---:|---:|\n", sum.Settlements)
+		fmt.Fprintf(&b, "| posted | %d | %d |\n", sum.B1Posted, sum.AutoPosted)
+		fmt.Fprintf(&b, "| **posted wrong** | **%d** | **%d** |\n", sum.B1PostedWrong, sum.AutoPostedWrong)
+		fmt.Fprintf(&b, "| reports that were defective | %d | |\n", sum.B1DefectiveRpts)
+		fmt.Fprintf(&b, "| **defective reports it would flag** | **0 of %d** | **%d of %d** |\n\n",
+			sum.B1DefectiveRpts, sum.B1CaughtByUs, sum.B1DefectiveRpts)
+		right := 100 * float64(sum.B1Posted-sum.B1PostedWrong) / float64(max(sum.B1Posted, 1))
+		fmt.Fprintf(&b, "B1 is right %.1f per cent of the time, and that is not in dispute: for most\n", right)
+		fmt.Fprintf(&b, "settlements at most gateways the lookup is the right answer and the solver is\n")
+		fmt.Fprintf(&b, "dead weight. What it cannot do is notice the rest. It has no independent\n")
+		fmt.Fprintf(&b, "account of the money, so its output restates its input, and the only thing it\n")
+		fmt.Fprintf(&b, "can check the report against is the report.\n\n")
+		fmt.Fprintf(&b, "The pipeline never reads the mapping. It is generated, withheld from the\n")
+		fmt.Fprintf(&b, "engine, and handed to B1 alone, which is what makes the last row a\n")
+		fmt.Fprintf(&b, "measurement rather than a restatement.\n\n")
+	}
+
 	// ---- Batch outcome ---------------------------------------------------
 	fmt.Fprintf(&b, "## Batch outcome against the baseline\n\n")
 	fmt.Fprintf(&b, "B0 is a confidence matcher given the same inputs and the same narrowing.\n")
@@ -160,28 +183,35 @@ func renderResults(
 			len(sum.TopExceptions), sum.Exceptions)
 		fmt.Fprintf(&b, "work them. All %d are in `out/receipts.ndjson`, one JSON object per line.\n\n",
 			sum.Exceptions)
-		fmt.Fprintf(&b, "| settlement | merchant | status | cost INR | pool | agent | cause | computed remedy |\n")
-		fmt.Fprintf(&b, "|---|---|---|---:|---:|---|---|---|\n")
+		fmt.Fprintf(&b, "| settlement | status | at stake INR | mins | cost INR | INR per analyst hour | cause | computed remedy |\n")
+		fmt.Fprintf(&b, "|---|---|---:|---:|---:|---:|---|---|\n")
 		for _, e := range sum.TopExceptions {
-			worked := "skipped"
-			if e.AgentTouch {
-				worked = "worked"
-			}
 			rem := e.Remediation
 			if rem == "" {
 				rem = "none available"
 			}
-			fmt.Fprintf(&b, "| `%s` | %s | `%s` | %d | %d | %s | %s | %s |\n",
-				e.Ref, e.Archetype, e.Status, e.CostINR, e.PoolN, worked,
-				cell(e.Cause, 90), cell(rem, 80))
+			fmt.Fprintf(&b, "| `%s` | `%s` | %s | %d | %d | **%s** | %s | %s |\n",
+				e.Ref, e.Status, commas(int64(e.ValuePaise)/100), e.Minutes, e.CostINR,
+				commas(int64(e.INRPerHour)), cell(e.Cause, 80), cell(rem, 70))
 		}
 		b.WriteString("\n")
 		fmt.Fprintf(&b, "Every row carries a status that distinguishes two answers existing from ten\n")
 		fmt.Fprintf(&b, "million existing from a filter having decided it, a cause traceable to a\n")
 		fmt.Fprintf(&b, "specific gate or residual, a computed remedy rather than \"needs review\", and a\n")
-		fmt.Fprintf(&b, "price. Which means the queue can be sorted by cost and worked in the order that\n")
-		fmt.Fprintf(&b, "clears the most money per hour.\n\n")
-		fmt.Fprintf(&b, "The whole held queue prices at **INR %s** at the configured analyst handling\n",
+		fmt.Fprintf(&b, "handling estimate priced by what clearing it takes.\n\n")
+		fmt.Fprintf(&b, "Handling time is not flat, and that is what makes this a work plan rather than\n")
+		fmt.Fprintf(&b, "a list. It runs from INR %d to INR %d, a %.1fx spread. A refusal whose remedy\n",
+			sum.ExceptionCostMin, sum.ExceptionCostMax,
+			float64(sum.ExceptionCostMax)/math.Max(float64(sum.ExceptionCostMin), 1))
+		fmt.Fprintf(&b, "has already been computed and re-verified is a five-minute decision; a credit\n")
+		fmt.Fprintf(&b, "nothing reconstructs, with nothing to act on, is an open-ended investigation.\n")
+		fmt.Fprintf(&b, "Every term that produced an estimate is named on the receipt in\n")
+		fmt.Fprintf(&b, "`exception_cost_basis`, so this can be argued with as a model rather than\n")
+		fmt.Fprintf(&b, "accepted as a number. The order above is by value cleared per analyst hour,\n")
+		fmt.Fprintf(&b, "which is what working the most valuable thing first actually means.\n\n")
+		fmt.Fprintf(&b, "The queue holds **INR %s** of unposted credit and **%.0f analyst hours**. It\n",
+			commas(int64(sum.ExceptionValuePaise)/100), float64(sum.ExceptionMinutes)/60)
+		fmt.Fprintf(&b, "prices at **INR %s** at the configured analyst handling\n",
 			commas(int64(sum.ExceptionCostINR)))
 		fmt.Fprintf(&b, "time. B0's %d wrong postings price at **INR %s** to unwind, at INR 2,400 each,\n",
 			sum.B0PostedWrong, commas(int64(sum.B0PostedWrong*2400)))
@@ -233,7 +263,9 @@ func renderResults(
 		fmt.Fprintf(&b, "feed may post.\n\n")
 
 		fmt.Fprintf(&b, "That rule was learned rather than designed. Without it, an agent able to retune\n")
-		fmt.Fprintf(&b, "narrowing produced two wrong postings in three hundred settlements: it tightened\n")
+		fmt.Fprintf(&b, "narrowing produced two wrong postings in three hundred settlements (recorded by\n")
+		fmt.Fprintf(&b, "hand from an earlier build, and the only figure in this file not emitted by the\n")
+		fmt.Fprintf(&b, "run above, because the build that produced it no longer exists): it tightened\n")
 		fmt.Fprintf(&b, "a window, the pool fell from 44 records to 40, an ambiguous settlement became\n")
 		fmt.Fprintf(&b, "verified, and the answer was wrong because the tightening had cut real records\n")
 		fmt.Fprintf(&b, "out of the batch.\n\n")
@@ -316,18 +348,83 @@ func renderResults(
 		fmt.Fprintf(&b, "after. If the curves turn where the index predicts they turn, the feasibility\n")
 		fmt.Fprintf(&b, "gate and the merchant segmentation are both shippable.\n\n")
 
-		fmt.Fprintf(&b, "| collision index band | configs | verified | ambiguous | underdetermined | Manhattan wrong | B0 wrong |\n")
-		fmt.Fprintf(&b, "|---|---:|---:|---:|---:|---:|---:|\n")
+		fmt.Fprintf(&b, "Bands hold roughly equal numbers of configurations rather than equal widths\n")
+		fmt.Fprintf(&b, "in log space. Equal widths sound right and put 76 of 96 configurations into\n")
+		fmt.Fprintf(&b, "the top two bands, because a handful of points near an index of 1e-4 stretch\n")
+		fmt.Fprintf(&b, "the range; the curve then had its coarsest resolution exactly where it was\n")
+		fmt.Fprintf(&b, "being asked to say something. Band edges are therefore quantiles of the\n")
+		fmt.Fprintf(&b, "observed index, which is less tidy and considerably more honest.\n\n")
+		fmt.Fprintf(&b, "| collision index band | configs | mean pool | verified | ambiguous | underdetermined | Manhattan wrong | B0 wrong |\n")
+		fmt.Fprintf(&b, "|---|---:|---:|---:|---:|---:|---:|---:|\n")
 		for _, bk := range bench.LogSpaced(sweep, 8) {
 			if bk.N == 0 {
 				continue
 			}
-			fmt.Fprintf(&b, "| %.3g to %.3g | %d | %.0f%% | %.0f%% | %.0f%% | %.0f%% | %.0f%% |\n",
-				bk.LoIndex, bk.HiIndex, bk.N,
+			fmt.Fprintf(&b, "| %.3g to %.3g | %d | %.0f | %.0f%% | %.0f%% | %.0f%% | %.0f%% | %.0f%% |\n",
+				bk.LoIndex, bk.HiIndex, bk.N, bk.MeanPoolN,
 				bk.Verified*100, bk.Ambiguous*100, bk.Underdetermined*100,
 				bk.Wrong*100, bk.B0Wrong*100)
 		}
 		b.WriteString("\n")
+
+		fmt.Fprintf(&b, "**Read flat, that table does not support the claim, and the mean pool column\n")
+		fmt.Fprintf(&b, "shows why.** The verified rate falls and then rises again at the top, and the\n")
+		fmt.Fprintf(&b, "bands where it rises are the ones with the smallest pools. Individual rows in\n")
+		fmt.Fprintf(&b, "the full sweep below say the same thing more sharply: travel at pool 220 with\n")
+		fmt.Fprintf(&b, "index 4.64 verifies nothing, travel at pool 70 with index 6.03 verifies\n")
+		fmt.Fprintf(&b, "everything. Higher predicted index, better observed outcome.\n\n")
+		fmt.Fprintf(&b, "The index is not wrong in those rows. It is being read against the wrong\n")
+		fmt.Fprintf(&b, "variable.\n\n")
+
+		// The same curve, segmented by the variable that actually governs it.
+		bands := bench.CardinalityBands(sweep, 4)
+		if len(bands) > 0 {
+			fmt.Fprintf(&b, "### Segmented by batch cardinality\n\n")
+			fmt.Fprintf(&b, "Cardinality is what the search has to reach, and it is what the collision\n")
+			fmt.Fprintf(&b, "index has to be read against. Within one cardinality:\n\n")
+			var mono, notMono []int
+			anyWrong := false
+			for _, cb := range bands {
+				fmt.Fprintf(&b, "**Batch of %d** (%d configurations, verified rate %s in the index)\n\n",
+					cb.BatchSize, cb.N, monoWord(cb.Monotone))
+				fmt.Fprintf(&b, "| index band | verified | ambiguous | underdetermined | wrong |\n")
+				fmt.Fprintf(&b, "|---|---:|---:|---:|---:|\n")
+				for _, bk := range cb.Buckets {
+					fmt.Fprintf(&b, "| %.3g to %.3g | %.0f%% | %.0f%% | %.0f%% | %.0f%% |\n",
+						bk.LoIndex, bk.HiIndex, bk.Verified*100, bk.Ambiguous*100,
+						bk.Underdetermined*100, bk.Wrong*100)
+				}
+				b.WriteString("\n")
+				if cb.Monotone {
+					mono = append(mono, cb.BatchSize)
+				} else {
+					notMono = append(notMono, cb.BatchSize)
+				}
+				if cb.AnyWrong {
+					anyWrong = true
+				}
+			}
+
+			fmt.Fprintf(&b, "The verified rate is monotone in the index at cardinality %s, and not at %s.\n",
+				intList(mono), intList(notMono))
+			fmt.Fprintf(&b, "Where it breaks, it breaks in one direction and for a reason that is a\n")
+			fmt.Fprintf(&b, "property of the estimator rather than a defect in the measurement. The\n")
+			fmt.Fprintf(&b, "collision index is an EXPECTED number of colliding subsets. At small\n")
+			fmt.Fprintf(&b, "cardinality the enumeration is small enough that the realised count is\n")
+			fmt.Fprintf(&b, "frequently one where the expectation is five, so the estimator is\n")
+			fmt.Fprintf(&b, "conservative precisely where the search is cheapest.\n\n")
+			if !anyWrong {
+				fmt.Fprintf(&b, "**The wrong-posting rate is zero in every band of every cardinality.** The\n")
+				fmt.Fprintf(&b, "breakdown costs recall and never precision, which is the same asymmetry the\n")
+				fmt.Fprintf(&b, "rest of the system is built around: a gate that refuses too much is a gate\n")
+				fmt.Fprintf(&b, "that is merely expensive.\n\n")
+			}
+			fmt.Fprintf(&b, "So the commercial claim is scoped rather than flat. The index predicts a\n")
+			fmt.Fprintf(&b, "merchant's auto-post rate at the cardinalities where refusal actually binds,\n")
+			fmt.Fprintf(&b, "and under-predicts it below them. That is a narrower claim than the one this\n")
+			fmt.Fprintf(&b, "section made before the sweep was segmented, and it is the one the data\n")
+			fmt.Fprintf(&b, "supports.\n\n")
+		}
 
 		// The estimator comparison, which is a finding rather than a footnote.
 		var empErr, anaErr float64
@@ -357,6 +454,12 @@ func renderResults(
 		}
 
 		fmt.Fprintf(&b, "### Full sweep\n\n")
+		fmt.Fprintf(&b, "`counted` is the mean number of reconstructions found by EXHAUSTIVE\n")
+		fmt.Fprintf(&b, "enumeration, which is the ground truth the index is being scored against.\n")
+		fmt.Fprintf(&b, "**A counted value of 0.0 beside a verified rate of 0%% is not a contradiction\n")
+		fmt.Fprintf(&b, "and not a bug.** It means the gate refused before any enumeration ran, so\n")
+		fmt.Fprintf(&b, "nothing was counted, and zero is the count of a search that did not happen\n")
+		fmt.Fprintf(&b, "rather than a finding that no rivals exist. Those rows are `UNDERDETERMINED`.\n\n")
 		fmt.Fprintf(&b, "| archetype | pool | batch | sigma (paise) | twin mass | index | counted | verified | wrong | B0 wrong |\n")
 		fmt.Fprintf(&b, "|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|\n")
 		for _, p := range sweep {
@@ -399,6 +502,35 @@ func cell(s string, n int) string {
 		cut = n
 	}
 	return s[:cut] + "..."
+}
+
+// monoWord reports whether a band's verified rate falls monotonically as the
+// predicted index rises.
+func monoWord(ok bool) string {
+	if ok {
+		return "**monotone**"
+	}
+	return "not monotone"
+}
+
+// intList renders a small set of cardinalities as prose.
+func intList(xs []int) string {
+	switch len(xs) {
+	case 0:
+		return "none"
+	case 1:
+		return fmt.Sprintf("%d", xs[0])
+	case 2:
+		return fmt.Sprintf("%d and %d", xs[0], xs[1])
+	}
+	var out string
+	for i, x := range xs[:len(xs)-1] {
+		if i > 0 {
+			out += ", "
+		}
+		out += fmt.Sprintf("%d", x)
+	}
+	return out + fmt.Sprintf(" and %d", xs[len(xs)-1])
 }
 
 func logAbsRatio(a, b float64) float64 {

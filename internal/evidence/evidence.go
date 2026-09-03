@@ -284,7 +284,18 @@ type Receipt struct {
 	Note        string        `json:"note,omitempty"`
 	Remediation []Remediation `json:"remediation,omitempty"`
 
+	// ExceptionCostINR is what clearing this exception is estimated to cost,
+	// and ExceptionMinutes is the handling estimate behind it.
+	//
+	// These vary by what clearing actually takes. A flat per-exception price
+	// was simpler and it was also useless: every row costing the same makes
+	// "sort the queue by cost" sort by nothing, and a queue that cannot be
+	// ordered is a list rather than a work plan.
 	ExceptionCostINR int `json:"exception_cost_inr,omitempty"`
+	ExceptionMinutes int `json:"exception_handling_minutes,omitempty"`
+	// ExceptionBasis names every term that produced the estimate, so an
+	// operations lead can disagree with the model rather than with a number.
+	ExceptionBasis []string `json:"exception_cost_basis,omitempty"`
 
 	Cost     CostBlock        `json:"cost"`
 	TimingMS map[string]int64 `json:"timing_ms"`

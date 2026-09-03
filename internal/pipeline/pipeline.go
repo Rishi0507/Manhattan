@@ -69,6 +69,9 @@ type Config struct {
 	// queue, so a finance lead can sort a backlog by money.
 	AnalystMinutesPerException int
 	AnalystHourlyINR           int
+	// Handling prices an exception by what clearing it takes rather than by a
+	// flat rate per row.
+	Handling HandlingModel
 
 	RunID string
 	Seed  int64
@@ -88,6 +91,7 @@ func DefaultConfig() Config {
 
 		AnalystMinutesPerException: 20,
 		AnalystHourlyINR:           1000,
+		Handling:                   DefaultHandling(),
 
 		Seed: 20260826,
 	}
@@ -695,7 +699,10 @@ func (e *Engine) finish(rec *evidence.Receipt, sw *stopwatch, credit model.BankC
 	sw.mark("fee_check")
 
 	if !rec.Status.Postable() {
-		rec.ExceptionCostINR = e.Cfg.AnalystMinutesPerException * e.Cfg.AnalystHourlyINR / 60
+		mins, basis := e.Cfg.Handling.Minutes(rec)
+		rec.ExceptionMinutes = mins
+		rec.ExceptionBasis = basis
+		rec.ExceptionCostINR = mins * e.Cfg.AnalystHourlyINR / 60
 	}
 	rec.TimingMS = sw.out
 	sort.Slice(rec.Flags, func(i, j int) bool { return rec.Flags[i] < rec.Flags[j] })

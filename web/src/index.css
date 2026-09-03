@@ -191,6 +191,42 @@ button:disabled {
   animation: panel-in 0.14s ease-out both;
 }
 
+/* Closing.
+
+   A drawer that animates in and then vanishes on close reads as a glitch: the
+   eye tracked it arriving and expects it to leave the same way. The exit is
+   slightly faster than the entrance, which is the usual asymmetry, because a
+   viewer who has decided to close something is no longer reading it. */
+@keyframes panel-out {
+  from {
+    opacity: 1;
+    transform: translateX(0);
+  }
+  to {
+    opacity: 0;
+    transform: translateX(14px);
+  }
+}
+
+@keyframes scrim-out {
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0;
+  }
+}
+
+.panel-out {
+  animation: panel-out 0.13s cubic-bezier(0.4, 0, 1, 1) both;
+  pointer-events: none;
+}
+
+.scrim-out {
+  animation: scrim-out 0.13s ease-in both;
+  pointer-events: none;
+}
+
 /* Buttons, tabs and rows settle rather than snap. */
 button,
 [role="tab"],
@@ -283,7 +319,9 @@ tr {
 @media (prefers-reduced-motion: reduce) {
   .arrive,
   .view-in,
-  .panel-in {
+  .panel-in,
+  .panel-out,
+  .scrim-out {
     animation: none;
   }
   button,

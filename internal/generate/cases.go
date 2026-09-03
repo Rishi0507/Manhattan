@@ -49,6 +49,12 @@ func Cases() []Case {
 		s.BatchJitter = 0
 		s.PoolJitter = 0
 		s.Start = time.Date(2026, 8, 20, 0, 0, 0, 0, time.UTC)
+		// The eleven cases are hand-built pathologies with exact expected
+		// outcomes, and each one isolates a single failure of the ARITHMETIC.
+		// Report defects are a different argument, measured on the batch, and
+		// injecting them here would perturb the fixtures without testing
+		// anything the fixtures exist to test.
+		s.ReportDefectRate = 0
 		return s
 	}
 

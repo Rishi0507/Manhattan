@@ -496,7 +496,7 @@ export function ReceiptView({ r }: { r: Receipt }) {
                       )}
                       {h.source_ref ? (
                         <p className="tnum mt-1.5 text-[12px]" style={{ color: "var(--color-verified)" }}>
-                          cites {h.source_ref} — {h.evidence}
+                          cites {h.source_ref}: {h.evidence}
                         </p>
                       ) : (
                         <p className="mt-1.5 text-[12px] text-ink-faint">
@@ -537,6 +537,37 @@ export function ReceiptView({ r }: { r: Receipt }) {
             ))}
           </div>
         </Panel>
+      )}
+
+      {/* What holding this costs, and why that number and not another. */}
+      {r.exception_cost_inr !== undefined && r.exception_cost_inr > 0 && (
+        <Fold
+          title="Cost to clear"
+          summary={`${r.exception_handling_minutes} min, ₹${r.exception_cost_inr}`}
+        >
+          <p className="mb-2.5 text-[12.5px] leading-relaxed text-ink-faint">
+            Handling time is estimated from what clearing this actually takes rather than charged
+            at a flat rate, so the queue can be ordered. Every term that fired is listed, which
+            makes this a model to disagree with rather than a number to accept.
+          </p>
+          <table className="w-full max-w-lg">
+            <tbody>
+              {(r.exception_cost_basis ?? []).map((line, i) => (
+                <tr key={i}>
+                  <Td className="text-ink-faint">{line}</Td>
+                </tr>
+              ))}
+              <tr>
+                <Td className="text-ink">
+                  {r.exception_handling_minutes} min at the configured analyst rate
+                </Td>
+                <Td right mono className="text-ink">
+                  ₹{r.exception_cost_inr}
+                </Td>
+              </tr>
+            </tbody>
+          </table>
+        </Fold>
       )}
 
       {/* Timings */}

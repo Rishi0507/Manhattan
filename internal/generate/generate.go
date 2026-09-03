@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"math/rand"
 	"sort"
+	"strings"
 	"time"
 
 	"github.com/Rishi0507/manhattan/internal/accounting"
@@ -47,6 +48,17 @@ type Spec struct {
 	// it false is what creates a residual only an agent can explain.
 	JoinDisputes bool
 
+	// ReportDefectRate is the fraction of settlement reports whose stated
+	// mapping does not match the money that actually moved.
+	//
+	// Six per cent is the shipped default and it is deliberately modest. Real
+	// gateway reports are good, and the argument this supports does not need
+	// them to be bad. It needs them to be occasionally wrong in a way nothing
+	// downstream can detect, which is a different and much weaker claim, and
+	// the one that is actually true. A rate chosen to make the comparison
+	// dramatic would be making a dishonest point.
+	ReportDefectRate float64
+
 	// FeeDriftBps applies a systematic overcharge to the observed fee rows,
 	// which the fee detector should surface without the reconciliation itself
 	// being affected.
@@ -62,22 +74,23 @@ type Spec struct {
 // DefaultSpec is a plausible mid-market merchant.
 func DefaultSpec() Spec {
 	return Spec{
-		Seed:            20260826,
-		Archetype:       "marketplace",
-		Settlements:     20,
-		BatchSize:       6,
-		BatchJitter:     2,
-		PoolTarget:      34,
-		PoolJitter:      10,
-		ChargebackRate:  0.08,
-		RefundRate:      0.15,
-		FullRefundShare: 0.25,
-		AdjustmentRate:  0.02,
-		Mode:            model.ModeMappingWithheld,
-		DeclareTxnCount: true,
-		JoinDisputes:    true,
-		Policy:          accounting.DefaultPolicy(),
-		Start:           time.Date(2026, 8, 1, 0, 0, 0, 0, time.UTC),
+		Seed:             20260826,
+		Archetype:        "marketplace",
+		Settlements:      20,
+		BatchSize:        6,
+		BatchJitter:      2,
+		PoolTarget:       34,
+		PoolJitter:       10,
+		ChargebackRate:   0.08,
+		RefundRate:       0.15,
+		FullRefundShare:  0.25,
+		AdjustmentRate:   0.02,
+		Mode:             model.ModeMappingWithheld,
+		DeclareTxnCount:  true,
+		JoinDisputes:     true,
+		ReportDefectRate: 0.06,
+		Policy:           accounting.DefaultPolicy(),
+		Start:            time.Date(2026, 8, 1, 0, 0, 0, 0, time.UTC),
 	}
 }
 
@@ -115,10 +128,12 @@ func Generate(spec Spec) *model.Dataset {
 		arch: ByName(spec.Archetype),
 	}
 	b.ds = &model.Dataset{
-		Mode:           spec.Mode,
-		DisputesJoined: spec.JoinDisputes,
-		GroundTruth:    map[string][]string{},
-		Pathology:      spec.Pathology,
+		Mode:            spec.Mode,
+		DisputesJoined:  spec.JoinDisputes,
+		GroundTruth:     map[string][]string{},
+		ReportedMapping: map[string][]string{},
+		ReportDefects:   map[string]string{},
+		Pathology:       spec.Pathology,
 	}
 
 	merchant := model.Merchant{
@@ -181,7 +196,19 @@ func Generate(spec Spec) *model.Dataset {
 		}
 		sort.Strings(truth)
 
-		ref := fmt.Sprintf("bank_credit_%s_%04d", valueDate.Format("2006_01_02"), 1000+s)
+		// The merchant is part of the reference, and it has to be.
+		//
+		// Without it the reference is date plus sequence, which is unique
+		// within one merchant and collides across them: a batch run over six
+		// archetypes produced six settlements called
+		// bank_credit_2026_08_04_1001, carrying different pools and different
+		// verdicts. Nothing downstream was wrong, but a reader of the
+		// exception queue saw one identifier with three contradictory statuses
+		// and concluded the receipt store was broken, in the exact document
+		// asking them to trust it. An identifier that cannot be trusted to
+		// name one thing is not an identifier.
+		ref := fmt.Sprintf("bank_credit_%s_%s_%04d",
+			strings.TrimPrefix(merchant.ID, "mid_"), valueDate.Format("2006_01_02"), 1000+s)
 		credit := model.BankCredit{
 			Ref:        ref,
 			Narration:  b.narration(merchant, valueDate, s),
@@ -196,6 +223,7 @@ func Generate(spec Spec) *model.Dataset {
 		}
 		b.ds.Credits = append(b.ds.Credits, credit)
 		b.ds.GroundTruth[ref] = truth
+		b.reportMapping(ref, truth)
 	}
 
 	return b.ds
@@ -408,4 +436,83 @@ func displayName(archetype string) string {
 		return "TenMinute Retail Pvt Ltd"
 	}
 	return "Merchant Pvt Ltd"
+}
+
+// reportMapping records what the gateway's settlement report SAYS this
+// settlement is made of, which is usually but not always the truth.
+//
+// The three defects modelled are the ones that actually happen, and each one
+// is invisible to anything that reads the report as authority:
+//
+//   - a chargeback debited in this cycle but raised against an earlier one,
+//     which the settlement report omits because its own join is by capture
+//     date. The money moved; the mapping does not mention it.
+//   - a payment named in the mapping that actually settled in the previous
+//     cycle, double-counted across a cycle boundary.
+//   - a mapping that is simply short by one, which is what a partial write or
+//     a truncated file looks like downstream.
+//
+// None of these is exotic and none is a strawman. The point is not that
+// gateway reports are unreliable, it is that a reconciliation with no
+// independent account of the money cannot tell a correct report from a
+// defective one, because the only thing it can check the report against is
+// the report.
+func (b *builder) reportMapping(ref string, truth []string) {
+	stated := append([]string(nil), truth...)
+	defect := ""
+
+	if b.spec.ReportDefectRate > 0 && b.rng.Float64() < b.spec.ReportDefectRate && len(stated) > 1 {
+		switch b.rng.Intn(3) {
+		case 0:
+			// Omit a signed item. The report's own join misses it.
+			drop := -1
+			for i, id := range stated {
+				if c := b.contributionOf(id); c < 0 {
+					drop = i
+					break
+				}
+			}
+			if drop < 0 {
+				drop = b.rng.Intn(len(stated))
+			}
+			defect = "omits " + stated[drop] + ", a record that moved money in this cycle"
+			stated = append(stated[:drop:drop], stated[drop+1:]...)
+
+		case 1:
+			// Name a record that belongs to a different cycle.
+			var outside []string
+			for _, p := range b.ds.Payments {
+				if !contains(truth, p.ID) {
+					outside = append(outside, p.ID)
+				}
+			}
+			if len(outside) == 0 {
+				return
+			}
+			sort.Strings(outside)
+			add := outside[b.rng.Intn(len(outside))]
+			defect = "names " + add + ", which settled in a different cycle"
+			stated = append(stated, add)
+
+		case 2:
+			drop := b.rng.Intn(len(stated))
+			defect = "is short by one record, " + stated[drop]
+			stated = append(stated[:drop:drop], stated[drop+1:]...)
+		}
+	}
+
+	sort.Strings(stated)
+	b.ds.ReportedMapping[ref] = stated
+	if defect != "" {
+		b.ds.ReportDefects[ref] = defect
+	}
+}
+
+func contains(xs []string, v string) bool {
+	for _, x := range xs {
+		if x == v {
+			return true
+		}
+	}
+	return false
 }

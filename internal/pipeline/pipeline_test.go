@@ -68,10 +68,19 @@ func TestReconcileEndToEnd(t *testing.T) {
 		// A posting is only correct if the witness is exactly the ground-truth
 		// batch. Matching the amount is not enough: matching the amount with
 		// the wrong records is the failure this whole system exists to prevent.
-		if !sameSet(rec.Witness, ds.GroundTruth[credit.Ref]) {
+		//
+		// Records contributing exactly zero are excluded from the comparison
+		// on both sides, and that is not a weakening of it. A fully refunded
+		// zero-MDR UPI payment moves no money, so no method that reads the
+		// credit can place it in or out of the batch: any witness plus or
+		// minus a zero has the same sum. The pipeline removes them before the
+		// search, names each one on the receipt, and reconciles the count as
+		// witness plus zeros. Requiring the witness to contain a record the
+		// arithmetic cannot see would be testing for clairvoyance.
+		if !sameSet(rec.Witness, attributable(ds.GroundTruth[credit.Ref], e)) {
 			wrong++
 			t.Errorf("%s: VERIFIED but the witness is not the true batch\n  got  %v\n  want %v",
-				credit.Ref, rec.Witness, ds.GroundTruth[credit.Ref])
+				credit.Ref, rec.Witness, attributable(ds.GroundTruth[credit.Ref], e))
 		}
 	}
 

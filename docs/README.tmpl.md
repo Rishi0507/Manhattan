@@ -27,15 +27,32 @@ The brief asks for one finance-ops loop closed across a batch of 50 or more synt
 
 ---
 
-## First question first: doesn't the settlement report already tell you?
+## The first question, answered with a number
 
-It is the first thing anyone at a payments company asks, so it goes at the top.
+Everyone at a payments company asks the same thing, so it goes above everything else, and it gets a measurement rather than a paragraph.
 
-For Razorpay's own settlements it largely does: each `settlement_id` maps to its payments, and Optimizer's Single View Recon surfaces that mapping even for externally processed transactions. Where it is present and trusted, this leg is a lookup and the solver is unnecessary. The solver earns its place where that mapping is absent or unverified: a bank credit whose narration carries no usable settlement reference; a merchant reconciling their own OMS against a lump credit; multi-gateway merchants where one aggregator ships a transaction-level mapping and another ships only a net figure; historical backfill, migrations and disputed periods.
+> **"We already ship that mapping. Optimizer's Single View Recon gives you settlement_id to payments. What is the solver for?"**
 
-And one more, which is the strongest framing. *The settlement report is a claim. Manhattan verifies the claim independently, from the merchant's own records.* A reconciliation system that trusts its input is not reconciling, it is transcribing.
+Correct, and where the report is complete this project is unnecessary. So the benchmark runs that answer as a third system. **B1 reads the settlement report's stated mapping and posts it.** No search, no solver, instant, free.
 
-The demo posture reflects that: per-payment fee rows are retained and the `settlement_id` mapping is **withheld**, so the system is not handed the answer it is meant to derive.
+| {{ .S.Settlements }} settlements | B1, trust the report | Manhattan |
+|---|---:|---:|
+| posted | {{ .D.B1Posted }} | {{ .S.AutoPosted }} |
+| **posted wrong** | **{{ .D.B1Wrong }}** | **{{ .S.AutoPostedWrong }}** |
+| reports that were defective | {{ .D.Defects }} ({{ pct1 .D.DefectRatePct }} of the batch) | |
+| **defective reports it would flag** | **0 of {{ .D.Defects }}** | **{{ .D.DefectsCaught }} of {{ .D.Defects }}** |
+
+B1 is right {{ pct1 .D.B1CorrectPct }} of the time. That is not a strawman and it is not being disputed: for most settlements, at most gateways, the lookup is the right answer and the solver is dead weight.
+
+What B1 cannot do is notice the other {{ pct1 (sub100 .D.B1CorrectPct) }}. It has no independent account of the money, so its output is a restatement of its input, and the only thing it can check the report against is the report. Manhattan reconstructs the credit from the merchant's own records and then compares. It flagged **{{ .D.DefectsCaught }} of {{ .D.Defects }}** and missed **{{ .D.DefectsMissed }}**.
+
+The defects modelled are the ones that actually happen, not exotic ones: a chargeback debited this cycle but raised against an earlier one, which the report omits because its own join is by capture date; a payment named in the mapping that settled in the previous cycle; a mapping short by one record, which is what a partial write looks like downstream. Details in [`internal/generate/generate.go`](internal/generate/generate.go).
+
+> **The settlement report is a claim. Manhattan verifies the claim independently, from the merchant's own records.** A reconciliation system that trusts its input is not reconciling, it is transcribing.
+
+At {{ i .D.B1SilentPer1000 }} silent wrong postings per thousand settlements, on a gateway doing millions, that is the entire case. The demo posture follows from it: per-payment fee rows are retained and the `settlement_id` mapping is **withheld from the pipeline**, so the system is not handed the answer it exists to derive. The mapping is still generated, and B1 still reads it, which is how the row above is measured.
+
+**And the solver earns its place outright** wherever that mapping is absent: a bank credit whose narration carries no usable settlement reference; a merchant reconciling their own OMS against a lump credit; multi-gateway merchants where one aggregator ships a transaction-level mapping and another ships only a net figure; historical backfill, migrations and disputed periods.
 
 ---
 
@@ -139,13 +156,29 @@ That is why Manhattan's {{ .S.AutoPostedWrong }} means something. The baseline i
 
 Read the right-hand columns against the left. Where amounts genuinely fail to distinguish transactions, Manhattan's auto-post rate falls to zero and B0's wrong-posting rate climbs. Both systems see the same data. One reacts to it.
 
+### About those two zeros
+
+{{ words .D.ZeroArchetypes }} post **nothing**, and they are large, fast-growing segments. That number should be read twice rather than once.
+
+A subscription merchant charging 499, 999 and 1999 has settlements built from three repeated price points. Any subset of 143 customers paying 499 produces exactly the same credit as any other subset of 143. **There is no method that reconstructs those batches from amounts.** Not a better solver, not a better model, not more compute. The information is not present. B0 posts {{ range .S.ByArchetype }}{{ if eq .Archetype "subscription_saas" }}{{ rate .B0PostRate }} of them and is wrong on {{ rate .B0WrongRate }}{{ end }}{{ end }}, which is what confidently answering an unanswerable question looks like.
+
+So the zero is not a gap in coverage, it is the correct answer, delivered in eleven milliseconds with the reason attached and the remedy named. And the remedy is real: **these merchants do not need a better matcher, they need a settlement reference on the credit or a per-payment fee row**, and the receipt says so per settlement rather than in general.
+
+The honest commercial reading, which is in [LIMITATIONS.md](LIMITATIONS.md) and not hidden: on a flat-price merchant this system's amount-based route contributes nothing, and it says so before you integrate rather than after.
+
 This is also the commercial claim: one pass over a merchant's historical settlement amounts yields the spread and the twin mass, which yield the collision index, which yields the expected status mix, before any integration.
 
-**[RESULTS.md](RESULTS.md) carries the calibration that backs it**: the collision-index band table, the two-estimator comparison, and the full {{ len .Sweep }}-configuration sweep. That section answers the track's measured-accuracy bar and is the thing separating this from a solver demo, because it says whether the system knows in advance when it is about to be wrong.
+**[RESULTS.md](RESULTS.md) carries the calibration that backs it**, and it carries the claim's limits with it. Across all {{ len .Sweep }} swept configurations the index does **not** order outcomes cleanly, and the reason is that it is being read against the wrong variable. Segmented by batch cardinality, which is the variable it has to be read against, the verified rate is monotone in the index at cardinality {{ ints .D.MonotoneAt }} and not at {{ ints .D.NotMonotoneAt }}.
 
-### Two cross-checks nobody arranged
+Where it breaks it breaks in one direction. The index is an *expected* number of colliding subsets, and at small cardinality the enumeration is small enough that the realised count is often one where the expectation is five, so the estimator is conservative exactly where the search is cheapest. **The wrong-posting rate is zero in every band of every cardinality**{{ if .D.AnyBandWrong }}, except where noted{{ end }}, so the failure costs recall and never precision.
 
-Counters incremented in different packages, for different reasons, that agree anyway. `RESOLVED_BY_HYPOTHESIS` is **{{ .D.HypothesisFlag }}** and the agent repaired **{{ .S.AgentRepaired }}** settlements{{ if .D.AgentRepairedCrossFlag }}, matching exactly as they must, since every repair carries that flag and nothing else sets it{{ else }}, which differ and is a defect being tracked{{ end }}. `AMOUNT_ENTROPY_INSUFFICIENT` is **{{ .D.EntropyFlag }}**, exactly the {{ .D.EntropyArchCount }} zero-auto-post archetypes at {{ .D.PerArchetype }} settlements each. Free evidence that the instrumentation agrees with itself, and it would have caught a miscount in either direction.
+The commercial claim is scoped to match: the index predicts a merchant's auto-post rate at the cardinalities where refusal actually binds, and under-predicts it below them. That is still a claim worth selling, and it is one that survives its own data.
+
+### One cross-check nobody arranged
+
+`AMOUNT_ENTROPY_INSUFFICIENT` is **{{ .D.EntropyFlag }}**, which is exactly the {{ .D.EntropyArchCount }} zero-auto-post archetypes at {{ .D.PerArchetype }} settlements each. The flag is set per settlement in the entropy gate; the archetype totals come from a different loop in a different package. Nothing makes them agree, and a miscount in either would show up here.
+
+(There is a second pair, `RESOLVED_BY_HYPOTHESIS` at **{{ .D.HypothesisFlag }}** against **{{ .S.AgentRepaired }}** agent repairs. They match, and they match **by construction**: every repair sets that flag and nothing else does. That is a consistency assertion, not independent corroboration, and calling it evidence would be overclaiming.)
 
 ---
 
@@ -208,13 +241,13 @@ One property is easy to miss: **the gate runs before the solver, not after it.**
 
 ### The dashboard
 
-`./run.sh demo` builds the frontend, runs the batch and serves it on
-`localhost:8080`.
+`./run.sh demo` builds the frontend, runs the batch and serves it on `localhost:8080`. **Nobody should have to run it to judge this**, so the four views that carry the argument are below, and every figure in them is also in [RESULTS.md](RESULTS.md).
 
 | | |
 |---|---|
 | ![head to head](docs/screenshots/02-head-to-head.jpg) | **Head to head.** One credit, identical inputs to both systems. B0 proposes six records at 0.95 confidence and posts, and is wrong. Manhattan finds a witness, closes the identity to zero, then widens the pool and finds a rival, so it holds. |
-| ![calibration](docs/screenshots/03-calibration.jpg) | **Calibration.** Outcome mix against the collision index predicted *before* any search ran. Verified gives way to ambiguous and then to refusal as the index climbs, and the wrong-posting rate stays at zero across every band while B0's reaches {{ pct .D.TopBandB0Wrong }}. |
+| ![calibration](docs/screenshots/03-calibration.jpg) | **Calibration.** Outcome mix against the collision index predicted *before* any search ran, in bands of roughly equal population. Verified gives way to ambiguous and then to refusal as the index climbs, and the wrong-posting rate stays at zero across every band while B0's reaches {{ pct .D.TopBandB0Wrong }}. |
+| ![exceptions](docs/screenshots/06-exceptions.jpg) | **The exception queue.** {{ .S.Exceptions }} held settlements grouped by cause, each group priced and carrying the single change that would clear it, then the queue itself ordered by value cleared per analyst hour. |
 | ![receipt](docs/screenshots/04-receipt.jpg) | **A receipt.** The full derivation for one settlement: the narrowing waterfall with a reason per dropped record, both collision-index estimators plotted against the refusal threshold, the witness, the completeness checks and the identity. |
 | ![mobile](docs/screenshots/05-mobile.png) | **At 390px.** Every view is usable on a phone. Wide tables scroll inside their own panel rather than compressing to nothing. |
 
@@ -283,7 +316,7 @@ The counts do not read as a partition and a reader who tries will conclude somet
 | `PROPOSE_ADJUSTMENT` | asserts an unmodelled event | no |
 | `ESCALATE` | stops, deliberately, with everything tried recorded | no |
 
-**Only a corroborated action may post, and that rule was learned rather than designed.** The first version let narrowing changes post if the identity closed, and produced **two wrong postings in three hundred settlements**: the agent tightened a window, the pool fell from 44 records to 40, an `AMBIGUOUS` settlement became `VERIFIED`, every check passed, and the answer was wrong because the tightening had cut real records out of the batch.
+**Only a corroborated action may post, and that rule was learned rather than designed.** The first version let narrowing changes post if the identity closed, and produced **two wrong postings in three hundred settlements** (a figure from that earlier build, recorded by hand; it is the one number in this file not emitted by run `{{ .S.RunID }}`, because the build that produced it no longer exists): the agent tightened a window, the pool fell from 44 records to 40, an `AMBIGUOUS` settlement became `VERIFIED`, every check passed, and the answer was wrong because the tightening had cut real records out of the batch.
 
 > Removing candidates cannot make the survivor unique. It makes it **unexamined**.
 
@@ -305,21 +338,27 @@ The eleven-case suite passes on a deliberately unintelligent offline stub propos
 
 ## The exception list is the deliverable
 
-Most systems treat the exception list as an apology. Every entry here carries a status distinguishing *two answers exist and here they both are* from *ten million answers exist* from *a filter decided this*; a named cause traceable to a specific gate, constraint or residual; a **computed** remediation; and a price. Which means the queue can be sorted by cost and worked in the order that clears the most money per hour.
+Most systems treat the exception list as an apology. Every entry here carries a status distinguishing *two answers exist and here they both are* from *ten million answers exist* from *a filter decided this*; a named cause traceable to a specific gate, constraint or residual; a **computed** remediation; and a handling estimate priced by what clearing it actually takes.
 
-The head of the queue, sorted by cost, as an operations lead would work it. **[The full top {{ len .S.TopExceptions }} is in RESULTS.md](RESULTS.md#the-exception-queue); all {{ .S.Exceptions }} are in `out/receipts.ndjson`.**
+That last part is the one that makes the queue a work plan rather than a list. Handling time is not flat: it runs from **{{ .D.ExceptionCostMin }} to {{ .D.ExceptionCostMax }} INR**, a {{ f1 .D.CostSpreadRatio }}x spread, because a refusal whose remedy has already been computed and re-verified is a decision somebody makes in five minutes, while a credit that nothing reconstructs, with nothing to act on, is an open-ended investigation. Every term that produced an estimate is named on the receipt in `exception_cost_basis`, so an operations lead can argue with the model rather than with the number.
 
-| settlement | merchant | status | cost | cause | computed remedy |
-|---|---|---|---:|---|---|
+So the queue is ordered by **value cleared per analyst hour**, which is what "work the most valuable thing first" actually means. Ordering by handling cost alone would put a forty-five minute investigation of a small credit above a five minute data fix on a large one.
+
+**[The full top {{ len .S.TopExceptions }} is in RESULTS.md](RESULTS.md#the-exception-queue); all {{ .S.Exceptions }} are in `out/receipts.ndjson`.**
+
+| settlement | status | at stake | mins | INR/hour | cause | computed remedy |
+|---|---|---:|---:|---:|---|---|
 {{- range first 6 .S.TopExceptions }}
-| `{{ .Ref }}` | {{ .Archetype }} | `{{ .Status }}` | {{ .CostINR }} | {{ clip .Cause 58 }} | {{ if .Remediation }}{{ clip .Remediation 48 }}{{ else }}none available{{ end }} |
+| `{{ .Ref }}` | `{{ .Status }}` | {{ ni (div (float .ValuePaise) 100) }} | {{ .Minutes }} | **{{ ni .INRPerHour }}** | {{ clip .Cause 46 }} | {{ if .Remediation }}{{ clip .Remediation 40 }}{{ else }}none available{{ end }} |
 {{- end }}
 
 ### What refusing is worth
 
 | | |
 |---|---:|
-| the whole held queue, at configured analyst handling time | **{{ n .D.ExceptionCostINR }} INR** |
+| money sitting unposted in the queue | {{ ni .D.ExceptionValueINR }} INR |
+| analyst time to clear it | {{ f0 .D.ExceptionHours }} hours |
+| the whole held queue, at the configured rate | **{{ n .D.ExceptionCostINR }} INR** |
 | B0's {{ .S.B0PostedWrong }} wrong postings, at {{ n .D.RemediationEachINR }} INR each to unwind | **{{ n .D.WrongPostingCostINR }} INR** |
 | difference | **{{ n .D.NetINR }} INR in Manhattan's favour, per {{ .S.Settlements }} settlements** |
 
@@ -356,6 +395,20 @@ A full annotated `VERIFIED` receipt and the `UNRESOLVED` and `NARROWING_SENSITIV
 ---
 
 ## Where the model sits
+
+### On how much of the outcome the model is responsible for
+
+A fair reading of the numbers above is that the model moves {{ .S.AgentRepaired }} settlements out of {{ .S.Settlements }}, that {{ pct .D.TriagePct }} of the exception queue never calls it, and that the agent is therefore doing very little. That reading is correct about the arithmetic and wrong about the architecture, and it is worth being direct about which.
+
+**The model is not load-bearing for correctness, deliberately and permanently.** A model that could change whether a settlement is correctly posted would be a model that can put wrong numbers in a general ledger, and no amount of capability fixes that, because the failure is silent. Any design where a better model produces more correct postings is a design where a worse one produces incorrect ones. This system is built so that swapping the model changes throughput and never accuracy, and the eleven-case suite passing on a deliberately unintelligent stub is the proof that it worked.
+
+**The model is load-bearing for the loop closing at all.** Reading `NEFT-RAZORPAY SOFTWARE PVT LTD-UTR3491-CR` into typed fields is not something a solver does. Looking at an unexplained residual and knowing that a chargeback debit is the shape of thing that produces it is not something a solver does. Choosing which of seven actions to try on a stuck settlement, and answering a finance lead's question from a store of receipts, are not things a solver does. Remove the model and there is no pipeline, only a subset-sum library.
+
+**And deciding not to call it is itself an agent design decision**, not an absence of one. {{ .S.AgentSkipped }} deterministic skips is {{ .S.AgentSkipped }} times the system established, cheaply and provably, that no action in its vocabulary could change the outcome. An agent that burns a model call to rediscover that on every item is not more agentic, it is worse engineered and more expensive.
+
+The claim being made is not that the model does little. It is that **the model does the open-ended work and the arithmetic does the deciding, and that this is the only arrangement in which an agent may touch a ledger at all.**
+
+---
 
 The boundary is one interface that speaks only in schemas. No method on it returns free text into a decision path, so the trust boundary is enforced by the type system rather than by discipline.
 

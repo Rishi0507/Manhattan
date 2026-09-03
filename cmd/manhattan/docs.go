@@ -16,6 +16,7 @@ import (
 	"github.com/Rishi0507/manhattan/internal/bench"
 	"github.com/Rishi0507/manhattan/internal/evidence"
 	"github.com/Rishi0507/manhattan/internal/llm"
+	"github.com/Rishi0507/manhattan/internal/money"
 )
 
 // The document generator.
@@ -88,6 +89,35 @@ type Derived struct {
 	EntropyArchCount int
 	PerArchetype     int
 	CrossChecksHold  bool
+
+	// The lookup, which is the answer everybody gives.
+	B1Posted        int
+	B1Wrong         int
+	B1CorrectPct    float64
+	Defects         int
+	DefectsCaught   int
+	DefectsMissed   int
+	DefectCatchPct  float64
+	DefectRatePct   float64
+	B1SilentPer1000 float64
+
+	// The queue, and whether ordering it means anything.
+	ExceptionCostMin   int
+	ExceptionCostMax   int
+	ExceptionMinutes   int
+	ExceptionHours     float64
+	ExceptionValueINR  float64
+	CostSpreadRatio    float64
+	QueueOrderedByWhat string
+
+	// Calibration, scoped to what the data supports.
+	CardinalityBands []bench.CardinalityBand
+	MonotoneAt       []int
+	NotMonotoneAt    []int
+	AnyBandWrong     bool
+
+	// The archetypes that post nothing, named rather than buried.
+	ZeroArchetypes []string
 
 	// The economics of refusing.
 	ExceptionCostINR    int
@@ -252,6 +282,34 @@ func deriveDocs(sum bench.Summary, cases []bench.CaseOutcome, sweep []bench.Swee
 	d.CrossChecksHold = d.AgentRepairedCrossFlag &&
 		d.EntropyFlag == d.EntropyArchCount*d.PerArchetype
 
+	d.B1Posted, d.B1Wrong = sum.B1Posted, sum.B1PostedWrong
+	if sum.B1Posted > 0 {
+		d.B1CorrectPct = 100 * float64(sum.B1Posted-sum.B1PostedWrong) / float64(sum.B1Posted)
+	}
+	d.Defects = sum.B1DefectiveRpts
+	d.DefectsCaught, d.DefectsMissed = sum.B1CaughtByUs, sum.B1MissedByUs
+	if d.Defects > 0 {
+		d.DefectCatchPct = 100 * float64(d.DefectsCaught) / float64(d.Defects)
+	}
+	if sum.Settlements > 0 {
+		d.DefectRatePct = 100 * float64(d.Defects) / float64(sum.Settlements)
+		d.B1SilentPer1000 = 1000 * float64(sum.B1PostedWrong) / float64(sum.Settlements)
+	}
+
+	d.ExceptionCostMin, d.ExceptionCostMax = sum.ExceptionCostMin, sum.ExceptionCostMax
+	d.ExceptionMinutes = sum.ExceptionMinutes
+	d.ExceptionHours = float64(sum.ExceptionMinutes) / 60
+	d.ExceptionValueINR = float64(sum.ExceptionValuePaise) / 100
+	if sum.ExceptionCostMin > 0 {
+		d.CostSpreadRatio = float64(sum.ExceptionCostMax) / float64(sum.ExceptionCostMin)
+	}
+
+	for _, a := range sum.ByArchetype {
+		if a.AutoPostRate == 0 {
+			d.ZeroArchetypes = append(d.ZeroArchetypes, a.Archetype)
+		}
+	}
+
 	d.ExceptionCostINR = sum.ExceptionCostINR
 	d.RemediationEachINR = remediationCostINR
 	d.WrongPostingCostINR = sum.B0PostedWrong * remediationCostINR
@@ -282,6 +340,18 @@ func deriveDocs(sum bench.Summary, cases []bench.CaseOutcome, sweep []bench.Swee
 			if f == evidence.FlagTwinSwap {
 				d.TwinSwapInCases = true
 			}
+		}
+	}
+
+	d.CardinalityBands = bench.CardinalityBands(sweep, 4)
+	for _, b := range d.CardinalityBands {
+		if b.Monotone {
+			d.MonotoneAt = append(d.MonotoneAt, b.BatchSize)
+		} else {
+			d.NotMonotoneAt = append(d.NotMonotoneAt, b.BatchSize)
+		}
+		if b.AnyWrong {
+			d.AnyBandWrong = true
 		}
 	}
 
@@ -389,9 +459,41 @@ var docFuncs = template.FuncMap{
 		}
 		return a / b
 	},
-	"add":  func(a, b int) int { return a + b },
-	"sub":  func(a, b int) int { return a - b },
-	"trim": strings.TrimSpace,
+	"add":    func(a, b int) int { return a + b },
+	"sub":    func(a, b int) int { return a - b },
+	"trim":   strings.TrimSpace,
+	"sub100": func(f float64) float64 { return 100 - f },
+	"float":  func(p money.Paise) float64 { return float64(p) },
+	"f0":     func(f float64) string { return fmt.Sprintf("%.0f", f) },
+	"ints": func(xs []int) string {
+		var parts []string
+		for _, x := range xs {
+			parts = append(parts, fmt.Sprintf("%d", x))
+		}
+		switch len(parts) {
+		case 0:
+			return "none"
+		case 1:
+			return parts[0]
+		case 2:
+			return parts[0] + " and " + parts[1]
+		}
+		return strings.Join(parts[:len(parts)-1], ", ") + " and " + parts[len(parts)-1]
+	},
+	"words": func(xs []string) string {
+		for i, x := range xs {
+			xs[i] = strings.ReplaceAll(x, "_", " ")
+		}
+		switch len(xs) {
+		case 0:
+			return "none"
+		case 1:
+			return xs[0]
+		case 2:
+			return xs[0] + " and " + xs[1]
+		}
+		return strings.Join(xs[:len(xs)-1], ", ") + " and " + xs[len(xs)-1]
+	},
 	// first takes the head of any slice, so the README can show the top of a
 	// table whose full version lives in RESULTS.md.
 	"first": func(n int, v any) any {

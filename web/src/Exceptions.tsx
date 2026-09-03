@@ -13,12 +13,23 @@ import { Empty, Panel, StatusPill, SummaryBar, Td, Th } from "./ui";
  * finance lead can answer "what is our backlog costing us, and which single
  * configuration change would cut it most" without leaving this screen.
  */
+/** Rupees of held credit cleared per analyst hour, the queue's ordering key. */
+function perHour(r: Receipt): number {
+  const mins = r.exception_handling_minutes ?? 0;
+  if (mins <= 0) return 0;
+  return (Math.abs(r.target_paise) / 100) * (60 / mins);
+}
+
 export function Exceptions({ receipts, onOpen }: { receipts: Receipt[]; onOpen: (r: Receipt) => void }) {
   const ex = useMemo(
     () =>
       receipts
         .filter((r) => r.status !== "VERIFIED")
-        .sort((a, b) => (b.exception_cost_inr ?? 0) - (a.exception_cost_inr ?? 0) || b.target_paise - a.target_paise),
+        // Ordered by value cleared per analyst hour, which is what working the
+        // most valuable thing first actually means. Ordering by handling cost
+        // alone puts a forty-five minute investigation of a small credit above
+        // a five minute data fix on a large one.
+        .sort((a, b) => perHour(b) - perHour(a) || b.target_paise - a.target_paise),
     [receipts],
   );
 
@@ -95,14 +106,14 @@ export function Exceptions({ receipts, onOpen }: { receipts: Receipt[]; onOpen: 
                 <Td right mono>
                   ₹{num(v.cost)}
                 </Td>
-                <Td className="text-ink-faint">{v.cure || "—"}</Td>
+                <Td className="text-ink-faint">{v.cure || "none"}</Td>
               </tr>
             ))}
           </tbody>
         </table>
       </Panel>
 
-      <Panel title="The queue" hint="highest cost first, click for the derivation">
+      <Panel title="The queue" hint="most value cleared per analyst hour first, click for the derivation">
         <div className="max-h-[540px] space-y-2 overflow-auto pr-1">
           {ex.slice(0, 60).map((r) => (
             <button
@@ -119,13 +130,14 @@ export function Exceptions({ receipts, onOpen }: { receipts: Receipt[]; onOpen: 
                 </span>
                 <span className="tnum text-[12.5px] text-ink-faint">
                   {rupeesShort(r.target_paise)} · pool {r.pool.n} · index{" "}
-                  {idx(r.feasibility.collision_index_at_k_star)} · ₹{r.exception_cost_inr}
+                  {idx(r.feasibility.collision_index_at_k_star)} · {r.exception_handling_minutes}
+                  min · ₹{r.exception_cost_inr}
                 </span>
               </div>
               <p className="mt-1.5 text-[13px] leading-snug text-ink-dim">{r.claim}</p>
               {r.remediation?.[0] && (
                 <p className="mt-1.5 text-[12.5px] leading-snug" style={{ color: "var(--color-accent)" }}>
-                  {r.remediation[0].action} — {r.remediation[0].effect}
+                  {r.remediation[0].action}. {r.remediation[0].effect}
                 </p>
               )}
             </button>

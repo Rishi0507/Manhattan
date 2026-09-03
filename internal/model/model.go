@@ -214,6 +214,18 @@ type Dataset struct {
 	Pathology string `json:"pathology,omitempty"`
 
 	Mode DataMode `json:"data_mode"`
+
+	// ReportedMapping is what the gateway's settlement report states each
+	// credit is composed of, and ReportDefects names the ones where that
+	// statement is wrong.
+	//
+	// The PIPELINE NEVER READS EITHER. They exist so the benchmark can score
+	// a lookup-based reconciliation, which is the thing every payments person
+	// correctly points out already exists. Manhattan reconstructs from the
+	// merchant's own records and is then compared against this; reading it
+	// would make the comparison circular and the whole exercise pointless.
+	ReportedMapping map[string][]string `json:"-"`
+	ReportDefects   map[string]string   `json:"-"`
 }
 
 // Record is the uniform shape the pipeline works in after Stage 3. Every

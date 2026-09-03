@@ -84,7 +84,7 @@ export function Cases({ cases, onOpen }: { cases: CaseOutcome[]; onOpen: (r: Rec
                     }}
                   >
                     {c.b0_posted
-                      ? `posted at ${c.b0_confidence.toFixed(2)}${c.b0_posted_wrong ? " — the wrong batch" : ""}`
+                      ? `posted at ${c.b0_confidence.toFixed(2)}${c.b0_posted_wrong ? ", the wrong batch" : ""}`
                       : "held, low confidence"}
                   </div>
                 </div>
@@ -108,7 +108,7 @@ export function Cases({ cases, onOpen }: { cases: CaseOutcome[]; onOpen: (r: Rec
                 )}
                 style={c.posted_wrong ? { color: "var(--color-wrong)" } : undefined}
               >
-                {c.posted_wrong ? "AUTO-POSTED THE WRONG BATCH — " : ""}
+                {c.posted_wrong ? "AUTO-POSTED THE WRONG BATCH: " : ""}
                 {c.case.Why}
               </p>
             </button>

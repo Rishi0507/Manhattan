@@ -10,9 +10,9 @@ State these before anyone asks. Every one is a design decision with a reason, an
 
 No solver improvement changes this. It is not a limitation of meet-in-the-middle, of the implementation, or of the hardware. It is what the arithmetic permits.
 
-**The measured consequence is a bounded auto-post rate.** On the shipped 498-settlement benchmark Manhattan auto-posts 32% overall, against B0's 77%. B0's figure carries 226 wrong postings and Manhattan's carries 0, which is the comparison that matters, but the ceiling is real and belongs here rather than buried: **this system posts less, and there are settlements it will never post.**
+**The measured consequence is a bounded auto-post rate.** On the shipped 498-settlement benchmark Manhattan auto-posts 30% overall, against B0's 72%. B0's figure carries 216 wrong postings and Manhattan's carries 0, which is the comparison that matters, but the ceiling is real and belongs here rather than buried: **this system posts less, and there are settlements it will never post.**
 
-**Auto-post rate depends on the merchant, not on the algorithm.** Measured across the 6 archetypes it runs from 77% (travel, wide ticket spread) down to 0% (subscription SaaS, three repeated price points). The segmentation makes this a sales input rather than an excuse, but the underlying fact stands.
+**Auto-post rate depends on the merchant, not on the algorithm.** Measured across the 6 archetypes it runs from 75% (travel, wide ticket spread) down to 0% (subscription SaaS, three repeated price points). The segmentation makes this a sales input rather than an excuse, but the underlying fact stands.
 
 ---
 
@@ -38,9 +38,25 @@ Manhattan now measures the density by sampling subset sums from the actual pool.
 
 **On one lognormal pool**, the fixture in `internal/feasibility/empirical_test.go`, checked against exhaustive enumeration of every 3-subset: the sampled estimator scores **0.09** mean absolute log-ratio against the counted truth, the analytic form **0.72**.
 
-**Across the whole calibration sweep**, 56 configurations spanning every archetype, pool size and batch size: the sampled estimator scores **1.93**, the analytic form **2.75**. Both are far worse than on the single pool, because the sweep deliberately includes regimes neither model was built for, among them pools whose true rival count runs into the thousands.
+**Across the whole calibration sweep**, 57 configurations spanning every archetype, pool size and batch size: the sampled estimator scores **1.94**, the analytic form **2.72**. Both are far worse than on the single pool, because the sweep deliberately includes regimes neither model was built for, among them pools whose true rival count runs into the thousands.
 
 The swept numbers are the ones to quote about the system; the single-pool pair describes one fixture and nothing more. The ordering is what the design rests on and it holds in both: the sampled estimator is closer to the counted truth than the closed form, everywhere it has been measured. Both are carried on every receipt.
+
+### The index orders outcomes within a cardinality, not across all of them
+
+This is the sharpest limit on the commercial claim and it was found in this project's own sweep rather than pointed out afterwards.
+
+Read flat across all 57 swept configurations, the collision index does **not** order outcomes cleanly. Travel at pool 220 with index 4.64 verifies nothing; travel at pool 70 with index 6.03 verifies everything. Marketplace at 150 with index 5.87 verifies nothing; marketplace at 48 with index 5.96 verifies everything. Higher predicted index, better observed outcome, twice.
+
+Segmented by batch cardinality, which is the variable the index has to be read against, the verified rate is monotone in the index at cardinality 9 and not at 4 and 6. The reason is a property of the estimator: the index is an *expected* number of colliding subsets, and at small cardinality the enumeration is small enough that the realised count is frequently one where the expectation is five.
+
+Two consequences, and only one of them is comfortable.
+
+**The failure direction is safe.** Being conservative means refusing configurations that could have verified. The wrong-posting rate is zero in every band of every cardinality, so this costs recall and never precision.
+
+**The sales claim has to be narrower than "one pass over historical amounts predicts your auto-post rate".** It predicts it at the cardinalities where refusal actually binds, and under-predicts it below them. Quoting the flat version would be quoting something this repository's own data contradicts.
+
+## The estimator is still an estimator
 
 **But the sampled estimator is still an estimator.** Its errors run in the direction that costs recall rather than precision (an index that is too low makes the gate accept a slightly larger region, and the exhaustive count inside that region catches the rivals anyway), and that asymmetry is the entire justification for admitting a heuristic into an otherwise deterministic pipeline. A badly calibrated threshold will still reject verifiable settlements, and because the index also sets `k*`, a bad threshold shrinks the searched region as well as the accepted one.
 
@@ -106,17 +122,17 @@ The band is scaled by the **witness** cardinality, not the pool size. A pool-wid
 
 An action that cites a real record in a real feed may post. An action that changes a filter, a window or a constraint may not, however cleanly the accounting identity closes afterwards.
 
-That rule exists because of a measured failure rather than a principle chosen in advance. Without it, an agent able to retune narrowing produced **two wrong postings in three hundred settlements**: it tightened a value-date window, the candidate pool fell from 44 records to 40, an `AMBIGUOUS` settlement became `VERIFIED`, and the answer was wrong because the tightening had cut real records out of the batch. Every check passed, including the completeness probe, because the surviving rival differed from the found witness by more than the probe's depth bound.
+That rule exists because of a measured failure rather than a principle chosen in advance. Without it, an agent able to retune narrowing produced **two wrong postings in three hundred settlements**. That figure is recorded by hand from an earlier build and is the only number in this document not emitted by run `run_20260903_0459`, because the build that produced it no longer exists. What happened: it tightened a value-date window, the candidate pool fell from 44 records to 40, an `AMBIGUOUS` settlement became `VERIFIED`, and the answer was wrong because the tightening had cut real records out of the batch. Every check passed, including the completeness probe, because the surviving rival differed from the found witness by more than the probe's depth bound.
 
-The consequence is a real ceiling, and it is a ceiling on the mechanism rather than a shortfall in the result. Most refusals are `UNDERDETERMINED`, caused by a pool that is too wide, and the agent can prove exactly what would fix them but is not permitted to act on it. On the shipped benchmark it repairs **18** settlements into postings and produces **5** proven cures, out of the 355 that entered the loop.
+The consequence is a real ceiling, and it is a ceiling on the mechanism rather than a shortfall in the result. Most refusals are `UNDERDETERMINED`, caused by a pool that is too wide, and the agent can prove exactly what would fix them but is not permitted to act on it. On the shipped benchmark it repairs **16** settlements into postings and produces **4** proven cures, out of the 363 that entered the loop.
 
-Read the repair count as a measurement of the data, not of the loop. **Every one of the 18 repairs cited a record sitting in a feed nobody had joined**, because that is the only class of action allowed to post. The agent's contribution to recall is therefore exactly as large as the amount of genuinely missing data in the inputs and not one settlement larger. On a dataset with well-configured narrowing and every feed connected, the correct number of repairs is zero, and the loop returning zero there would be the loop working.
+Read the repair count as a measurement of the data, not of the loop. **Every one of the 16 repairs cited a record sitting in a feed nobody had joined**, because that is the only class of action allowed to post. The agent's contribution to recall is therefore exactly as large as the amount of genuinely missing data in the inputs and not one settlement larger. On a dataset with well-configured narrowing and every feed connected, the correct number of repairs is zero, and the loop returning zero there would be the loop working.
 
-The 5 proven cures are the other half of the output and they never post, by design. A cure is a remediation whose effect has been computed and re-verified rather than estimated. Handing an analyst *tightening this window to seven hours yields exactly one reconstruction, with the identity closing to zero* is stronger than handing them a bare residual, and it is still their decision to make.
+The 4 proven cures are the other half of the output and they never post, by design. A cure is a remediation whose effect has been computed and re-verified rather than estimated. Handing an analyst *tightening this window to seven hours yields exactly one reconstruction, with the identity closing to zero* is stronger than handing them a bare residual, and it is still their decision to make.
 
 ## The agent is not invoked on most exceptions, deliberately
 
-A deterministic screen settles 203 of the 355 exceptions that enter the loop with no model call at all, which is 57% of them: the amounts do not distinguish the transactions, or a rival already appears when the pool is widened, or there is nothing left to search or tighten.
+A deterministic screen settles 210 of the 363 exceptions that enter the loop with no model call at all, which is 58% of them: the amounts do not distinguish the transactions, or a rival already appears when the pool is widened, or there is nothing left to search or tighten.
 
 This is the right trade, and it is still a trade. The screen is conservative but it is a heuristic, and a settlement it skips is one the agent never sees. A more capable model might have found something in a case the screen declared hopeless.
 
@@ -138,7 +154,19 @@ This is a real dependency and it is asserted by a test rather than hoped for.
 
 Memory grows with `C(n/2, at most k*)`. It is bounded across the accept region and guarded by a configured ceiling checked *before* allocation, but a merchant with pools above roughly 1,000 candidates at `k = 3` sits near it: **714 MB** at the top of the measured envelope.
 
-Two memory figures appear in this repository and they measure different things. **119 MB** is the peak across the whole 498-settlement batch, whose narrowed pools run from 19 to 49 candidates. **714 MB** is the top of the resource envelope, which deliberately probes a 1,000-candidate pool that no merchant in the benchmark has. Neither figure is wrong. Quoting the first one as a ceiling would be.
+Two memory figures appear in this repository and they measure different things. **15 MB** is the peak across the whole 498-settlement batch, whose narrowed pools run from 20 to 49 candidates. **714 MB** is the top of the resource envelope, which deliberately probes a 1,000-candidate pool that no merchant in the benchmark has. Neither figure is wrong. Quoting the first one as a ceiling would be.
+
+---
+
+## The report-defect rate is an assumption, and the comparison rests on it
+
+The measured answer to "we already ship that mapping" depends on a generated defect rate of 5.8%, and that figure is a modelling choice rather than an observation of any real gateway.
+
+It is deliberately modest, because the argument does not need reports to be bad. It needs them to be occasionally wrong in a way nothing downstream can detect, which is a much weaker and much more defensible claim. But if a gateway's true defect rate is a tenth of this, the lookup's 29 wrong postings become two or three, and the case for an independent reconstruction is correspondingly smaller in volume terms. It is not smaller in kind: the wrong postings that remain are still silent, still unattributable, and still found at audit rather than at posting.
+
+The three defect shapes modelled (an omitted chargeback raised against an earlier cycle, a payment named from the previous cycle, a mapping short by one) are chosen as plausible rather than sampled from anything. A payments engineer will know better than this generator does which of them actually occurs and at what rate, and that is a conversation this document invites rather than forecloses.
+
+**What is not an assumption** is the structural point underneath it. A reconciliation whose only check on the settlement report is the settlement report cannot detect a defective one at any rate, including zero. Manhattan flagged 29 of 29 and missed 0 because it has an independent account of the money, and that property does not depend on how often the report is wrong.
 
 ---
 
@@ -148,7 +176,7 @@ Every published figure comes from the deterministic offline path (`offline-stub`
 
 Two consequences, stated rather than glossed.
 
-**The cost figures are modelled, not billed.** Measured token counts priced at published rates. The direction of that error is known: the replay path reports no cache reads, so every input token is priced at the uncached rate, and a live run caching the byte-identical parse system block would come in under the 497 INR per thousand published here.
+**The cost figures are modelled, not billed.** Measured token counts priced at published rates. The direction of that error is known: the replay path reports no cache reads, so every input token is priced at the uncached rate, and a live run caching the byte-identical parse system block would come in under the 516 INR per thousand published here.
 
 **No delta is published for what a capable model buys over the stub.** The offline stub proposes from a fixed list in a fixed order. It cannot change whether a posting is correct, because the model is never asked whether it was right, and the eleven-case suite passing on it is a statement about the verifier rather than about the stub. But how many more exceptions a real model would clear is unmeasured, and putting a number on it would be exactly the class of unverified claim this document exists to prevent.
 
@@ -160,7 +188,7 @@ The pathology mix reflects documented Razorpay settlement mechanics: paise-denom
 
 **Real merchant data will contain things the generator does not model.** Every accuracy figure in this repository should be read as a statement about the system's behaviour on a distribution chosen to be plausible, not as a measurement of the Indian merchant base.
 
-The exception economics are modelled too. The 2,400 INR cost of unwinding one wrong posting is an assumption, printed wherever it is used so a reader can substitute their own, and the 112,221 INR held-queue total rests on a configured analyst handling time.
+The exception economics are modelled too. The 2,400 INR cost of unwinding one wrong posting is an assumption, printed wherever it is used so a reader can substitute their own, and the 125,009 INR held-queue total rests on a configured analyst handling time.
 
 The archetype table is likewise modelled. The spread and twin-mass values come from configured ticket distributions chosen to be plausible for each merchant type. It describes how the estimator behaves across distribution shapes over stated assumptions. It is not market data and must not be presented as such.
 
@@ -178,4 +206,4 @@ Being able to name what was left out, why, and exactly which population it would
 
 ---
 
-*This document is generated from run `run_20260903_0358`, seed `20260826`, by `manhattan bench`. Its source is `docs/LIMITATIONS.tmpl.md`. No figure in it is typed by hand, so it cannot come to describe a run other than the one that produced [RESULTS.md](RESULTS.md) and [README.md](README.md).*
+*This document is generated from run `run_20260903_0459`, seed `20260826`, by `manhattan bench`. Its source is `docs/LIMITATIONS.tmpl.md`. No figure in it is typed by hand, so it cannot come to describe a run other than the one that produced [RESULTS.md](RESULTS.md) and [README.md](README.md).*

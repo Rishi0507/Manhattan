@@ -42,6 +42,22 @@ Manhattan now measures the density by sampling subset sums from the actual pool.
 
 The swept numbers are the ones to quote about the system; the single-pool pair describes one fixture and nothing more. The ordering is what the design rests on and it holds in both: the sampled estimator is closer to the counted truth than the closed form, everywhere it has been measured. Both are carried on every receipt.
 
+### The index orders outcomes within a cardinality, not across all of them
+
+This is the sharpest limit on the commercial claim and it was found in this project's own sweep rather than pointed out afterwards.
+
+Read flat across all {{ .D.SweptConfigs }} swept configurations, the collision index does **not** order outcomes cleanly. Travel at pool 220 with index 4.64 verifies nothing; travel at pool 70 with index 6.03 verifies everything. Marketplace at 150 with index 5.87 verifies nothing; marketplace at 48 with index 5.96 verifies everything. Higher predicted index, better observed outcome, twice.
+
+Segmented by batch cardinality, which is the variable the index has to be read against, the verified rate is monotone in the index at cardinality {{ ints .D.MonotoneAt }} and not at {{ ints .D.NotMonotoneAt }}. The reason is a property of the estimator: the index is an *expected* number of colliding subsets, and at small cardinality the enumeration is small enough that the realised count is frequently one where the expectation is five.
+
+Two consequences, and only one of them is comfortable.
+
+**The failure direction is safe.** Being conservative means refusing configurations that could have verified. The wrong-posting rate is zero in every band of every cardinality{{ if .D.AnyBandWrong }}, except where RESULTS.md notes otherwise{{ end }}, so this costs recall and never precision.
+
+**The sales claim has to be narrower than "one pass over historical amounts predicts your auto-post rate".** It predicts it at the cardinalities where refusal actually binds, and under-predicts it below them. Quoting the flat version would be quoting something this repository's own data contradicts.
+
+## The estimator is still an estimator
+
 **But the sampled estimator is still an estimator.** Its errors run in the direction that costs recall rather than precision (an index that is too low makes the gate accept a slightly larger region, and the exhaustive count inside that region catches the rivals anyway), and that asymmetry is the entire justification for admitting a heuristic into an otherwise deterministic pipeline. A badly calibrated threshold will still reject verifiable settlements, and because the index also sets `k*`, a bad threshold shrinks the searched region as well as the accepted one.
 
 At large `n` the sampled estimator remains conservative by a factor of several. The calibration sweep measures this rather than assuming it away.
@@ -106,7 +122,7 @@ The band is scaled by the **witness** cardinality, not the pool size. A pool-wid
 
 An action that cites a real record in a real feed may post. An action that changes a filter, a window or a constraint may not, however cleanly the accounting identity closes afterwards.
 
-That rule exists because of a measured failure rather than a principle chosen in advance. Without it, an agent able to retune narrowing produced **two wrong postings in three hundred settlements**: it tightened a value-date window, the candidate pool fell from 44 records to 40, an `AMBIGUOUS` settlement became `VERIFIED`, and the answer was wrong because the tightening had cut real records out of the batch. Every check passed, including the completeness probe, because the surviving rival differed from the found witness by more than the probe's depth bound.
+That rule exists because of a measured failure rather than a principle chosen in advance. Without it, an agent able to retune narrowing produced **two wrong postings in three hundred settlements**. That figure is recorded by hand from an earlier build and is the only number in this document not emitted by run `{{ .S.RunID }}`, because the build that produced it no longer exists. What happened: it tightened a value-date window, the candidate pool fell from 44 records to 40, an `AMBIGUOUS` settlement became `VERIFIED`, and the answer was wrong because the tightening had cut real records out of the batch. Every check passed, including the completeness probe, because the surviving rival differed from the found witness by more than the probe's depth bound.
 
 The consequence is a real ceiling, and it is a ceiling on the mechanism rather than a shortfall in the result. Most refusals are `UNDERDETERMINED`, caused by a pool that is too wide, and the agent can prove exactly what would fix them but is not permitted to act on it. On the shipped benchmark it repairs **{{ .S.AgentRepaired }}** settlements into postings and produces **{{ .S.AgentProvenCures }}** proven cures, out of the {{ .D.ExceptionsEntered }} that entered the loop.
 
@@ -139,6 +155,18 @@ This is a real dependency and it is asserted by a test rather than hoped for.
 Memory grows with `C(n/2, at most k*)`. It is bounded across the accept region and guarded by a configured ceiling checked *before* allocation, but a merchant with pools above roughly 1,000 candidates at `k = 3` sits near it: **{{ i .D.PeakEnvelopeMB }} MB** at the top of the measured envelope.
 
 Two memory figures appear in this repository and they measure different things. **{{ i .S.PeakMemoryMB }} MB** is the peak across the whole {{ .S.Settlements }}-settlement batch, whose narrowed pools run from {{ .S.Pools.NarrowedMin }} to {{ .S.Pools.NarrowedMax }} candidates. **{{ i .D.PeakEnvelopeMB }} MB** is the top of the resource envelope, which deliberately probes a 1,000-candidate pool that no merchant in the benchmark has. Neither figure is wrong. Quoting the first one as a ceiling would be.
+
+---
+
+## The report-defect rate is an assumption, and the comparison rests on it
+
+The measured answer to "we already ship that mapping" depends on a generated defect rate of {{ pct1 .D.DefectRatePct }}, and that figure is a modelling choice rather than an observation of any real gateway.
+
+It is deliberately modest, because the argument does not need reports to be bad. It needs them to be occasionally wrong in a way nothing downstream can detect, which is a much weaker and much more defensible claim. But if a gateway's true defect rate is a tenth of this, the lookup's {{ .D.B1Wrong }} wrong postings become two or three, and the case for an independent reconstruction is correspondingly smaller in volume terms. It is not smaller in kind: the wrong postings that remain are still silent, still unattributable, and still found at audit rather than at posting.
+
+The three defect shapes modelled (an omitted chargeback raised against an earlier cycle, a payment named from the previous cycle, a mapping short by one) are chosen as plausible rather than sampled from anything. A payments engineer will know better than this generator does which of them actually occurs and at what rate, and that is a conversation this document invites rather than forecloses.
+
+**What is not an assumption** is the structural point underneath it. A reconciliation whose only check on the settlement report is the settlement report cannot detect a defective one at any rate, including zero. Manhattan flagged {{ .D.DefectsCaught }} of {{ .D.Defects }} and missed {{ .D.DefectsMissed }} because it has an independent account of the money, and that property does not depend on how often the report is wrong.
 
 ---
 

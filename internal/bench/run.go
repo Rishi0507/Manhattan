@@ -15,6 +15,7 @@ import (
 	"github.com/Rishi0507/manhattan/internal/guards"
 	"github.com/Rishi0507/manhattan/internal/llm"
 	"github.com/Rishi0507/manhattan/internal/model"
+	"github.com/Rishi0507/manhattan/internal/money"
 	"github.com/Rishi0507/manhattan/internal/narrow"
 	"github.com/Rishi0507/manhattan/internal/pipeline"
 )
@@ -39,6 +40,22 @@ type Summary struct {
 	B0Posted      int `json:"b0_auto_posted"`
 	B0PostedWrong int `json:"b0_auto_posted_wrong"`
 	B0Unresolved  int `json:"b0_unresolved"`
+
+	// B1 is the lookup: read the settlement report's stated mapping and post
+	// it. It is the answer every payments person gives to this project, and it
+	// is measured here rather than argued with.
+	//
+	// Where the report is right, B1 is right, instantly and for free, and
+	// these numbers say so plainly. What it cannot do is notice when the
+	// report is wrong, because its only check on the report is the report.
+	B1Posted        int `json:"b1_auto_posted"`
+	B1PostedWrong   int `json:"b1_auto_posted_wrong"`
+	B1DefectiveRpts int `json:"report_defects_present"`
+	// B1CaughtByUs counts defective reports where Manhattan's independent
+	// reconstruction did NOT agree with the report, so a discrepancy would
+	// have been raised. This is the number that answers the question.
+	B1CaughtByUs int `json:"report_defects_manhattan_would_flag"`
+	B1MissedByUs int `json:"report_defects_manhattan_would_miss"`
 
 	MedianLatencyMS float64 `json:"median_latency_ms"`
 	P95LatencyMS    float64 `json:"p95_latency_ms"`
@@ -116,8 +133,15 @@ type Summary struct {
 
 	// ExceptionCostINR totals the per-receipt exception cost across the whole
 	// held queue, so the refusal has a price attached rather than only a
-	// principle.
-	ExceptionCostINR int `json:"exception_cost_inr_total"`
+	// principle. ExceptionMinutes is the analyst time behind it, and
+	// ExceptionValuePaise is the money sitting unposted while it is worked.
+	ExceptionCostINR    int         `json:"exception_cost_inr_total"`
+	ExceptionMinutes    int         `json:"exception_minutes_total"`
+	ExceptionValuePaise money.Paise `json:"exception_value_at_stake_paise"`
+	// ExceptionCostSpread is the cheapest and dearest row in the queue, which
+	// is the number that says whether sorting it means anything.
+	ExceptionCostMin int `json:"exception_cost_inr_min"`
+	ExceptionCostMax int `json:"exception_cost_inr_max"`
 
 	// TopExceptions is the actual backlog, sorted by cost, so the honest
 	// exception list the track asks for is exhibited rather than argued for.
@@ -192,15 +216,25 @@ type PoolStats struct {
 
 // ExceptionRow is one line of the held queue as an operator would see it.
 type ExceptionRow struct {
-	Ref         string  `json:"settlement_ref"`
-	Archetype   string  `json:"archetype"`
-	Status      string  `json:"status"`
-	CostINR     int     `json:"exception_cost_inr"`
-	PoolN       int     `json:"pool_n"`
-	Cause       string  `json:"cause"`
-	Remediation string  `json:"remediation"`
-	AgentTouch  bool    `json:"agent_worked_it"`
-	Index       float64 `json:"collision_index"`
+	Ref       string `json:"settlement_ref"`
+	Archetype string `json:"archetype"`
+	Status    string `json:"status"`
+	// ValuePaise is the credit that stays unposted while this sits in the
+	// queue, and Minutes is what clearing it is estimated to take. The queue
+	// is ordered by the first divided by the second, because that is what
+	// "work the queue in the order that clears the most money per hour"
+	// literally means, and ordering by handling cost alone would put a
+	// forty-five minute investigation of a small credit above a twelve minute
+	// data fix on a large one.
+	ValuePaise  money.Paise `json:"value_at_stake_paise"`
+	Minutes     int         `json:"handling_minutes"`
+	INRPerHour  float64     `json:"value_cleared_per_analyst_hour_inr"`
+	CostINR     int         `json:"exception_cost_inr"`
+	PoolN       int         `json:"pool_n"`
+	Cause       string      `json:"cause"`
+	Remediation string      `json:"remediation"`
+	AgentTouch  bool        `json:"agent_worked_it"`
+	Index       float64     `json:"collision_index"`
 }
 
 // ArchetypeResult is one merchant shape's measured outcome.
@@ -422,10 +456,55 @@ func RunBatch(ctx context.Context, spec BatchSpec, provider llm.Provider) (*evid
 
 			// B0 on identical inputs.
 			m := eng.Merchants[credit.MerchantID]
+			byID := make(map[string]model.Record, len(eng.Records))
+			for _, r := range eng.Records {
+				byID[r.ID] = r
+			}
+			for _, r := range eng.Unjoined {
+				byID[r.ID] = r
+			}
 			nc := cfg.Narrow
 			nc.CycleDays = m.SettlementCycleDays
 			nc.EnforceInstrument = m.InstrumentSegregated
 			pool := narrow.Apply(eng.Records, credit, m, nc).Pool
+
+			// B1, the lookup. It reads the report's mapping directly; the
+			// pipeline above never saw it.
+			if stated, ok := ds.ReportedMapping[credit.Ref]; ok {
+				b1 := baseline.TrustReport(credit, stated, byID)
+				defective := ds.ReportDefects[credit.Ref] != ""
+				if defective {
+					sum.B1DefectiveRpts++
+				}
+				if b1.Posted_ {
+					sum.B1Posted++
+					// Scored against the FULL ground truth rather than the
+					// attributable subset. Manhattan is scored on the
+					// attributable subset because a zero-contribution record is
+					// invisible to any amount-based method, but B1 is not doing
+					// arithmetic: it is copying a list of record ids, and that
+					// list legitimately contains records that moved no money.
+					// Scoring it on the reduced set would mark it wrong for
+					// being right, which is the mirror image of the mistake
+					// this benchmark exists to avoid.
+					if !b1.Correct(ds.GroundTruth[credit.Ref]) {
+						sum.B1PostedWrong++
+					}
+				}
+				// Would Manhattan have raised a discrepancy? It posts only on
+				// a proof, so a defective report is caught whenever Manhattan
+				// either refused or reconstructed something different. It is
+				// missed only if Manhattan verified the same wrong batch, and
+				// that cannot happen while wrong postings are zero.
+				if defective {
+					agrees := rec.Status == evidence.StatusVerified && sameSet(rec.Witness, stated)
+					if agrees {
+						sum.B1MissedByUs++
+					} else {
+						sum.B1CaughtByUs++
+					}
+				}
+			}
 
 			b0start := time.Now()
 			b0 := baseline.Match(pool, credit.Amount, credit.DeclaredTxnCount, baseline.DefaultConfig())
@@ -589,11 +668,19 @@ func RunBatch(ctx context.Context, spec BatchSpec, provider llm.Provider) (*evid
 
 		// The held queue, priced and sorted, which is the deliverable the
 		// track actually asks for.
+		sum.ExceptionCostMin = 1 << 30
 		for _, r := range store.All() {
 			if r.Status == evidence.StatusVerified {
 				continue
 			}
 			sum.ExceptionCostINR += r.ExceptionCostINR
+			sum.ExceptionMinutes += r.ExceptionMinutes
+			sum.ExceptionValuePaise += r.TargetPaise.Abs()
+			sum.ExceptionCostMin = minInt(sum.ExceptionCostMin, r.ExceptionCostINR)
+			sum.ExceptionCostMax = maxInt(sum.ExceptionCostMax, r.ExceptionCostINR)
+		}
+		if sum.ExceptionCostMin == 1<<30 {
+			sum.ExceptionCostMin = 0
 		}
 		sum.TopExceptions = topExceptions(store, archOf, 15)
 	}
@@ -688,11 +775,16 @@ func topExceptions(store *evidence.Store, archOf map[string]string, n int) []Exc
 			Ref:        r.SettlementRef,
 			Archetype:  archOf[r.SettlementRef],
 			Status:     string(r.Status),
+			ValuePaise: r.TargetPaise.Abs(),
+			Minutes:    r.ExceptionMinutes,
 			CostINR:    r.ExceptionCostINR,
 			PoolN:      r.Pool.N,
 			Cause:      r.Claim,
 			AgentTouch: r.Agent.Invoked,
 			Index:      r.Feasibility.IndexAtKStar,
+		}
+		if row.Minutes > 0 {
+			row.INRPerHour = float64(row.ValuePaise) / 100 * 60 / float64(row.Minutes)
 		}
 		if len(r.Remediation) > 0 {
 			row.Remediation = r.Remediation[0].Action
@@ -703,8 +795,8 @@ func topExceptions(store *evidence.Store, archOf map[string]string, n int) []Exc
 		rows = append(rows, row)
 	}
 	sort.SliceStable(rows, func(i, j int) bool {
-		if rows[i].CostINR != rows[j].CostINR {
-			return rows[i].CostINR > rows[j].CostINR
+		if rows[i].INRPerHour != rows[j].INRPerHour {
+			return rows[i].INRPerHour > rows[j].INRPerHour
 		}
 		return rows[i].Ref < rows[j].Ref
 	})

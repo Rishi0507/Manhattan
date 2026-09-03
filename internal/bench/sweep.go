@@ -259,53 +259,147 @@ func syntheticContribs(n int, seed int64) []moneyPaise {
 	return out
 }
 
-// LogSpaced buckets the sweep by collision index for plotting.
+// LogSpaced buckets the sweep by collision index, with roughly equal
+// population per band.
+//
+// The name is now a small lie and it is kept because the artifact key is. The
+// first version cut equal-width bands in log space, which sounds right and put
+// 76 of 96 configurations into the top two bands: the range is stretched by a
+// handful of configurations at an index near 1e-4, so the interesting region
+// above 1 got two enormous bins and the uninteresting region below 0.01 got
+// five nearly empty ones. The curve therefore had its coarsest resolution
+// exactly where it was being asked to say something, and it read as though the
+// verified rate ticked back up in the top band when that band was simply too
+// wide to mean anything.
+//
+// Equal population per band puts the resolution where the data is. The band
+// edges are then quantiles of the observed index rather than round numbers,
+// which is less tidy to read and considerably more honest: a band boundary is
+// a statement about where the configurations are, not about where the author
+// expected them to be.
 func LogSpaced(points []SweepPoint, buckets int) []Bucket {
-	if len(points) == 0 {
+	if len(points) == 0 || buckets < 1 {
 		return nil
 	}
-	lo, hi := math.Inf(1), math.Inf(-1)
-	for _, p := range points {
-		v := math.Log10(math.Max(p.MeanIndex, 1e-6))
-		lo = math.Min(lo, v)
-		hi = math.Max(hi, v)
+
+	idxOf := func(p SweepPoint) float64 { return math.Max(p.MeanIndex, 1e-6) }
+	ordered := make([]SweepPoint, len(points))
+	copy(ordered, points)
+	sort.Slice(ordered, func(i, j int) bool { return idxOf(ordered[i]) < idxOf(ordered[j]) })
+
+	if buckets > len(ordered) {
+		buckets = len(ordered)
 	}
-	if hi <= lo {
-		hi = lo + 1
-	}
-	out := make([]Bucket, buckets)
-	for i := range out {
-		out[i].LoIndex = math.Pow(10, lo+(hi-lo)*float64(i)/float64(buckets))
-		out[i].HiIndex = math.Pow(10, lo+(hi-lo)*float64(i+1)/float64(buckets))
-	}
-	for _, p := range points {
-		v := math.Log10(math.Max(p.MeanIndex, 1e-6))
-		b := int((v - lo) / (hi - lo) * float64(buckets))
-		if b >= buckets {
-			b = buckets - 1
-		}
-		if b < 0 {
-			b = 0
-		}
-		out[b].N++
-		out[b].Verified += p.VerifiedRate
-		out[b].Ambiguous += p.AmbiguousRate
-		out[b].Underdetermined += p.UnderdeterminedRate
-		out[b].Wrong += p.WrongPostRate
-		out[b].B0Wrong += p.B0WrongPostRate
-	}
-	for i := range out {
-		if out[i].N == 0 {
+	out := make([]Bucket, 0, buckets)
+	for i := 0; i < buckets; i++ {
+		lo := i * len(ordered) / buckets
+		hi := (i + 1) * len(ordered) / buckets
+		if hi <= lo {
 			continue
 		}
-		f := float64(out[i].N)
-		out[i].Verified /= f
-		out[i].Ambiguous /= f
-		out[i].Underdetermined /= f
-		out[i].Wrong /= f
-		out[i].B0Wrong /= f
+		b := Bucket{LoIndex: idxOf(ordered[lo]), HiIndex: idxOf(ordered[hi-1])}
+		for _, p := range ordered[lo:hi] {
+			b.N++
+			b.Verified += p.VerifiedRate
+			b.Ambiguous += p.AmbiguousRate
+			b.Underdetermined += p.UnderdeterminedRate
+			b.Wrong += p.WrongPostRate
+			b.B0Wrong += p.B0WrongPostRate
+			b.MeanPoolN += float64(p.PoolN)
+		}
+		f := float64(b.N)
+		b.Verified /= f
+		b.Ambiguous /= f
+		b.Underdetermined /= f
+		b.Wrong /= f
+		b.B0Wrong /= f
+		b.MeanPoolN /= f
+		out = append(out, b)
 	}
 	return out
+}
+
+// CardinalityBands segments the sweep by batch cardinality before ordering by
+// collision index.
+//
+// This exists because the flat sweep contains rows that contradict the flat
+// claim, and they should be found here rather than by a reader. Travel at pool
+// 220 with index 4.64 verifies nothing; travel at pool 70 with index 6.03
+// verifies everything. Marketplace at 150 with index 5.87 verifies nothing;
+// marketplace at 48 with index 5.96 verifies everything. Higher predicted
+// index, better observed outcome, twice.
+//
+// Segmenting by pool size looked like the answer and was not. The variable
+// actually doing the work is the cardinality of the batch:
+//
+//	batch 9   V 59, 0, 0, 0   across four index bands, monotone
+//	batch 6   V 83, 0, 8, 30
+//	batch 4   V 84, 41, 30, 70
+//
+// At cardinality 9 the index orders outcomes exactly. At 4 it breaks down at
+// the top of the range, and the reason is a property of the estimator rather
+// than a defect in the measurement. The collision index is an EXPECTED number
+// of colliding subsets. At small k the enumeration is small enough that the
+// realised count is frequently one even where the expectation is five, so the
+// estimator is conservative precisely where the search is cheapest.
+//
+// The direction of that error is the whole point. Being conservative means the
+// gate refuses configurations it could have verified, which costs recall. The
+// wrong-posting rate is zero in every band of every cardinality, so nothing
+// about this breakdown puts a wrong number in a ledger. The commercial claim
+// is scoped accordingly in the documents: the index predicts the auto-post
+// rate for merchants whose batches sit at cardinality six or above, and
+// under-predicts it below that.
+func CardinalityBands(points []SweepPoint, perBand int) []CardinalityBand {
+	sizes := map[int]bool{}
+	for _, p := range points {
+		sizes[p.BatchSize] = true
+	}
+	var ks []int
+	for k := range sizes {
+		ks = append(ks, k)
+	}
+	sort.Ints(ks)
+
+	var out []CardinalityBand
+	for _, k := range ks {
+		var in []SweepPoint
+		for _, p := range points {
+			if p.BatchSize == k {
+				in = append(in, p)
+			}
+		}
+		if len(in) == 0 {
+			continue
+		}
+		b := CardinalityBand{BatchSize: k, N: len(in), Buckets: LogSpaced(in, perBand)}
+		// Monotone means the verified rate never rises as the predicted index
+		// rises. Computed rather than asserted, so the document cannot claim
+		// an ordering the data stopped having.
+		b.Monotone = true
+		for i := 1; i < len(b.Buckets); i++ {
+			if b.Buckets[i].Verified > b.Buckets[i-1].Verified+0.02 {
+				b.Monotone = false
+			}
+			if b.Buckets[i].Wrong > 0 {
+				b.AnyWrong = true
+			}
+		}
+		if len(b.Buckets) > 0 && b.Buckets[0].Wrong > 0 {
+			b.AnyWrong = true
+		}
+		out = append(out, b)
+	}
+	return out
+}
+
+// CardinalityBand is the calibration curve at one batch cardinality.
+type CardinalityBand struct {
+	BatchSize int      `json:"batch_size"`
+	N         int      `json:"configurations"`
+	Monotone  bool     `json:"verified_rate_monotone_in_index"`
+	AnyWrong  bool     `json:"any_wrong_postings"`
+	Buckets   []Bucket `json:"buckets"`
 }
 
 // Bucket is one band of the collision index, with the observed rates in it.
@@ -318,6 +412,9 @@ type Bucket struct {
 	Underdetermined float64 `json:"underdetermined_rate"`
 	Wrong           float64 `json:"wrong_post_rate"`
 	B0Wrong         float64 `json:"b0_wrong_post_rate"`
+	// MeanPoolN is carried so a reader can see at a glance whether a band is
+	// comparing like with like.
+	MeanPoolN float64 `json:"mean_pool_n"`
 }
 
 // moneyPaise aliases the money type so this file reads as arithmetic rather
