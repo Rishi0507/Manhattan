@@ -53,7 +53,7 @@
     "pool_n": 40,
     "k_star": 12,
     "collision_index": 6.993192879457462,
-    "latency_ms": 17,
+    "latency_ms": 22,
     "receipt": {
       "settlement_ref": "bank_credit_2026_08_25_1003",
       "run_id": "case_01_clean_positive_only",
@@ -324,8 +324,8 @@
         "feasibility": 7,
         "fee_check": 0,
         "narrow": 0,
-        "prove": 2,
-        "reconstruct": 6
+        "prove": 3,
+        "reconstruct": 10
       },
       "policy_version": "fees_2026_08",
       "replay_seed": 1001
@@ -678,11 +678,11 @@
       },
       "timing_ms": {
         "entropy_gate": 0,
-        "feasibility": 4,
+        "feasibility": 7,
         "fee_check": 0,
         "narrow": 0,
-        "prove": 2,
-        "reconstruct": 5
+        "prove": 0,
+        "reconstruct": 4
       },
       "policy_version": "fees_2026_08",
       "replay_seed": 1002
@@ -758,7 +758,7 @@
     "pool_n": 258,
     "k_star": 3,
     "collision_index": 0.16817783731093572,
-    "latency_ms": 67,
+    "latency_ms": 60,
     "receipt": {
       "settlement_ref": "bank_credit_2026_08_23_1001",
       "run_id": "case_03_large_batch_complement",
@@ -1289,11 +1289,11 @@
       },
       "timing_ms": {
         "entropy_gate": 0,
-        "feasibility": 4,
+        "feasibility": 8,
         "fee_check": 0,
         "narrow": 0,
-        "prove": 4,
-        "reconstruct": 58
+        "prove": 0,
+        "reconstruct": 51
       },
       "policy_version": "fees_2026_08",
       "replay_seed": 1003
@@ -1370,7 +1370,7 @@
     "pool_n": 318,
     "k_star": 4,
     "collision_index": 0.617929367521851,
-    "latency_ms": 16,
+    "latency_ms": 9,
     "receipt": {
       "settlement_ref": "bank_credit_2026_08_23_1001",
       "run_id": "case_04_underdetermined",
@@ -1560,7 +1560,7 @@
       },
       "timing_ms": {
         "entropy_gate": 0,
-        "feasibility": 16,
+        "feasibility": 9,
         "fee_check": 0,
         "narrow": 0
       },
@@ -1794,7 +1794,7 @@
     "pool_n": 34,
     "k_star": 12,
     "collision_index": 1.343340077841329,
-    "latency_ms": 11,
+    "latency_ms": 10,
     "receipt": {
       "settlement_ref": "bank_credit_2026_08_25_1003",
       "run_id": "case_05_ambiguous_twin",
@@ -2043,7 +2043,7 @@
         "fee_check": 0,
         "narrow": 0,
         "prove": 0,
-        "reconstruct": 3
+        "reconstruct": 2
       },
       "policy_version": "fees_2026_08",
       "replay_seed": 1005
@@ -2117,7 +2117,7 @@
     "pool_n": 34,
     "k_star": 12,
     "collision_index": 2.4272189000134428,
-    "latency_ms": 13,
+    "latency_ms": 9,
     "receipt": {
       "settlement_ref": "bank_credit_2026_08_25_1003",
       "run_id": "case_06_fee_anomaly_observed",
@@ -2387,10 +2387,10 @@
       },
       "timing_ms": {
         "entropy_gate": 0,
-        "feasibility": 7,
+        "feasibility": 6,
         "fee_check": 0,
         "narrow": 0,
-        "prove": 1,
+        "prove": 0,
         "reconstruct": 3
       },
       "policy_version": "fees_2026_08",
@@ -2465,7 +2465,7 @@
     "pool_n": 34,
     "k_star": 12,
     "collision_index": 2.424857733454302,
-    "latency_ms": 15,
+    "latency_ms": 10,
     "receipt": {
       "settlement_ref": "bank_credit_2026_08_25_1003",
       "run_id": "case_07_fee_check_circular",
@@ -2735,11 +2735,11 @@
       },
       "timing_ms": {
         "entropy_gate": 0,
-        "feasibility": 8,
+        "feasibility": 6,
         "fee_check": 0,
         "narrow": 0,
-        "prove": 2,
-        "reconstruct": 5
+        "prove": 0,
+        "reconstruct": 4
       },
       "policy_version": "fees_2026_08",
       "replay_seed": 1006
@@ -2814,7 +2814,7 @@
     "pool_n": 26,
     "k_star": 12,
     "collision_index": 0.06644663346613545,
-    "latency_ms": 11,
+    "latency_ms": 13,
     "receipt": {
       "settlement_ref": "bank_credit_2026_08_25_1003",
       "run_id": "case_08_rounding_inferred",
@@ -3088,11 +3088,11 @@
       },
       "timing_ms": {
         "entropy_gate": 0,
-        "feasibility": 9,
+        "feasibility": 13,
         "fee_check": 0,
         "narrow": 0,
         "prove": 0,
-        "reconstruct": 1
+        "reconstruct": 0
       },
       "policy_version": "fees_2026_08",
       "replay_seed": 1008
@@ -3167,7 +3167,7 @@
     "pool_n": 25,
     "k_star": 12,
     "collision_index": 0.019657506384222142,
-    "latency_ms": 26,
+    "latency_ms": 27,
     "receipt": {
       "settlement_ref": "bank_credit_2026_08_25_1003",
       "run_id": "case_09_unjoined_disputes_feed",
@@ -3473,11 +3473,11 @@
       },
       "timing_ms": {
         "entropy_gate": 0,
-        "feasibility": 6,
+        "feasibility": 10,
         "fee_check": 0,
         "narrow": 0,
-        "prove": 2,
-        "reconstruct": 4
+        "prove": 0,
+        "reconstruct": 10
       },
       "policy_version": "fees_2026_08",
       "replay_seed": 1009
@@ -3550,7 +3550,7 @@
     "pool_n": 29,
     "k_star": 12,
     "collision_index": 0.3749135973981732,
-    "latency_ms": 10,
+    "latency_ms": 15,
     "receipt": {
       "settlement_ref": "bank_credit_2026_08_25_1003",
       "run_id": "case_10_narrowing_sensitive",
@@ -3837,11 +3837,11 @@
       },
       "timing_ms": {
         "entropy_gate": 0,
-        "feasibility": 4,
+        "feasibility": 10,
         "fee_check": 0,
         "narrow": 0,
-        "prove": 0,
-        "reconstruct": 6
+        "prove": 2,
+        "reconstruct": 3
       },
       "policy_version": "fees_2026_08",
       "replay_seed": 1010

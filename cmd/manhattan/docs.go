@@ -369,13 +369,16 @@ func citationLine(c agent.Citation) string {
 }
 
 var docFuncs = template.FuncMap{
-	"pct":   func(f float64) string { return fmt.Sprintf("%.0f%%", f) },
-	"pct1":  func(f float64) string { return fmt.Sprintf("%.1f%%", f) },
-	"rate":  func(f float64) string { return fmt.Sprintf("%.0f%%", f*100) },
-	"f1":    func(f float64) string { return fmt.Sprintf("%.1f", f) },
-	"f2":    func(f float64) string { return fmt.Sprintf("%.2f", f) },
-	"f3g":   func(f float64) string { return fmt.Sprintf("%.3g", f) },
-	"i":     func(f float64) string { return fmt.Sprintf("%.0f", f) },
+	"pct":  func(f float64) string { return fmt.Sprintf("%.0f%%", f) },
+	"pct1": func(f float64) string { return fmt.Sprintf("%.1f%%", f) },
+	"rate": func(f float64) string { return fmt.Sprintf("%.0f%%", f*100) },
+	"f1":   func(f float64) string { return fmt.Sprintf("%.1f", f) },
+	"f2":   func(f float64) string { return fmt.Sprintf("%.2f", f) },
+	"f3g":  func(f float64) string { return fmt.Sprintf("%.3g", f) },
+	"i":    func(f float64) string { return fmt.Sprintf("%.0f", f) },
+	// ni is a rounded float with thousands separators, for figures a reader
+	// reads as a quantity rather than as a measurement.
+	"ni":    func(f float64) string { return commas(int64(f + 0.5)) },
 	"n":     func(n int) string { return commas(int64(n)) },
 	"n64":   func(n int64) string { return commas(n) },
 	"lower": strings.ToLower,

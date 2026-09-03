@@ -19,11 +19,11 @@ The brief asks for one finance-ops loop closed across a batch of 50 or more synt
 
 | requirement | what this run did |
 |---|---|
-| 50+ record batch | **{{ n .S.Pools.TotalRecords }} records** across **{{ .S.Settlements }} settlements**, pools reaching **{{ .S.Pools.RawMax }} records** before narrowing and **{{ .S.Pools.NarrowedMax }}** after |
+| 50+ record batch | **{{ n .S.Pools.TotalRecords }} records** across **{{ .S.Settlements }} settlements**, pools reaching **{{ n .S.Pools.RawMax }} records** before narrowing and **{{ .S.Pools.NarrowedMax }}** after |
 | one loop, closed | bank credit to posted ledger entry, or to a named exception, end to end |
 | match rate reported | **{{ .S.AutoPosted }} of {{ .S.Settlements }}** auto-posted, {{ pct .D.PostRate }}, with **{{ .S.AutoPostedWrong }} wrong** |
 | exceptions it could not resolve | **{{ .S.Exceptions }}**, each with a named cause, a computed remedy and a price. [The list is below.](#the-exception-list-is-the-deliverable) |
-| throughput | **{{ i .S.PerHour }} settlements per hour**, {{ f1 .S.MedianLatencyMS }} ms median, peak {{ i .S.PeakMemoryMB }} MB |
+| throughput | **{{ ni .S.PerHour }} settlements per hour**, {{ f1 .S.MedianLatencyMS }} ms median, peak {{ i .S.PeakMemoryMB }} MB |
 
 ---
 
@@ -73,9 +73,9 @@ Finding one subset that sums correctly is easy and nearly worthless: subsets gro
 | **auto-posted WRONG** | **{{ .S.AutoPostedWrong }}** | **{{ .S.B0PostedWrong }}** ({{ pct .D.B0WrongOfPosted }} of its postings) |
 | held for review | {{ .S.Exceptions }} | {{ .S.B0Unresolved }} |
 | median latency | {{ f1 .S.MedianLatencyMS }} ms | {{ f1 .S.B0MedianMS }} ms |
-| throughput | {{ i .S.PerHour }} / hour | |
+| throughput | {{ ni .S.PerHour }} / hour | |
 | input tokens per 1k | {{ f2 (div .S.AxiomTokPer1k 1e6) }} M | {{ f2 (div .S.B0TokensPer1k 1e6) }} M |
-| cost per 1k settlements | {{ i .D.INRPer1k }} INR | {{ i .D.B0INRPer1k }} INR |
+| cost per 1k settlements | {{ ni .D.INRPer1k }} INR | {{ ni .D.B0INRPer1k }} INR |
 
 The five statuses are above the headline on purpose. `AMBIGUOUS` at {{ .D.StatusAmbiguous }} and `UNDERDETERMINED` at {{ .D.StatusUnderdetermined }} are real, sized populations rather than rhetoric: {{ add .D.StatusAmbiguous .D.StatusUnderdetermined }} settlements where rivals were found or proved to exist. A tool reporting those as matches is reporting a coin flip.
 
@@ -97,14 +97,14 @@ Priced at published `{{ .S.Cost.Model }}` rates, `{{ if .S.PriceIsReal }}actual 
 | model calls | {{ n .S.Cost.Calls }} over {{ .S.Settlements }} settlements |
 | cache hit rate | {{ pct1 (mul .S.Cost.CacheHitRate 100) }} |
 | USD to INR | {{ i .S.Cost.USDToINR }} |
-| **Manhattan** | **${{ f2 .D.USDPer1k }} = {{ i .D.INRPer1k }} INR per 1k** |
-| **B0** | **${{ f2 .D.B0USDPer1k }} = {{ i .D.B0INRPer1k }} INR per 1k** |
+| **Manhattan** | **${{ f2 .D.USDPer1k }} = {{ ni .D.INRPer1k }} INR per 1k** |
+| **B0** | **${{ f2 .D.B0USDPer1k }} = {{ ni .D.B0INRPer1k }} INR per 1k** |
 
 The cache hit rate is {{ pct1 (mul .S.Cost.CacheHitRate 100) }} because a replay run reports no cache reads, so every input token here is priced at the **uncached** rate. A live run caches the parse system block, byte-identical across every settlement, so the real figure is below the one published. The claim is made against Manhattan deliberately.
 
-**B0's token model, since it decides the comparison.** {{ .S.Cost.B0Overhead }} tokens of instruction plus {{ .S.Cost.B0PerRecord }} per candidate record, over a mean narrowed pool of {{ f1 .S.Cost.B0MeanPoolN }}, giving {{ i .S.Cost.B0TokensPerCall }} input tokens per settlement against Manhattan's {{ i .D.InputPerSettl }}. Forty tokens covers one candidate rendered as an id, an amount, a timestamp, an instrument and a kind.
+**B0's token model, since it decides the comparison.** {{ .S.Cost.B0Overhead }} tokens of instruction plus {{ .S.Cost.B0PerRecord }} per candidate record, over a mean narrowed pool of {{ f1 .S.Cost.B0MeanPoolN }}, giving {{ ni .S.Cost.B0TokensPerCall }} input tokens per settlement against Manhattan's {{ ni .D.InputPerSettl }}. Forty tokens covers one candidate rendered as an id, an amount, a timestamp, an instrument and a kind.
 
-That is low on purpose. **B0 is handed Manhattan's narrowing for free**, so it reads a few dozen records rather than the {{ f1 .S.Pools.RawMean }} in the mean unnarrowed universe. Without that narrowing it would pay roughly {{ i .D.UnnarrowedTokens }} tokens per settlement and the gap reported here would be several times wider. A cost advantage argued from a handicapped baseline is not an advantage.
+That is low on purpose. **B0 is handed Manhattan's narrowing for free**, so it reads a few dozen records rather than the {{ f1 .S.Pools.RawMean }} in the mean unnarrowed universe. Without that narrowing it would pay roughly {{ ni .D.UnnarrowedTokens }} tokens per settlement and the gap reported here would be several times wider. A cost advantage argued from a handicapped baseline is not an advantage.
 
 </details>
 
@@ -325,7 +325,7 @@ The head of the queue, sorted by cost, as an operations lead would work it. **[T
 
 The {{ n .D.RemediationEachINR }} INR is an assumption, printed so it can be replaced. It is roughly two hours of a mid-level finance analyst at Indian metro rates: noticing the error, usually at month end and from a reconciliation difference rather than from the posting itself; finding which credit it belonged to; reversing the journal; re-posting; explaining the movement to whoever signs the accounts. It excludes any case that reaches an auditor.
 
-Substitute your own figure; the arithmetic is one multiplication. The conclusion survives a wide range, because B0 only comes out ahead if unwinding a wrong posting costs under {{ i .D.BreakEvenINR }} INR, which is well under an hour of analyst time for an error nobody knows about yet.
+Substitute your own figure; the arithmetic is one multiplication. The conclusion survives a wide range, because B0 only comes out ahead if unwinding a wrong posting costs under {{ ni .D.BreakEvenINR }} INR, which is well under an hour of analyst time for an error nobody knows about yet.
 
 So {{ pct .D.PostRate }} is not a philosophical position. It is the cheaper one.
 
@@ -394,7 +394,7 @@ Benchmarked on synthetic data throughout. The pathology mix reflects documented 
 2. **[RESULTS.md](RESULTS.md)**, the calibration section, which answers whether the system knows in advance when it is about to be wrong. One minute.
 3. **`./run.sh demo`**, which opens on adversarial case 10: narrowing drops a real record, a coincidental subset closes the identity, and the guard catches it. One minute.
 
-Longer: [docs/EXPLAIN.md](docs/EXPLAIN.md) is the whole system from first principles in plain language; [docs/DESIGN.md](docs/DESIGN.md) has every derivation.
+Longer: [docs/EXPLAIN.md](docs/EXPLAIN.md) is the whole system from first principles in plain language; [docs/DESIGN.md](docs/DESIGN.md) has every derivation. The sixty-second walkthrough is scripted in [docs/DEMO-SCRIPT.md](docs/DEMO-SCRIPT.md).
 
 ---
 
@@ -422,6 +422,7 @@ web/               the dashboard: Vite, React, TypeScript, Tailwind
 docs/DESIGN.md     the design, the derivations, what was cut and why
 docs/EXPLAIN.md    the system from first principles, in plain language
 docs/*.tmpl.md     the sources of this file and LIMITATIONS.md
+docs/DEMO-SCRIPT.md  the sixty-second walkthrough, shot by shot
 docs/diagrams/     rendered SVGs of every Mermaid diagram
 RESULTS.md         generated; never typed
 ```

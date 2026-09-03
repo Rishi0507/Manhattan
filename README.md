@@ -19,11 +19,11 @@ The brief asks for one finance-ops loop closed across a batch of 50 or more synt
 
 | requirement | what this run did |
 |---|---|
-| 50+ record batch | **22,150 records** across **498 settlements**, pools reaching **3809 records** before narrowing and **49** after |
+| 50+ record batch | **22,150 records** across **498 settlements**, pools reaching **3,809 records** before narrowing and **49** after |
 | one loop, closed | bank credit to posted ledger entry, or to a named exception, end to end |
 | match rate reported | **161 of 498** auto-posted, 32%, with **0 wrong** |
 | exceptions it could not resolve | **337**, each with a named cause, a computed remedy and a price. [The list is below.](#the-exception-list-is-the-deliverable) |
-| throughput | **97002 settlements per hour**, 13.4 ms median, peak 119 MB |
+| throughput | **97,002 settlements per hour**, 13.4 ms median, peak 119 MB |
 
 ---
 
@@ -73,7 +73,7 @@ Finding one subset that sums correctly is easy and nearly worthless: subsets gro
 | **auto-posted WRONG** | **0** | **226** (59% of its postings) |
 | held for review | 337 | 114 |
 | median latency | 13.4 ms | 3.6 ms |
-| throughput | 97002 / hour | |
+| throughput | 97,002 / hour | |
 | input tokens per 1k | 0.79 M | 1.58 M |
 | cost per 1k settlements | 497 INR | 959 INR |
 
@@ -102,9 +102,9 @@ Priced at published `claude-opus-5` rates, `modelled: no model was billed on thi
 
 The cache hit rate is 0.0% because a replay run reports no cache reads, so every input token here is priced at the **uncached** rate. A live run caches the parse system block, byte-identical across every settlement, so the real figure is below the one published. The claim is made against Manhattan deliberately.
 
-**B0's token model, since it decides the comparison.** 200 tokens of instruction plus 40 per candidate record, over a mean narrowed pool of 34.5, giving 1580 input tokens per settlement against Manhattan's 793. Forty tokens covers one candidate rendered as an id, an amount, a timestamp, an instrument and a kind.
+**B0's token model, since it decides the comparison.** 200 tokens of instruction plus 40 per candidate record, over a mean narrowed pool of 34.5, giving 1,580 input tokens per settlement against Manhattan's 793. Forty tokens covers one candidate rendered as an id, an amount, a timestamp, an instrument and a kind.
 
-That is low on purpose. **B0 is handed Manhattan's narrowing for free**, so it reads a few dozen records rather than the 3678.4 in the mean unnarrowed universe. Without that narrowing it would pay roughly 147335 tokens per settlement and the gap reported here would be several times wider. A cost advantage argued from a handicapped baseline is not an advantage.
+That is low on purpose. **B0 is handed Manhattan's narrowing for free**, so it reads a few dozen records rather than the 3678.4 in the mean unnarrowed universe. Without that narrowing it would pay roughly 147,335 tokens per settlement and the gap reported here would be several times wider. A cost advantage argued from a handicapped baseline is not an advantage.
 
 </details>
 
@@ -440,7 +440,7 @@ Benchmarked on synthetic data throughout. The pathology mix reflects documented 
 2. **[RESULTS.md](RESULTS.md)**, the calibration section, which answers whether the system knows in advance when it is about to be wrong. One minute.
 3. **`./run.sh demo`**, which opens on adversarial case 10: narrowing drops a real record, a coincidental subset closes the identity, and the guard catches it. One minute.
 
-Longer: [docs/EXPLAIN.md](docs/EXPLAIN.md) is the whole system from first principles in plain language; [docs/DESIGN.md](docs/DESIGN.md) has every derivation.
+Longer: [docs/EXPLAIN.md](docs/EXPLAIN.md) is the whole system from first principles in plain language; [docs/DESIGN.md](docs/DESIGN.md) has every derivation. The sixty-second walkthrough is scripted in [docs/DEMO-SCRIPT.md](docs/DEMO-SCRIPT.md).
 
 ---
 
@@ -468,6 +468,7 @@ web/               the dashboard: Vite, React, TypeScript, Tailwind
 docs/DESIGN.md     the design, the derivations, what was cut and why
 docs/EXPLAIN.md    the system from first principles, in plain language
 docs/*.tmpl.md     the sources of this file and LIMITATIONS.md
+docs/DEMO-SCRIPT.md  the sixty-second walkthrough, shot by shot
 docs/diagrams/     rendered SVGs of every Mermaid diagram
 RESULTS.md         generated; never typed
 ```
