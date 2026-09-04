@@ -1,14 +1,14 @@
 flowchart TB
     EX["a settlement that did not post"] --> T{"deterministic triage:<br/>could any action help?"}
-    T -->|"no: amounts do not distinguish,<br/>or a rival already appears,<br/>or nothing left to tighten"| SKIP["not invoked<br/><small>zero model cost</small>"]
-    T -->|"yes"| OBS["<b>observe</b><br/><small>status, pool size, collision index,<br/>twin mass, exact residual,<br/>everything already tried</small>"]
-    OBS --> CH["<b>choose one action</b><br/><small>from a closed typed vocabulary</small>"]
-    CH --> ACT["<b>act</b><br/><small>the action becomes an overlay,<br/>which is data</small>"]
-    ACT --> VER["<b>re-verify</b><br/><small>the ENTIRE stack runs again, unmodified</small>"]
+    T -->|"no: amounts do not distinguish,<br/>or a rival already appears,<br/>or nothing left to tighten"| SKIP["not invoked<br/>zero model cost"]
+    T -->|"yes"| OBS["observe<br/>status, pool size, collision index,<br/>twin mass, exact residual,<br/>everything already tried"]
+    OBS --> CH["choose one action<br/>from a closed typed vocabulary"]
+    CH --> ACT["act<br/>the action becomes an overlay,<br/>which is data"]
+    ACT --> VER["re-verify<br/>the ENTIRE stack runs again, unmodified"]
     VER --> Q{"unique reconstruction?"}
     Q -->|no| OBS
-    Q -->|"yes, and an action<br/>cited a real record"| POST["VERIFIED<br/><small>posts, with the citation</small>"]
-    Q -->|"yes, but only because<br/>a filter was changed"| CURE["proven cure<br/><small>held; the remediation is verified,<br/>not estimated</small>"]
+    Q -->|"yes, and an action<br/>cited a real record"| POST["VERIFIED<br/>posts, with the citation"]
+    Q -->|"yes, but only because<br/>a filter was changed"| CURE["proven cure<br/>held; the remediation is verified,<br/>not estimated"]
 
     style SKIP fill:#f1f3f5,stroke:#6b7480,color:#16181d
     style POST fill:#e7f5ee,stroke:#0a7d4e,color:#16181d

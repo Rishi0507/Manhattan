@@ -177,12 +177,15 @@ export default function App() {
               {/* Aligned on the text baseline rather than centred.
                   An image's baseline is its bottom edge, and this mark's bottom
                   edge IS a baseline rule, so the rule lands exactly on the
-                  wordmark's baseline. Centring it instead pushed the rule below
-                  the text and read as an underline. */}
+                  wordmark's baseline, then nudged down a few pixels so the mark
+                  sits optically centred against the height of the wordmark
+                  block rather than hanging off the top of it. Centring it
+                  geometrically instead pushed the rule below the text and read
+                  as an underline. */}
               <img
                 src="/logo.png"
                 alt=""
-                className="h-[19px] w-auto shrink-0 sm:h-[22px]"
+                className="h-[19px] w-auto shrink-0 translate-y-[3px] sm:h-[22px] sm:translate-y-[4px]"
               />
               <span className="display text-[27px] leading-none font-semibold tracking-[-0.012em] text-ink sm:text-[31px]">
                 Manhattan

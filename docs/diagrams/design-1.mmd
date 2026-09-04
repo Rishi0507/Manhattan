@@ -3,9 +3,9 @@ flowchart LR
     PG[("PG settlement report<br/>payments, fees")] -->|"Leg B"| OMS[("OMS / ledger<br/>orders")]
     PG -.->|"Leg C"| POL[["fee policy config"]]
 
-    LA["<b>Leg A</b> one to many<br/>reference often missing<br/><small>narrowing, then exact reconstruction</small>"]
-    LB["<b>Leg B</b> one to one, keyed<br/><small>deterministic join; unmatched rows become orphans</small>"]
-    LC["<b>Leg C</b> not a join at all<br/><small>independent recomputation and comparison</small>"]
+    LA["Leg A one to many<br/>reference often missing<br/>narrowing, then exact reconstruction"]
+    LB["Leg B one to one, keyed<br/>deterministic join; unmatched rows become orphans"]
+    LC["Leg C not a join at all<br/>independent recomputation and comparison"]
 
     BANK --- LA
     OMS --- LB

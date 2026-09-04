@@ -11,8 +11,8 @@ they move together. Do not retype them from memory.
 
 **On screen:** you, facing camera.
 
-> Hi, I am Rishi. This is Manhattan, my submission for Track 04, the AI Finance
-> Controller. It is an agent that closes the settlement reconciliation loop
+> Hi, I am Rishi. This is Manhattan, my submission for the AI Finance
+> Controller track. It is an agent that closes the settlement reconciliation loop
 > across a thousand records, and the one thing it will not do is guess.
 
 Then cut to the screen. Do not stay on camera past fifteen seconds.

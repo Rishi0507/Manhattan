@@ -4,7 +4,7 @@
 
 **Settlement reconciliation that proves its answers, and refuses when it cannot.**
 
-Track 04, AI Finance Controller · Multi-source settlement reconciliation
+AI Finance Controller · Multi-source settlement reconciliation
 
 Manhattan posts **{{ .D.M1Posted }} of {{ .S.Settlements }}** settlements automatically ({{ pct .D.M1PostRate }}) with **{{ .D.M1Wrong }} wrong**, and hands back {{ .D.M1Held }} exceptions each carrying a named cause, a computed remedy and a price.
 
@@ -412,7 +412,7 @@ Four of the five stop the money and none is a failure. `AMBIGUOUS` at {{ .D.Stat
 flowchart TB
     subgraph SRC["Four sources, which disagree"]
         PG["PG settlement report"]
-        BANK["Bank statement<br/><small>free text, one credit</small>"]
+        BANK["Bank statement<br/>free text, one credit"]
         OMS["OMS / ledger"]
         DIS["Disputes feed"]
     end
@@ -422,12 +422,12 @@ flowchart TB
     OMS --> S1
     DIS --> S1
 
-    S1["<b>1 Parse</b><br/>model reads narration into typed fields"]
-    S2["<b>2 Narrow</b><br/>business constraints, every drop logged"]
-    S3["<b>3 Contribute</b><br/>signed net contribution, integer paise"]
-    S4["<b>4 Gate</b><br/>amount entropy, then feasibility<br/><small>outputs k*, the solver's dispatch parameter</small>"]
-    S5["<b>5 Reconstruct</b><br/>cardinality-dispatched meet in the middle"]
-    S6["<b>6 Prove</b><br/>count rivals, guard completeness, re-derive the identity"]
+    S1["1 Parse<br/>model reads narration into typed fields"]
+    S2["2 Narrow<br/>business constraints, every drop logged"]
+    S3["3 Contribute<br/>signed net contribution, integer paise"]
+    S4["4 Gate<br/>amount entropy, then feasibility<br/>outputs k*, the solver's dispatch parameter"]
+    S5["5 Reconstruct<br/>cardinality-dispatched meet in the middle"]
+    S6["6 Prove<br/>count rivals, guard completeness, re-derive the identity"]
 
     S1 --> S2 --> S3 --> S4 --> S5 --> S6
     S6 --> D{"decision"}
@@ -441,21 +441,21 @@ flowchart TB
     A --> S7
     U --> S7
     NS --> S7
-    UR --> S7["<b>7 Agent</b><br/>observe, choose one action, act, re-verify<br/><small>only a corroborated action may post</small>"]
+    UR --> S7["7 Agent<br/>observe, choose one action, act, re-verify<br/>only a corroborated action may post"]
 
     S7 -->|"corroborated"| V
     S7 -->|otherwise| CLAIM
 
-    V --> CLAIM["<b>8 Check the report's claim</b><br/><small>separate entry point; the search never saw it</small>"]
+    V --> CLAIM["8 Check the report's claim<br/>separate entry point; the search never saw it"]
     CLAIM -->|"consistent"| POST["post"]
-    CLAIM -->|"contradicted"| DX["<b>9 Diagnose</b><br/><small>model names the defect class, graded</small>"]
+    CLAIM -->|"contradicted"| DX["9 Diagnose<br/>model names the defect class, graded"]
     DX --> REV
-    CLAIM -->|"uncheckable"| REV["review queue<br/><small>with a drafted, sendable note</small>"]
+    CLAIM -->|"uncheckable"| REV["review queue<br/>with a drafted, sendable note"]
 
     V --> POST
-    POST --> EV["Evidence object<br/><small>replayable, diffable, queryable</small>"]
+    POST --> EV["Evidence object<br/>replayable, diffable, queryable"]
     REV --> EV
-    EV --> QA["<b>10 Q and A</b><br/><small>grounded in receipts only</small>"]
+    EV --> QA["10 Q and A<br/>grounded in receipts only"]
 
     style V fill:#e7f5ee,stroke:#0a7d4e,color:#16181d
     style POST fill:#e7f5ee,stroke:#0a7d4e,color:#16181d
@@ -731,4 +731,4 @@ Traditional reconciliation asks *how confident are we that these records match?*
 
 **No guessed matches. No confidence threshold. Proof, a checked claim, exhibited alternatives, or a named and priced reason none is available.**
 
-Built by **Rishi0507** for Track 04, AI Finance Controller. MIT licensed; see [LICENSE](LICENSE).
+Built by **Rishi0507**. MIT licensed; see [LICENSE](LICENSE).

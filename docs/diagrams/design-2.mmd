@@ -1,8 +1,8 @@
 flowchart LR
     P["narrowed pool<br/>n records"] --> L["left half"]
     P --> R["right half"]
-    L --> LB["buckets by cardinality<br/><small>int64 sum + uint32 colex rank</small>"]
-    R --> RB["buckets by cardinality<br/><small>sorted, 12 bytes per entry</small>"]
+    L --> LB["buckets by cardinality<br/>int64 sum + uint32 colex rank"]
+    R --> RB["buckets by cardinality<br/>sorted, 12 bytes per entry"]
     LB --> PR{{"probe"}}
     RB --> PR
     PR -->|"target T"| W["small-|S| witnesses"]
