@@ -193,9 +193,13 @@ var Rates = map[string]Pricing{
 	// input at a quarter of the input rate rather than a tenth, which is why
 	// the cache figure on a Gemini run is less dramatic than on an Anthropic
 	// one and is reported separately rather than blended.
-	"gemini-2.5-pro":   {InputPerMTok: 1.25, OutputPerMTok: 10.00, CacheReadPerMTok: 0.31, CacheWritePerMTok: 1.25},
-	"gemini-2.5-flash": {InputPerMTok: 0.30, OutputPerMTok: 2.50, CacheReadPerMTok: 0.075, CacheWritePerMTok: 0.30},
-	"replay":           {},
+	"gemini-3.8-flash":       {InputPerMTok: 0.30, OutputPerMTok: 2.50, CacheReadPerMTok: 0.075, CacheWritePerMTok: 0.30},
+	"gemini-3.7-flash":       {InputPerMTok: 0.30, OutputPerMTok: 2.50, CacheReadPerMTok: 0.075, CacheWritePerMTok: 0.30},
+	"gemini-3.6-flash":       {InputPerMTok: 0.30, OutputPerMTok: 2.50, CacheReadPerMTok: 0.075, CacheWritePerMTok: 0.30},
+	"gemini-3.1-pro-preview": {InputPerMTok: 1.25, OutputPerMTok: 10.00, CacheReadPerMTok: 0.31, CacheWritePerMTok: 1.25},
+	"gemini-2.5-pro":         {InputPerMTok: 1.25, OutputPerMTok: 10.00, CacheReadPerMTok: 0.31, CacheWritePerMTok: 1.25},
+	"gemini-2.5-flash":       {InputPerMTok: 0.30, OutputPerMTok: 2.50, CacheReadPerMTok: 0.075, CacheWritePerMTok: 0.30},
+	"replay":                 {},
 }
 
 // USDToINR is the conversion used when pricing a run in rupees. It is a

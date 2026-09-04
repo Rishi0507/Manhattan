@@ -52,24 +52,46 @@ func DefaultGeminiConfig() GeminiConfig {
 	if key == "" {
 		key = os.Getenv("GOOGLE_API_KEY")
 	}
+
+	// Model names are pinned rather than taken from the -latest aliases.
+	//
+	// An alias that silently moves under a benchmark makes every published
+	// figure unattributable: the run says "gemini-pro-latest" and nobody can
+	// say afterwards what actually answered. Pinning costs an occasional
+	// update and buys a receipt that means something.
+	//
+	// Both are overridable, because the tier a key sits on decides what it can
+	// reach. The pro models are not available on the free tier at all, so the
+	// default points every role at flash and a paid key upgrades the expensive
+	// roles with one variable rather than a code change.
+	flash := envOr("GEMINI_FLASH_MODEL", "gemini-3.8-flash")
+	pro := envOr("GEMINI_PRO_MODEL", flash)
+
 	return GeminiConfig{
 		APIKey: key,
 		Models: map[Role]string{
-			RoleParse:   "gemini-2.5-flash",
-			RoleResolve: "gemini-2.5-pro",
-			RolePlan:    "gemini-2.5-pro",
-			RoleAnswer:  "gemini-2.5-pro",
-			RoleExplain: "gemini-2.5-flash",
+			RoleParse:   flash,
+			RoleResolve: pro,
+			RolePlan:    pro,
+			RoleAnswer:  pro,
+			RoleExplain: flash,
 			// Diagnosis and note drafting are the cheapest jobs at the highest
 			// volume, so they take the smaller model for the same reason the
 			// Anthropic path points them at Sonnet.
-			RoleTriage:    "gemini-2.5-flash",
-			RoleRemediate: "gemini-2.5-flash",
+			RoleTriage:    flash,
+			RoleRemediate: flash,
 			// The close is one call per period over the whole run, so it is
 			// the cheapest place to spend the best model.
-			RoleControl: "gemini-2.5-pro",
+			RoleControl: pro,
 		},
 	}
+}
+
+func envOr(name, fallback string) string {
+	if v := os.Getenv(name); v != "" {
+		return v
+	}
+	return fallback
 }
 
 // NewGemini builds a live Gemini provider.
@@ -90,7 +112,7 @@ func (p *geminiProvider) Model(r Role) string {
 	if m, ok := p.models[r]; ok {
 		return m
 	}
-	return "gemini-2.5-pro"
+	return DefaultGeminiConfig().Models[RoleResolve]
 }
 
 // geminiRequest is the subset of the generateContent body this uses.
@@ -115,10 +137,23 @@ type geminiGenConfig struct {
 	// output mode, and they are what make this provider interchangeable with
 	// the Anthropic one: the answer is guaranteed to parse into the shape the
 	// caller declared.
-	ResponseMIMEType string         `json:"responseMimeType"`
-	ResponseSchema   map[string]any `json:"responseSchema,omitempty"`
-	MaxOutputTokens  int            `json:"maxOutputTokens,omitempty"`
-	Temperature      float64        `json:"temperature"`
+	ResponseMIMEType string `json:"responseMimeType"`
+	// ThinkingConfig switches off the 3.x models' internal reasoning.
+	//
+	// Reasoning tokens are drawn from the same output budget as the answer, so
+	// a thinking model handed a small budget spends it thinking and returns a
+	// truncated object. Every job here is extraction or classification against
+	// a fixed schema, which is not work that reasoning improves, and turning it
+	// off restores both the budget and the determinism a zero temperature was
+	// asked for.
+	ThinkingConfig  *geminiThinking `json:"thinkingConfig,omitempty"`
+	ResponseSchema  map[string]any  `json:"responseSchema,omitempty"`
+	MaxOutputTokens int             `json:"maxOutputTokens,omitempty"`
+	Temperature     float64         `json:"temperature"`
+}
+
+type geminiThinking struct {
+	ThinkingBudget int `json:"thinkingBudget"`
 }
 
 type geminiSafety struct {
@@ -143,8 +178,57 @@ type geminiResponse struct {
 	} `json:"error"`
 }
 
-// Structured makes one call whose answer is guaranteed to fit the schema.
+// Structured makes one call whose answer is guaranteed to fit the schema,
+// retrying the failures that are the network's fault rather than the caller's.
+//
+// A batch here is fifteen hundred calls. At that volume a shared endpoint will
+// return 429 or 503 several times over, and without a retry each one lands as
+// "the agent could not clear this exception", which is indistinguishable in the
+// published numbers from a model that was not good enough. A measurement that
+// silently absorbs infrastructure noise is not a measurement.
+//
+// Only transient statuses are retried. A 400 means the schema is wrong and
+// retrying it just spends four seconds arriving at the same answer.
 func (p *geminiProvider) Structured(ctx context.Context, req Request) (*Result, error) {
+	var lastErr error
+	backoff := 800 * time.Millisecond
+	for attempt := 0; attempt < 5; attempt++ {
+		if attempt > 0 {
+			select {
+			case <-ctx.Done():
+				return nil, ctx.Err()
+			case <-time.After(backoff):
+			}
+			backoff *= 2
+		}
+		res, err := p.structuredOnce(ctx, req)
+		if err == nil {
+			return res, nil
+		}
+		lastErr = err
+		if !isTransient(err) {
+			return nil, err
+		}
+	}
+	return nil, fmt.Errorf("llm: %s call failed after 5 attempts: %w", req.Role, lastErr)
+}
+
+// isTransient reports whether an error is worth trying again.
+func isTransient(err error) bool {
+	s := err.Error()
+	for _, marker := range []string{
+		"UNAVAILABLE", "RESOURCE_EXHAUSTED", "INTERNAL", "DEADLINE_EXCEEDED",
+		"high demand", "overloaded", "HTTP 429", "HTTP 500", "HTTP 502",
+		"HTTP 503", "HTTP 504", "connection reset", "EOF", "timeout",
+	} {
+		if strings.Contains(s, marker) {
+			return true
+		}
+	}
+	return false
+}
+
+func (p *geminiProvider) structuredOnce(ctx context.Context, req Request) (*Result, error) {
 	if p.apiKey == "" {
 		return nil, fmt.Errorf("llm: GEMINI_API_KEY is not set")
 	}
@@ -152,6 +236,12 @@ func (p *geminiProvider) Structured(ctx context.Context, req Request) (*Result, 
 	maxTokens := req.MaxTokens
 	if maxTokens <= 0 {
 		maxTokens = 2048
+	}
+	// A floor, because a caller's tight budget that was fine for a
+	// non-reasoning model truncates the object here and the failure reads as
+	// malformed JSON rather than as a budget.
+	if maxTokens < 1024 {
+		maxTokens = 1024
 	}
 
 	body := geminiRequest{
@@ -162,6 +252,7 @@ func (p *geminiProvider) Structured(ctx context.Context, req Request) (*Result, 
 		GenerationConfig: geminiGenConfig{
 			ResponseMIMEType: "application/json",
 			ResponseSchema:   geminiSchema(req.Schema),
+			ThinkingConfig:   &geminiThinking{ThinkingBudget: 0},
 			MaxOutputTokens:  maxTokens,
 			// Zero temperature, because a reconciliation that answers
 			// differently on a re-run of the same settlement is not one an
@@ -212,7 +303,7 @@ func (p *geminiProvider) Structured(ctx context.Context, req Request) (*Result, 
 		return nil, fmt.Errorf("llm: %s returned no candidate", req.Role)
 	}
 
-	text := strings.TrimSpace(out.Candidates[0].Content.Parts[0].Text)
+	text := extractJSON(out.Candidates[0].Content.Parts)
 	if !json.Valid([]byte(text)) {
 		return nil, fmt.Errorf(
 			"llm: %s returned an answer that does not parse as JSON despite the response "+
@@ -289,4 +380,69 @@ func truncate(s string, n int) string {
 		return s
 	}
 	return s[:n] + "..."
+}
+
+// extractJSON pulls the answer out of a candidate's parts.
+//
+// The response schema guarantees the model emits JSON, and the 3.x models
+// still sometimes put a sentence in one part and the object in the next, or
+// wrap the object in a markdown fence. Reading parts[0] and trusting it turned
+// a working call into "does not parse as JSON", so this joins every part and
+// then takes the first balanced object or array.
+//
+// This is not leniency about what the model may return. The result is still
+// required to parse and still validated against the schema by the caller. It
+// is only about where in the envelope the object was placed.
+func extractJSON(parts []geminiPart) string {
+	var b strings.Builder
+	for _, p := range parts {
+		b.WriteString(p.Text)
+	}
+	s := strings.TrimSpace(b.String())
+
+	if i := strings.Index(s, "```"); i >= 0 {
+		rest := s[i+3:]
+		rest = strings.TrimPrefix(rest, "json")
+		if j := strings.Index(rest, "```"); j >= 0 {
+			s = strings.TrimSpace(rest[:j])
+		}
+	}
+	if json.Valid([]byte(s)) {
+		return s
+	}
+
+	// The first balanced object or array, ignoring braces inside strings.
+	for i, r := range s {
+		if r != '{' && r != '[' {
+			continue
+		}
+		open, close := byte('{'), byte('}')
+		if r == '[' {
+			open, close = '[', ']'
+		}
+		depth, inStr, esc := 0, false, false
+		for j := i; j < len(s); j++ {
+			c := s[j]
+			switch {
+			case esc:
+				esc = false
+			case c == '\\' && inStr:
+				esc = true
+			case c == '"':
+				inStr = !inStr
+			case inStr:
+			case c == open:
+				depth++
+			case c == close:
+				depth--
+				if depth == 0 {
+					if cand := s[i : j+1]; json.Valid([]byte(cand)) {
+						return cand
+					}
+					break
+				}
+			}
+		}
+	}
+	return s
 }
