@@ -13,7 +13,17 @@ import (
 // rather than a broken integration. One call with the error printed is the
 // difference between five minutes and an afternoon.
 func TestGeminiLiveSmoke(t *testing.T) {
+	// Opt-in, not merely key-gated.
+	//
+	// `go test ./...` runs on every change, and a free-tier key is rated for
+	// ten requests a minute against a few hundred a day. A smoke test that
+	// spends one of those every time the suite runs will have emptied the
+	// quota before the run that needed it. So it wants an explicit
+	// MANHATTAN_LIVE_SMOKE=1 as well as a key.
 	loadEnvForTest()
+	if os.Getenv("MANHATTAN_LIVE_SMOKE") != "1" {
+		t.Skip("set MANHATTAN_LIVE_SMOKE=1 to spend a real request on this")
+	}
 	if os.Getenv("GEMINI_API_KEY") == "" {
 		t.Skip("no GEMINI_API_KEY")
 	}

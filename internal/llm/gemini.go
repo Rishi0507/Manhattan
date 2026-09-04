@@ -8,8 +8,13 @@ import (
 	"io"
 	"net/http"
 	"os"
+	"regexp"
+	"strconv"
 	"strings"
+	"sync"
 	"time"
+
+	"golang.org/x/time/rate"
 )
 
 // The Gemini provider.
@@ -34,6 +39,15 @@ type geminiProvider struct {
 	apiKey string
 	models map[Role]string
 	http   *http.Client
+
+	// limit paces requests so a batch stays inside the key's quota.
+	//
+	// Without it a run does not merely fail, it fails destructively: a
+	// sixty-settlement batch fired several hundred requests at a ten-per-minute
+	// key, collected 666 rate-limit errors, and burned the whole day's
+	// allowance producing nothing. Retrying a 429 immediately is not resilience,
+	// it is the cause.
+	limit *rate.Limiter
 }
 
 // GeminiConfig configures the Gemini path.
@@ -99,10 +113,19 @@ func NewGemini(cfg GeminiConfig) Provider {
 	if cfg.Models == nil {
 		cfg.Models = DefaultGeminiConfig().Models
 	}
+	// Ten a minute is the free tier's published ceiling and therefore the safe
+	// default. A paid key raises it with GEMINI_RPM rather than a code change.
+	rpm := 10.0
+	if v := os.Getenv("GEMINI_RPM"); v != "" {
+		if f, err := strconv.ParseFloat(v, 64); err == nil && f > 0 {
+			rpm = f
+		}
+	}
 	return &geminiProvider{
 		apiKey: cfg.APIKey,
 		models: cfg.Models,
 		http:   &http.Client{Timeout: 120 * time.Second},
+		limit:  rate.NewLimiter(rate.Limit(rpm/60.0), 1),
 	}
 }
 
@@ -207,11 +230,52 @@ func (p *geminiProvider) Structured(ctx context.Context, req Request) (*Result, 
 		}
 		lastErr = err
 		if !isTransient(err) {
-			return nil, err
+			return nil, warn(err)
+		}
+		// A daily cap does not clear by waiting thirty seconds, so retrying it
+		// only spends the next day's first requests on the same refusal.
+		if strings.Contains(err.Error(), "PerDay") {
+			return nil, warn(err)
+		}
+		// The server says how long to wait. Believing it beats guessing, and a
+		// quota refusal needs far longer than a transient overload.
+		if d := retryAfter(err); d > 0 {
+			backoff = d
+		} else if strings.Contains(err.Error(), "RESOURCE_EXHAUSTED") {
+			backoff = 30 * time.Second
 		}
 	}
-	return nil, fmt.Errorf("llm: %s call failed after 5 attempts: %w", req.Role, lastErr)
+	return nil, warn(fmt.Errorf("llm: %s call failed after 5 attempts: %w", req.Role, lastErr))
 }
+
+// warn prints the first few provider failures to stderr.
+//
+// The batch treats a provider error as "the agent could not clear this
+// exception", which is the right behaviour for a run and the wrong behaviour
+// for a diagnosis: a completely broken integration produces the same receipts
+// as a model that was not good enough, and the only visible symptom is a cost
+// of zero. This has now cost two debugging sessions, so the errors are printed
+// once each rather than inferred from a suspiciously round number.
+//
+// It is capped so a systematically failing run does not print fifteen hundred
+// identical lines over the summary a reader is trying to read.
+func warn(err error) error {
+	warnMu.Lock()
+	defer warnMu.Unlock()
+	if warnCount < 5 {
+		warnCount++
+		fmt.Fprintf(os.Stderr, "llm warning: %v\n", err)
+		if warnCount == 5 {
+			fmt.Fprintln(os.Stderr, "llm warning: further provider errors suppressed")
+		}
+	}
+	return err
+}
+
+var (
+	warnMu    sync.Mutex
+	warnCount int
+)
 
 // isTransient reports whether an error is worth trying again.
 func isTransient(err error) bool {
@@ -276,6 +340,13 @@ func (p *geminiProvider) structuredOnce(ctx context.Context, req Request) (*Resu
 	// The key travels in a header rather than a query string, so it does not
 	// end up in a proxy log.
 	httpReq.Header.Set("x-goog-api-key", p.apiKey)
+
+	// Pace, rather than discover the pace by being refused.
+	if p.limit != nil {
+		if err := p.limit.Wait(ctx); err != nil {
+			return nil, err
+		}
+	}
 
 	resp, err := p.http.Do(httpReq)
 	if err != nil {
@@ -446,3 +517,18 @@ func extractJSON(parts []geminiPart) string {
 	}
 	return s
 }
+
+// retryAfter reads the retryDelay the API returns with a quota refusal.
+func retryAfter(err error) time.Duration {
+	m := retryDelayRe.FindStringSubmatch(err.Error())
+	if len(m) != 2 {
+		return 0
+	}
+	d, e := time.ParseDuration(m[1])
+	if e != nil {
+		return 0
+	}
+	return d
+}
+
+var retryDelayRe = regexp.MustCompile(`retryDelay"?:\s*"?([0-9.]+m?s)`)

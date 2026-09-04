@@ -26,12 +26,26 @@ func selectProvider(pf providerFlags) (llm.Provider, error) {
 		return llm.NewOffline(), nil
 	}
 
-	// Whichever key is present. Both paths satisfy the same interface and
-	// nothing downstream can tell them apart, which is the point of the
-	// boundary: a second vendor is one file, not a migration.
+	// The live path is opt-in, and that is a correction rather than a
+	// preference.
 	//
-	// An explicit --provider wins, so a machine carrying both keys is not left
-	// guessing.
+	// It used to go live whenever a key was visible, which meant that leaving a
+	// key in .env silently turned `manhattan bench` into fifteen hundred billed
+	// calls against a key rated for ten a minute. The run produced nothing and
+	// spent the day's whole allowance doing it. A default that can empty a
+	// quota is not a default.
+	//
+	// So the reproducible path is what you get unless you ask for the other
+	// one, which also happens to be the honest default for a repository whose
+	// argument is that its numbers reproduce offline.
+	if !pf.live && pf.provider == "" {
+		return offlineOrReplay(pf)
+	}
+
+	// Both live paths satisfy the same interface and nothing downstream can
+	// tell them apart, which is the point of the boundary: a second vendor is
+	// one file, not a migration. An explicit --provider wins, so a machine
+	// carrying both keys is not left guessing.
 	if live, err := liveProvider(pf); err != nil {
 		return nil, err
 	} else if live != nil {
@@ -52,6 +66,12 @@ func selectProvider(pf providerFlags) (llm.Provider, error) {
 				"  or drop --live to use the recorded cassette")
 	}
 
+	return offlineOrReplay(pf)
+}
+
+// offlineOrReplay is the reproducible path: a recorded cassette if there is
+// one, the deterministic stub otherwise.
+func offlineOrReplay(pf providerFlags) (llm.Provider, error) {
 	cas, err := llm.LoadCassette(pf.cassette)
 	if err != nil {
 		return nil, err
