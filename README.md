@@ -34,7 +34,7 @@ git clone <this repo> && cd manhattan
 ./run.sh demo          # or:  .\run.ps1 demo    or:  make demo
 ```
 
-No API key required. **Every number in this file, in [RESULTS.md](RESULTS.md) and in [LIMITATIONS.md](LIMITATIONS.md) is emitted by that command**, rendered from one run in one pass so the three cannot drift. Generated from run `run_20260904_0737`, seed `20260826`, on windows/amd64, 4 logical cores, go1.27.0.
+No API key required. **Every number in this file, in [RESULTS.md](RESULTS.md) and in [LIMITATIONS.md](LIMITATIONS.md) is emitted by that command**, rendered from one run in one pass so the three cannot drift. Generated from run `run_20260904_0747`, seed `20260826`, on windows/amd64, 4 logical cores, go1.27.0.
 
 ---
 
@@ -55,6 +55,15 @@ Longer: [docs/EXPLAIN.md](docs/EXPLAIN.md) builds the system from first principl
 **358 of 498 settlements posted automatically, 0 wrong.** 75 of those are proofs, where exactly one batch produces the credit and it was counted exhaustively. The other 283 are the counterparty's own mapping, checked against an independent account of the money.
 
 The two are not alternatives. **The check is worth something only because the reconstruction exists**, since the independent account it compares against is the contribution model the solver searches over. Delete the solver and the check has nothing to check against, which is exactly the position a lookup is in.
+
+**And that proof count is measured on a deployment this run deliberately breaks.** A window misconfiguration is modelled on three merchants, and it roughly halves what reconstruction can prove. Fixing that one variable and changing nothing else, in the same sweep with the same code and the same report defects:
+
+| | reconstruction proves |
+|---|---:|
+| window misconfigured, as the main run models it | 13% |
+| **correctly configured** | **29%** |
+
+So the mechanism's rate is roughly 29%, and the headline figure is what it degrades to when a deployment's window is set too loosely. Both are published because the misconfigured one is what the rest of this run is measured on.
 
 ### Against the system that already exists
 
@@ -267,7 +276,7 @@ The rule was learned, not designed. The first version let narrowing post if the 
 
 > Removing candidates cannot make the survivor unique. It makes it **unexamined**.
 
-That figure is hand-recorded from a build that no longer exists, and it is the only number in this file not emitted by run `run_20260904_0737`. The failure is rebuilt as a committed test in [`internal/agent/corroboration_test.go`](internal/agent/corroboration_test.go), which fails if `TIGHTEN_WINDOW` is ever made postable again.
+That figure is hand-recorded from a build that no longer exists, and it is the only number in this file not emitted by run `run_20260904_0747`. The failure is rebuilt as a committed test in [`internal/agent/corroboration_test.go`](internal/agent/corroboration_test.go), which fails if `TIGHTEN_WINDOW` is ever made postable again.
 
 **Prohibition was the right default and the wrong permanent answer.** `NARROW_TO_HISTORY` closes the gap: a merchant's prior `VERIFIED` settlements are a second source, and a strong one, since each was proved by exhaustive enumeration without reference to any window hypothesis. The profile is built only from proofs, needs at least twelve, and the bound may never be tighter than the widest offset those proofs show. The verifier still decides. Corroboration buys the right to be tested, not the right to be believed.
 
@@ -566,10 +575,10 @@ it arrives with the residual attached.
 | one loop, closed | bank credit to posted ledger entry, or to a named and priced exception |
 | match rate reported | **358 of 498**, 72%, with **0 wrong** |
 | exceptions it could not resolve | **140**, each with a cause, a computed remedy, a price and a drafted note |
-| throughput | **47,222 settlements per hour**, 20.3 ms median pipeline time |
+| throughput | **34,449 settlements per hour**, 26.4 ms median pipeline time |
 | agentic design | 1,494 model calls across 5 jobs, a closed 8-action controller loop, cross-settlement merchant memory, and a graded diagnosis |
 
-Throughput is end to end: 498 settlements in 38.0 s of wall clock including the agent loop, both baselines and receipt serialisation. That divides to 76.2 ms against a 20.3 ms median pipeline time, and both are printed rather than the flattering one. Memory: **114 MB** deterministic solver peak; **747 MB** sampled process heap, which moves between runs and should never be quoted as a bound.
+Throughput is end to end: 498 settlements in 52.0 s of wall clock including the agent loop, both baselines and receipt serialisation. That divides to 104.5 ms against a 26.4 ms median pipeline time, and both are printed rather than the flattering one. Memory: **114 MB** deterministic solver peak; **747 MB** sampled process heap, which moves between runs and should never be quoted as a bound.
 
 **Determinism is per commit.** Same seed and same commit gives the same decisions on every settlement. Timings are measurements and move, so receipts are not byte-identical.
 

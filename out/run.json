@@ -1,5 +1,5 @@
 {
-  "run_id": "run_20260904_0737",
+  "run_id": "run_20260904_0747",
   "settlements": 498,
   "flags": null,
   "status_counts": {
@@ -20,11 +20,11 @@
   "auto_posted_wrong": 0,
   "exceptions": 423,
   "throughput": {
-    "wall_clock_s": 37.965611,
-    "settlements_per_hour": 47221.68174772691,
-    "median_latency_ms": 20.333,
-    "p95_latency_ms": 215.959,
-    "peak_memory_mb": 747.1196060180664
+    "wall_clock_s": 52.0418395,
+    "settlements_per_hour": 34449.205047796204,
+    "median_latency_ms": 26.393,
+    "p95_latency_ms": 273.555,
+    "peak_memory_mb": 747.1634216308594
   },
   "cost": {
     "model_calls": 1494,

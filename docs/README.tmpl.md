@@ -56,6 +56,15 @@ Longer: [docs/EXPLAIN.md](docs/EXPLAIN.md) builds the system from first principl
 
 The two are not alternatives. **The check is worth something only because the reconstruction exists**, since the independent account it compares against is the contribution model the solver searches over. Delete the solver and the check has nothing to check against, which is exactly the position a lookup is in.
 
+**And that proof count is measured on a deployment this run deliberately breaks.** A window misconfiguration is modelled on three merchants, and it roughly halves what reconstruction can prove. Fixing that one variable and changing nothing else, in the same sweep with the same code and the same report defects:
+
+| | reconstruction proves |
+|---|---:|
+| window misconfigured, as the main run models it | {{ pct .D.MisconfigPct }} |
+| **correctly configured** | **{{ pct .D.CleanReconPct }}** |
+
+So the mechanism's rate is roughly {{ pct .D.CleanReconPct }}, and the headline figure is what it degrades to when a deployment's window is set too loosely. Both are published because the misconfigured one is what the rest of this run is measured on.
+
 ### Against the system that already exists
 
 The honest comparison is not a fuzzy matcher. It is **B1: read the settlement report's stated mapping and post it.** Instant, free, and right almost always.

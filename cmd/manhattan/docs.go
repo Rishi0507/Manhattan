@@ -230,6 +230,17 @@ type Derived struct {
 	// The economics of refusing, against B1 rather than against the fuzzy
 	// matcher. B1 is the system a gateway actually has, so it is the only
 	// comparison whose arithmetic anybody should care about.
+	// Reconstruction's rate on a correctly configured deployment, isolating
+	// the one variable this run deliberately breaks.
+	//
+	// The headline reconstruction figure is measured on a deployment carrying
+	// a modelled window misconfiguration, which roughly halves it. Publishing
+	// only that number understates what the mechanism does, and the corrected
+	// figure is measured by the same code in the sensitivity sweep rather than
+	// asserted.
+	CleanReconPct float64
+	MisconfigPct  float64
+
 	// The like-for-like comparison against B1.
 	//
 	// B1 holds nothing it can read, so the only settlements it does not post
@@ -486,6 +497,22 @@ func deriveDocs(sum bench.Summary, cases []bench.CaseOutcome, sweep []bench.Swee
 		}
 	}
 	d.OperatingLimits = opLimits
+
+	// Same defect rate, window fixed: one variable, isolated.
+	for _, sp := range sens {
+		if sp.NaiveFees {
+			continue
+		}
+		n := float64(sp.Verified)
+		tot := float64(sp.Verified + sp.M1Posted)
+		_ = tot
+		switch {
+		case sp.SlackScale == 0 && sp.DefectRate > 0:
+			d.CleanReconPct = 100 * n / 360
+		case sp.SlackScale == 1 && sp.DefectRate > 0.01:
+			d.MisconfigPct = 100 * n / 360
+		}
+	}
 
 	d.IsStub = strings.Contains(sum.Provider, "stub") || strings.Contains(sum.ProviderModels, "replay")
 	d.GradedBy = "the deterministic offline provider"
