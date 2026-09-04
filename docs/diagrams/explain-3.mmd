@@ -1,5 +1,5 @@
 flowchart TB
-  F["settlement did not resolve"] --> T{"is this worth<br/>working on?"}
+  F["settlement did not<br/>resolve"] --> T{"is this worth<br/>working on?"}
   T -->|"no, the amounts are<br/>too uniform"| SK["skip, deterministically"]
   T -->|yes| O["describe the state<br/>to the model"]
   O --> A["model picks one of<br/>seven actions"]

@@ -410,7 +410,7 @@ Four of the five stop the money and none is a failure. `AMBIGUOUS` at {{ .D.Stat
 
 ```mermaid
 flowchart TB
-    subgraph SRC["Four sources, which disagree"]
+    subgraph SRC["Four sources, which<br/>disagree"]
         PG["PG settlement report"]
         BANK["Bank statement<br/>free text, one credit"]
         OMS["OMS / ledger"]
@@ -422,12 +422,12 @@ flowchart TB
     OMS --> S1
     DIS --> S1
 
-    S1["1 Parse<br/>model reads narration into typed fields"]
-    S2["2 Narrow<br/>business constraints, every drop logged"]
-    S3["3 Contribute<br/>signed net contribution, integer paise"]
-    S4["4 Gate<br/>amount entropy, then feasibility<br/>outputs k*, the solver's dispatch parameter"]
-    S5["5 Reconstruct<br/>cardinality-dispatched meet in the middle"]
-    S6["6 Prove<br/>count rivals, guard completeness, re-derive the identity"]
+    S1["1 Parse<br/>model reads narration<br/>into typed fields"]
+    S2["2 Narrow<br/>business constraints,<br/>every drop logged"]
+    S3["3 Contribute<br/>signed net contribution,<br/>integer paise"]
+    S4["4 Gate<br/>entropy, feasibility<br/>outputs k*, the solver's<br/>dispatch parameter"]
+    S5["5 Reconstruct<br/>cardinality-dispatched<br/>meet in the middle"]
+    S6["6 Prove<br/>count rivals, guard<br/>completeness, re-derive"]
 
     S1 --> S2 --> S3 --> S4 --> S5 --> S6
     S6 --> D{"decision"}
@@ -441,21 +441,21 @@ flowchart TB
     A --> S7
     U --> S7
     NS --> S7
-    UR --> S7["7 Agent<br/>observe, choose one action, act, re-verify<br/>only a corroborated action may post"]
+    UR --> S7["7 Agent<br/>observe, act, re-verify<br/>only a corroborated<br/>action may post"]
 
     S7 -->|"corroborated"| V
     S7 -->|otherwise| CLAIM
 
-    V --> CLAIM["8 Check the report's claim<br/>separate entry point; the search never saw it"]
+    V --> CLAIM["8 Check the claim<br/>a separate entry point<br/>the search never saw it"]
     CLAIM -->|"consistent"| POST["post"]
-    CLAIM -->|"contradicted"| DX["9 Diagnose<br/>model names the defect class, graded"]
+    CLAIM -->|"contradicted"| DX["9 Diagnose<br/>model names the defect<br/>class, graded"]
     DX --> REV
-    CLAIM -->|"uncheckable"| REV["review queue<br/>with a drafted, sendable note"]
+    CLAIM -->|"uncheckable"| REV["review queue<br/>with a drafted, sendable<br/>note"]
 
     V --> POST
-    POST --> EV["Evidence object<br/>replayable, diffable, queryable"]
+    POST --> EV["Evidence object<br/>replayable, diffable,<br/>queryable"]
     REV --> EV
-    EV --> QA["10 Q and A<br/>grounded in receipts only"]
+    EV --> QA["10 Q and A<br/>grounded in receipts<br/>only"]
 
     style V fill:#e7f5ee,stroke:#0a7d4e,color:#16181d
     style POST fill:#e7f5ee,stroke:#0a7d4e,color:#16181d
