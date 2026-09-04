@@ -49,7 +49,7 @@ git clone <this repo> && cd manhattan
 ./run.sh demo          # or:  .\run.ps1 demo    or:  make demo
 ```
 
-No API key required. **Every number in this file, in [RESULTS.md](RESULTS.md) and in [LIMITATIONS.md](LIMITATIONS.md) is emitted by that command**, rendered from one run in one pass so the three cannot drift. Generated from run `run_20260904_1546`, seed `20260826`, on windows/amd64, 4 logical cores, go1.27.0.
+No API key required. **Every number in this file, in [RESULTS.md](RESULTS.md) and in [LIMITATIONS.md](LIMITATIONS.md) is emitted by that command**, rendered from one run in one pass so the three cannot drift. Generated from run `run_20260904_1845`, seed `20260826`, on windows/amd64, 4 logical cores, go1.27.0.
 
 ---
 
@@ -57,7 +57,7 @@ No API key required. **Every number in this file, in [RESULTS.md](RESULTS.md) an
 
 1. **[The result](#against-the-method-already-in-use).** Reading the settlement report and posting it gets 39 of 848 wrong, invisibly. Verifying it first gets 0 of 731 wrong.
 2. **[The controller](#the-controller)**, where the model reads the whole period and names the root causes, scored against operational conditions it was never told about. A graded harness, currently reporting an 80% baseline from the deterministic provider.
-3. **[Where the rest of the AI is](#the-other-model-roles)**: 2,975 calls across 5 jobs, two of them scored against ground truth.
+3. **[Where the rest of the AI is](#the-other-model-roles)**: 2,976 calls across 5 jobs, two of them scored against ground truth.
 4. **[RESULTS.md](RESULTS.md), the calibration section.** Whether the system knows *in advance* when it is about to be wrong.
 5. **`./run.sh demo`**, which opens on adversarial case 10: narrowing drops a real record, a coincidental subset closes the identity exactly, and the guard catches it.
 
@@ -67,8 +67,8 @@ Longer: [docs/EXPLAIN.md](docs/EXPLAIN.md) builds the system from first principl
 
 | | |
 |---|---|
-| **Model calls this run** | 2,975 across 5 distinct jobs |
-| **Agent loop** | a closed 8-action controller, 1,233 turns graded |
+| **Model calls this run** | 2,976 across 5 distinct jobs |
+| **Agent loop** | a closed 8-action controller, 1,234 turns graded |
 | **Structured output** | every call schema-forced by the vendor's own mechanism: strict tool use on Anthropic, a strict response schema on Groq and Gemini. Free text cannot reach a decision path |
 | **Provider reliability** | not applicable on the deterministic path, which cannot fail. Measured and reported on every live run |
 | **Jobs scored against ground truth** | root-cause diagnosis (76%) and period close (80%) |
@@ -208,9 +208,9 @@ it grades itself:
 
 | | |
 |---|---:|
-| turns taken | 1,233 |
+| turns taken | 1,234 |
 | repairs reached on the **first** action chosen | 100% |
-| turns spent on an action that could not apply | 0.0% |
+| turns spent on an action that could not apply | 0.2% |
 | turns per useful outcome | 1.6 |
 
 Both accuracy figures saturate here, and that is the finding rather than the result: a fixed decision tree either picks the right action immediately or never picks it, and never proposes one that cannot apply. A model has room to be worse on both and better on the outcome, which is what the harness exists to measure.
@@ -242,7 +242,7 @@ The fair criticism of this project is that arithmetic does the deciding, so what
 |---|---:|---|---|
 | `control` | 5 | reads the WHOLE period and writes the close: which merchants are degrading, whether four hundred exceptions have four hundred causes or three, which single change recovers the most held value, and what needs a human this week. The only output here that works above a single settlement, and the only one not bounded by a closed action vocabulary, because it cannot act | **yes**, on whether it found the operational conditions this run injected |
 | `triage` | 34 | names WHY a report's stated mapping failed its arithmetic check, from a closed vocabulary of five defect classes. The same failed check has several causes needing different remedies, and telling them apart is reading rather than counting | **yes**, against the generator's record of what it injected |
-| `plan` | 1,233 | chooses one action from a closed set of eight for a settlement that did not post, including whether this merchant's own proved history corroborates a tighter window | indirectly: the entire stack re-runs and rejects anything that did not improve |
+| `plan` | 1,234 | chooses one action from a closed set of eight for a settlement that did not post, including whether this merchant's own proved history corroborates a tighter window | indirectly: the entire stack re-runs and rejects anything that did not improve |
 | `remediate` | 707 | drafts the analyst-facing note: what to do, why it works in terms of what was measured, and what it will not fix. Facts supplied, figures substituted afterwards | no, and it carries no safety risk: the settlement is held either way |
 | `parse` | 996 | reads an unstructured bank narration into typed fields. The highest volume and the lowest difficulty, and the one job a gateway would replace with a lookup table tomorrow | indirectly: a mis-parse produces an exception, never a posting |
 
@@ -370,7 +370,7 @@ And the contribution as a function of how bad the configuration is:
 907  settlements entered the loop as unresolved
 332  settled by deterministic triage, with no model call        (37%)
 575  reached the agent
-1233  actions taken
+1234  actions taken
 123  repaired into a posting, each citing evidence
  78  given a proven cure: verified remedy, deliberately not posted
 784  remain held
@@ -391,7 +391,7 @@ The rule was learned, not designed. The first version let narrowing post if the 
 
 > Removing candidates cannot make the survivor unique. It makes it **unexamined**.
 
-That figure is hand-recorded from a build that no longer exists, and it is the only number in this file not emitted by run `run_20260904_1546`. The failure is rebuilt as a committed test in [`internal/agent/corroboration_test.go`](internal/agent/corroboration_test.go), which fails if `TIGHTEN_WINDOW` is ever made postable again.
+That figure is hand-recorded from a build that no longer exists, and it is the only number in this file not emitted by run `run_20260904_1845`. The failure is rebuilt as a committed test in [`internal/agent/corroboration_test.go`](internal/agent/corroboration_test.go), which fails if `TIGHTEN_WINDOW` is ever made postable again.
 
 **Prohibition was the right default and the wrong permanent answer.** `NARROW_TO_HISTORY` closes the gap: a merchant's prior `VERIFIED` settlements are a second source, and a strong one, since each was proved by exhaustive enumeration without reference to any window hypothesis. The profile is built only from proofs, needs at least twelve, and the bound may never be tighter than the widest offset those proofs show. The verifier still decides. Corroboration buys the right to be tested, not the right to be believed.
 
@@ -407,13 +407,13 @@ That figure is hand-recorded from a build that no longer exists, and it is the o
 | `NARROWING_SENSITIVE` | The answer depended on a filter rather than on arithmetic | Review, constraint named |
 | `UNRESOLVED` | Nothing reconstructs the credit within tolerance | Queue, with the exact residual |
 
-Four of the five stop the money and none is a failure. `AMBIGUOUS` at 250 and `UNDERDETERMINED` at 476 are sized populations, not rhetoric. Flags are orthogonal: a settlement can be `VERIFIED` and carry `FEE_ANOMALY`, because whether the money is accounted for and whether the fee applied to it was right are different questions.
+Four of the five stop the money and none is a failure. `AMBIGUOUS` at 249 and `UNDERDETERMINED` at 477 are sized populations, not rhetoric. Flags are orthogonal: a settlement can be `VERIFIED` and carry `FEE_ANOMALY`, because whether the money is accounted for and whether the fee applied to it was right are different questions.
 
 | flag | settlements |
 |---|---:|
 | `SIGNED_ITEMS_PRESENT` | 454 |
 | `AMOUNT_ENTROPY_INSUFFICIENT` | 332 |
-| `FEE_ANOMALY` | 251 |
+| `FEE_ANOMALY` | 250 |
 | `LATTICE_CORRECTED` | 136 |
 | `RESOLVED_BY_HYPOTHESIS` | 123 |
 
@@ -537,9 +537,9 @@ and how many wrong postings does that work prevent.**
 | | |
 |---|---:|
 | settlements M1 holds that B1 posted | 147 |
-| at 347 INR average handling | **51,035 INR** |
+| at 347 INR average handling | **50,944 INR** |
 | wrong postings prevented | **39** |
-| so checking pays if unwinding one costs more than | **1,309 INR** |
+| so checking pays if unwinding one costs more than | **1,306 INR** |
 
 That break-even is **1.3 analyst hours per wrong posting**,
 and the question is whether unwinding one costs more than that.
@@ -593,28 +593,28 @@ That is the whole function. It measures how good a match *looks*, never whether 
 
 > **Q. which constraint dropped the most records?**
 >
-> outside the value-date window removed the most, at 5,620,669 records across 996 settlements, which is 77.0% of everything narrowing looked at.
+> outside the value-date window removed the most, at 5,620,639 records across 996 settlements, which is 77.0% of everything narrowing looked at.
 > 
 > The full breakdown:
->   outside the value-date window       5,620,669  (77.0%)
+>   outside the value-date window       5,620,639  (77.0%)
 >   a different merchant                1,005,462  (13.8%)
 >   already posted in a...
 >
 > `deterministic, no model call`
-> `aggregated across the store · narrowing.dropped.outside_settlement_window = 5,620,669`
+> `aggregated across the store · narrowing.dropped.outside_settlement_window = 5,620,639`
 > `aggregated across the store · narrowing.dropped.mid_mismatch = 1,005,462`
 
 > **Q. what is the backlog costing us?**
 >
-> The queue holds 784 settlements worth ₹2,43,75,328.65, and clearing it costs about INR 272,185 at the configured analyst handling time.
+> The queue holds 784 settlements worth ₹2,43,75,328.65, and clearing it costs about INR 271,702 at the configured analyst handling time.
 > 
 > By cause, most expensive first:
->   AMBIGUOUS               250 settlements   INR  178,656
->   UNDERDETERMINED         476 settlements   INR   58,043
+>   AMBIGUOUS               249 settlements   INR  178,073
+>   UNDERDETERMINED         477 settlements   INR   58,143
 >   UNRESOLVED  ...
 >
 > `deterministic, no model call`
-> `aggregated across the store · exception_cost_inr = 272,185`
+> `aggregated across the store · exception_cost_inr = 271,702`
 
 > **Q. why do the quick commerce settlements behave differently from the travel ones, and what would I change first?**
 >
@@ -696,10 +696,10 @@ it arrives with the residual attached.
 | one loop, closed | bank credit to posted ledger entry, or to a named and priced exception |
 | match rate reported | **731 of 996**, 73%, with **0 wrong** |
 | exceptions it could not resolve | **265**, each with a cause, a computed remedy, a price and a drafted note |
-| throughput | **31,515 settlements per hour** end to end, 26.5 ms median pipeline time, on windows/amd64, 4 logical cores, go1.27.0 |
-| agentic design | a closed 8-action controller loop, a period-close investigation over the receipt store, cross-settlement merchant memory, and three graded jobs. 2,975 model calls across 5 roles, all served by the deterministic offline provider on this run; `manhattan live` runs the same code against the API |
+| throughput | **37,753 settlements per hour** end to end, 21.7 ms median pipeline time, on windows/amd64, 4 logical cores, go1.27.0 |
+| agentic design | a closed 8-action controller loop, a period-close investigation over the receipt store, cross-settlement merchant memory, and three graded jobs. 2,976 model calls across 5 roles, all served by the deterministic offline provider on this run; `manhattan live` runs the same code against the API |
 
-Throughput is end to end: 996 settlements in 113.8 s of wall clock including the agent loop, both baselines and receipt serialisation. That divides to 114.2 ms against a 26.5 ms median pipeline time, and both are published. Memory: **325 MB** deterministic solver peak; **851 MB** sampled process heap, which moves between runs and should never be quoted as a bound.
+Throughput is end to end: 996 settlements in 95.0 s of wall clock including the agent loop, both baselines and receipt serialisation. That divides to 95.4 ms against a 21.7 ms median pipeline time, and both are published. Memory: **325 MB** deterministic solver peak; **851 MB** sampled process heap, which moves between runs and should never be quoted as a bound.
 
 **Determinism is per commit.** Same seed and same commit gives the same decisions on every settlement. Timings are measurements and move, so receipts are not byte-identical.
 

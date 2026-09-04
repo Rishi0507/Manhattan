@@ -1,17 +1,17 @@
 {
-  "run_id": "run_20260904_1546",
+  "run_id": "run_20260904_1845",
   "settlements": 996,
   "seed": 20260826,
   "status_counts": {
-    "AMBIGUOUS": 250,
+    "AMBIGUOUS": 249,
     "NARROWING_SENSITIVE": 3,
-    "UNDERDETERMINED": 476,
+    "UNDERDETERMINED": 477,
     "UNRESOLVED": 55,
     "VERIFIED": 212
   },
   "flag_counts": {
     "AMOUNT_ENTROPY_INSUFFICIENT": 332,
-    "FEE_ANOMALY": 251,
+    "FEE_ANOMALY": 250,
     "LATTICE_CORRECTED": 136,
     "RESOLVED_BY_HYPOTHESIS": 123,
     "SIGNED_ITEMS_PRESENT": 454
@@ -39,30 +39,30 @@
   "m1_clean_reports_checked": 809,
   "settlements_with_no_report_mapping": 148,
   "settlements_with_no_mapping_posted_by_reconstruction": 30,
-  "median_latency_ms": 26.454,
-  "p95_latency_ms": 247.786,
-  "b0_median_latency_ms": 9.312,
-  "wall_clock_s": 113.7757466,
-  "settlements_per_hour": 31514.625103765302,
-  "peak_memory_mb_sampled": 851.0673675537109,
+  "median_latency_ms": 21.71,
+  "p95_latency_ms": 211.654,
+  "b0_median_latency_ms": 7.208,
+  "wall_clock_s": 94.9746281,
+  "settlements_per_hour": 37753.24075209514,
+  "peak_memory_mb_sampled": 851.1758804321289,
   "peak_solver_mb_deterministic": 324.94054412841797,
   "peak_solver_settlement": "bank_credit_marketplace_2026_11_08_1097",
   "parse_calls": 996,
-  "agent_calls": 1233,
-  "agent_steps": 1233,
+  "agent_calls": 1234,
+  "agent_steps": 1234,
   "agent_repaired": 123,
   "agent_invoked": 575,
   "agent_skipped": 332,
   "agent_proven_cures": 78,
-  "model_calls": 2975,
-  "input_tokens": 2167082,
-  "output_tokens": 200653,
+  "model_calls": 2976,
+  "input_tokens": 2200099,
+  "output_tokens": 236988,
   "exception_rate": 0.7871485943775101,
-  "inr_per_1k_settlements": 1391.5198795180725,
+  "inr_per_1k_settlements": 1486.3637349397593,
   "b0_input_tokens_per_1k": 2287751.0040160646,
-  "input_tokens_per_1k": 2159924.698795181,
+  "input_tokens_per_1k": 2193074.297188755,
   "b0_inr_per_1k_settlements": 1270.6104417670683,
-  "provider": "offline-stub",
+  "provider": "replay",
   "provider_models": "parse=replay resolve=replay answer=replay",
   "measured_on": "windows/amd64, 4 logical cores, go1.27.0",
   "modelled_operational_conditions": [
@@ -76,21 +76,25 @@
     "NARROW_TO_HISTORY": 106,
     "SEARCH_FEED": 17
   },
-  "plan_turns": 1233,
+  "plan_turns": 1234,
   "plan_repaired_on_first_turn": 123,
   "plan_repaired_total": 123,
   "plan_first_turn_accuracy": 1,
-  "plan_turns_on_inapplicable_actions": 0,
-  "plan_inapplicable_rate": 0,
+  "plan_turns_on_inapplicable_actions": 2,
+  "plan_inapplicable_rate": 0.0016207455429497568,
   "plan_useful_outcomes": 776,
-  "plan_turns_per_useful_outcome": 1.5889175257731958,
+  "plan_turns_per_useful_outcome": 1.5902061855670102,
   "model_calls_by_role": {
     "control": 5,
     "parse": 996,
-    "plan": 1233,
+    "plan": 1234,
     "remediate": 707,
     "triage": 34
   },
+  "model_call_failures": 0,
+  "model_call_retries": 0,
+  "model_call_reliability": 1,
+  "model_schema_violations": 0,
   "report_defect_rate_configured": 0.06,
   "report_defect_rate_realised": 0.0391566265060241,
   "report_defects_diagnosed": 34,
@@ -146,7 +150,7 @@
         "cause_class": "WINDOW_TOO_WIDE",
         "evidence": "mean pool of 44 candidates for a mean batch of 7, and refusals are UNDERDETERMINED rather than UNRESOLVED",
         "recommended_action": "narrow the value-date window to what this merchant's proved settlements support",
-        "settlements_affected": 8,
+        "settlements_affected": 9,
         "value_held_inr": 8263
       },
       {
@@ -171,7 +175,7 @@
       "confirm the value-date window configured for each merchant against their capture cutoff"
     ],
     "what_i_cannot_tell": "Whether two merchants showing the same class share one underlying configuration or two separate ones, and whether a merchant flagged for one cause also has a second. The stub reports the first rule that matches per merchant and stops.",
-    "provider": "offline-stub",
+    "provider": "replay",
     "investigation": [
       {
         "step": 1,
@@ -190,7 +194,7 @@
         "step": 3,
         "looked_at": "INSPECT_REMEDIES",
         "why": "the system has already computed and re-verified remedies, and ranking them by held value says which single change recovers the most",
-        "found": "Remedies already computed and re-verified, by held value:     140 settlements,  ₹53,30,750.36 held : supply the settlement reference, or the settlement_id to payment_id mapping"
+        "found": "Remedies already computed and re-verified, by held value:     140 settlements,  ₹53,30,750.36 held : split the settlement by instrument, where the payout is instrument-segregated"
       },
       {
         "step": 4,
@@ -450,11 +454,11 @@
     "cache_read_usd_per_mtok": 0.5,
     "cache_write_usd_per_mtok": 6.25,
     "usd_to_inr": 88,
-    "uncached_input_tokens": 2151285,
+    "uncached_input_tokens": 2184302,
     "cached_input_tokens": 0,
     "cache_write_tokens": 0,
-    "output_tokens": 199722,
-    "calls": 2970,
+    "output_tokens": 236057,
+    "calls": 2971,
     "cache_hit_rate": 0,
     "b0_input_tokens": 2278600,
     "b0_output_tokens": 119520,
@@ -462,7 +466,7 @@
     "b0_tokens_overhead": 200,
     "b0_mean_narrowed_pool": 52.19377510040161,
     "b0_input_tokens_per_settlement": 2287.751004016064,
-    "manhattan_input_tokens_per_settlement": 2159.9246987951806
+    "manhattan_input_tokens_per_settlement": 2193.074297188755
   },
   "pool_stats": {
     "total_records_generated": 44146,
@@ -475,8 +479,8 @@
     "largest_declared_batch": 9,
     "settlements": 996
   },
-  "exception_cost_inr_total": 272185,
-  "exception_minutes_total": 16346,
+  "exception_cost_inr_total": 271702,
+  "exception_minutes_total": 16317,
   "exception_value_at_stake_paise": 2445073315,
   "exception_cost_inr_min": 83,
   "exception_cost_inr_max": 950,
@@ -580,6 +584,20 @@
       "collision_index": 3.363371700316209
     },
     {
+      "settlement_ref": "bank_credit_travel_2026_08_04_1001",
+      "archetype": "travel",
+      "status": "UNDERDETERMINED",
+      "value_at_stake_paise": 10559479,
+      "handling_minutes": 6,
+      "value_cleared_per_analyst_hour_inr": 1055947.9,
+      "exception_cost_inr": 100,
+      "pool_n": 66,
+      "cause": "this batch is claimed to be 9 records of a 66-record pool, a free cardinality of 9, at which the pool admits an estimated 157 distinct reconstructions of this target; no arithmetic procedure can single one out",
+      "remediation": "supply the settlement reference, or the settlement_id to payment_id mapping",
+      "agent_worked_it": true,
+      "collision_index": 7.470718166282564
+    },
+    {
       "settlement_ref": "bank_credit_travel_2026_08_13_1010",
       "archetype": "travel",
       "status": "UNDERDETERMINED",
@@ -676,20 +694,6 @@
       "remediation": "supply the settlement reference, or the settlement_id to payment_id mapping",
       "agent_worked_it": true,
       "collision_index": 0.5817968392594753
-    },
-    {
-      "settlement_ref": "bank_credit_marketplace_2026_11_13_1102",
-      "archetype": "marketplace",
-      "status": "UNDERDETERMINED",
-      "value_at_stake_paise": 6946098,
-      "handling_minutes": 7,
-      "value_cleared_per_analyst_hour_inr": 595379.8285714285,
-      "exception_cost_inr": 116,
-      "pool_n": 87,
-      "cause": "this batch is claimed to be 9 records of a 87-record pool, a free cardinality of 9, at which the pool admits an estimated 5.56e+04 distinct reconstructions of this target; no arithmetic procedure can single one out",
-      "remediation": "supply the settlement reference, or the settlement_id to payment_id mapping",
-      "agent_worked_it": true,
-      "collision_index": 1.0945767231976977
     }
   ],
   "by_archetype": [
@@ -699,9 +703,9 @@
       "settlements": 166,
       "auto_post_rate": 0.5843373493975904,
       "auto_posted_wrong": 0,
-      "mean_sigma_paise": 3389489.625624855,
+      "mean_sigma_paise": 3389662.428247635,
       "mean_twin_mass": 0,
-      "mean_collision_index": 4.085316711740732,
+      "mean_collision_index": 4.122446965081196,
       "entropy_gate_refusals": 0,
       "b0_post_rate": 0.2710843373493976,
       "b0_wrong_post_rate": 0.060240963855421686,

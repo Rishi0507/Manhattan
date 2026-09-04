@@ -122,7 +122,7 @@ The band is scaled by the **witness** cardinality, not the pool size. A pool-wid
 
 An action that cites a real record in a real feed may post. An action that changes a filter, a window or a constraint may not, however cleanly the accounting identity closes afterwards.
 
-That rule exists because of a measured failure rather than a principle chosen in advance. Without it, an agent able to retune narrowing produced **two wrong postings in three hundred settlements**. That figure is recorded by hand from an earlier build and is the only number in this document not emitted by run `run_20260904_1546`. The build that produced it is gone, so the failure it describes is rebuilt as a committed test in `internal/agent/corroboration_test.go`: the property that prevents it is asserted directly, and the test fails if `TIGHTEN_WINDOW` is ever made postable again. What happened: it tightened a value-date window, the candidate pool fell from 44 records to 40, an `AMBIGUOUS` settlement became `VERIFIED`, and the answer was wrong because the tightening had cut real records out of the batch. Every check passed, including the completeness probe, because the surviving rival differed from the found witness by more than the probe's depth bound.
+That rule exists because of a measured failure rather than a principle chosen in advance. Without it, an agent able to retune narrowing produced **two wrong postings in three hundred settlements**. That figure is recorded by hand from an earlier build and is the only number in this document not emitted by run `run_20260904_1845`. The build that produced it is gone, so the failure it describes is rebuilt as a committed test in `internal/agent/corroboration_test.go`: the property that prevents it is asserted directly, and the test fails if `TIGHTEN_WINDOW` is ever made postable again. What happened: it tightened a value-date window, the candidate pool fell from 44 records to 40, an `AMBIGUOUS` settlement became `VERIFIED`, and the answer was wrong because the tightening had cut real records out of the batch. Every check passed, including the completeness probe, because the surviving rival differed from the found witness by more than the probe's depth bound.
 
 The consequence is a real ceiling, and it is a ceiling on the mechanism rather than a shortfall in the result. Most refusals are `UNDERDETERMINED`, caused by a pool that is too wide, and the agent can prove exactly what would fix them but is not permitted to act on it. On the shipped benchmark it repairs **123** settlements into postings and produces **78** proven cures, out of the 907 that entered the loop.
 
@@ -238,7 +238,7 @@ What does not depend on these conditions is the safety property. Wrong postings 
 
 ## The graded figures come from the deterministic path
 
-The headline benchmark of 996 settlements runs on the deterministic provider (`offline-stub`, parse=replay resolve=replay answer=replay), which is what makes every published number reproducible to the paise without a network call.
+The headline benchmark of 996 settlements runs on the deterministic provider (`replay`, parse=replay resolve=replay answer=replay), which is what makes every published number reproducible to the paise without a network call.
 
 The live path is implemented for three vendors, Groq, Gemini and Anthropic, each forced into structured output by its own vendor mechanism and each recording to a cassette. It has been run: `manhattan live` executed 120 settlements against a live model and the same 120 against the stub, and **the wrong-posting count was identical at 0**, with cost billed rather than modelled.
 
@@ -246,7 +246,7 @@ The live path is implemented for three vendors, Groq, Gemini and Anthropic, each
 
 What the live run establishes is the architectural claim: model quality moves how much gets cleared and does not move whether what cleared was correct. What it does not establish is model quality at the full batch size, because the free-tier token allowances of the available providers do not reach 996 settlements in one sitting. The live figures are therefore reported at their own sample size and never blended into the headline.
 
-**The headline cost figures are modelled, not billed.** Measured token counts priced at published rates. The direction of that error is known: the replay path reports no cache reads, so every input token is priced at the uncached rate. The live run bills 66 INR per thousand against the 1,392 INR modelled here, on a smaller and cheaper model.
+**The headline cost figures are modelled, not billed.** Measured token counts priced at published rates. The direction of that error is known: the replay path reports no cache reads, so every input token is priced at the uncached rate. The live run bills 66 INR per thousand against the 1,486 INR modelled here, on a smaller and cheaper model.
 
 **One model job is graded and the rest are not.** Defect diagnosis scores 76% against the generator's own record of what it injected, which is a real accuracy figure for a real model output. Every other role is constrained rather than scored: a parse that goes wrong produces an exception, an action that goes wrong is rejected by the verifier, a drafted note that goes wrong is a confusing sentence. Those constraints are the safety argument and they are not accuracy measurements, and a reader should not read them as one.
 
@@ -262,7 +262,7 @@ The pathology mix reflects documented Indian gateway settlement mechanics: paise
 
 **Real merchant data will contain things the generator does not model.** Every accuracy figure in this repository should be read as a statement about the system's behaviour on a distribution chosen to be plausible, not as a measurement of the Indian merchant base.
 
-The exception economics are modelled too. The 2,400 INR cost of unwinding one wrong posting is an assumption, printed wherever it is used so a reader can substitute their own, and the 272,185 INR held-queue total rests on a configured analyst handling time.
+The exception economics are modelled too. The 2,400 INR cost of unwinding one wrong posting is an assumption, printed wherever it is used so a reader can substitute their own, and the 271,702 INR held-queue total rests on a configured analyst handling time.
 
 The archetype table is likewise modelled. The spread and twin-mass values come from configured ticket distributions chosen to be plausible for each merchant type. It describes how the estimator behaves across distribution shapes over stated assumptions. It is not market data and must not be presented as such.
 
