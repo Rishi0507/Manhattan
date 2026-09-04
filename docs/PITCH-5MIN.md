@@ -115,7 +115,7 @@ causes listed.
 > required. A reconciliation you cannot re-run is not one you can defend.
 >
 > Three: we published the break-even. Checking costs analyst time, and if your
-> reports are almost never wrong it is not worth it. Below roughly a 1.4 per
+> reports are almost never wrong it is not worth it. Below roughly a 2.3 per
 > cent report defect rate, do not buy this. Above it, you should. We are telling
 > you the condition under which our own product is the wrong purchase, because
 > a finance team is going to work that out anyway and would rather we said it
