@@ -164,6 +164,11 @@ type Derived struct {
 	// It exists so a graded figure can never be printed as model accuracy when
 	// a rule engine produced it. That is the category error this project
 	// polices everywhere else, and it would have been made here.
+	// ConditionMerchants is how many distinct merchant types carry a modelled
+	// misconfiguration, which is not the same as how many conditions there are
+	// because one merchant carries two.
+	ConditionMerchants int
+
 	IsStub       bool
 	GradedBy     string
 	B1Wrong1k    float64
@@ -199,15 +204,16 @@ type Derived struct {
 	StubCloseRecall float64
 
 	// The lookup, which is the answer everybody gives.
-	B1Posted        int
-	B1Wrong         int
-	B1CorrectPct    float64
-	Defects         int
-	DefectsCaught   int
-	DefectsMissed   int
-	DefectCatchPct  float64
-	DefectRatePct   float64
-	B1SilentPer1000 float64
+	B1Posted            int
+	B1Wrong             int
+	B1CorrectPct        float64
+	Defects             int
+	DefectsCaught       int
+	DefectsMissed       int
+	DefectCatchPct      float64
+	DefectRatePct       float64
+	DefectConfiguredPct float64
+	B1SilentPer1000     float64
 
 	// The queue, and whether ordering it means anything.
 	ExceptionCostMin   int
@@ -517,18 +523,6 @@ func deriveDocs(sum bench.Summary, cases []bench.CaseOutcome, sweep []bench.Swee
 		d.CloseSteps = sum.Close.Steps
 	}
 
-	// The defect rate at which checking pays for itself.
-	//
-	// Extra analyst work is fixed by the held population; the wrong postings
-	// prevented scale with the defect rate. So the break-even is the rate at
-	// which (settlements x rate x unwind cost) covers the extra work, and
-	// below it the honest recommendation is to run in shadow rather than to
-	// buy anything.
-	if sum.Settlements > 0 && remediationCostINR > 0 {
-		d.BreakEvenDefectPct = 100 * d.ExtraWorkINR /
-			(float64(sum.Settlements) * float64(remediationCostINR))
-	}
-
 	// Same defect rate, window fixed: one variable, isolated.
 	for _, sp := range sens {
 		if sp.NaiveFees {
@@ -558,6 +552,11 @@ func deriveDocs(sum bench.Summary, cases []bench.CaseOutcome, sweep []bench.Swee
 	d.TotalSweptConfigs = len(sweep)
 	d.PeakSampledMB, d.PeakSolverMB, d.Host = sum.PeakMemoryMB, sum.PeakSolverMB, sum.Host
 	d.Conditions = sum.Conditions
+	merchants := map[string]bool{}
+	for _, c := range sum.Conditions {
+		merchants[strings.TrimSpace(strings.SplitN(c, ":", 2)[0])] = true
+	}
+	d.ConditionMerchants = len(merchants)
 
 	d.M1Posted, d.M1Wrong = sum.M1Posted, sum.M1PostedWrong
 	d.M1FromProof, d.M1FromClaim, d.M1Held = sum.M1FromProof, sum.M1FromClaim, sum.M1Held
@@ -621,7 +620,8 @@ func deriveDocs(sum bench.Summary, cases []bench.CaseOutcome, sweep []bench.Swee
 		d.DefectCatchPct = 100 * float64(d.DefectsCaught) / float64(d.Defects)
 	}
 	if sum.Settlements > 0 {
-		d.DefectRatePct = 100 * float64(d.Defects) / float64(sum.Settlements)
+		d.DefectRatePct = 100 * float64(sum.B1DefectiveRpts) / float64(sum.Settlements)
+		d.DefectConfiguredPct = 100 * sum.DefectRateConfigured
 		d.B1SilentPer1000 = 1000 * float64(sum.B1PostedWrong) / float64(sum.Settlements)
 	}
 
@@ -646,17 +646,38 @@ func deriveDocs(sum bench.Summary, cases []bench.CaseOutcome, sweep []bench.Swee
 	// B1 cannot post a settlement whose mapping it has no way to read, so
 	// those are held by both systems and cancel out of the comparison.
 	d.B1Held = sum.NoClaim
-	d.ExtraHeld = sum.M1Held - (sum.NoClaim - sum.NoClaimPosted)
-	if d.ExtraHeld < 0 {
-		d.ExtraHeld = 0
+	extraHeld := sum.M1Held - (sum.NoClaim - sum.NoClaimPosted)
+	if extraHeld < 0 {
+		extraHeld = 0
 	}
+	d.ExtraHeld = extraHeld
+	var avgHandle float64
 	if sum.Exceptions > 0 {
-		d.AvgHandleINR = float64(sum.ExceptionCostINR) / float64(sum.Exceptions)
+		avgHandle = float64(sum.ExceptionCostINR) / float64(sum.Exceptions)
 	}
-	d.ExtraWorkINR = float64(d.ExtraHeld) * d.AvgHandleINR
+	d.AvgHandleINR = avgHandle
+	extraWork := float64(extraHeld) * avgHandle
+	d.ExtraWorkINR = extraWork
+	if sum.Settlements > 0 && remediationCostINR > 0 {
+		d.BreakEvenDefectPct = 100 * extraWork /
+			(float64(sum.Settlements) * float64(remediationCostINR))
+	}
 	d.B1UnwindINR = sum.B1PostedWrong * remediationCostINR
+
+	// The defect rate at which checking pays for itself.
+	//
+	// Extra analyst work is fixed by the held population; the wrong postings
+	// prevented scale with the defect rate. So the break-even is the rate at
+	// which settlements x rate x unwind cost covers the extra work, and below
+	// it the honest recommendation is to run in shadow rather than to buy.
+	//
+	// Every term comes from `sum` and from locals in this block. An earlier
+	// version read d.ExtraWorkINR from a statement that ran before it was
+	// assigned, and published "below a report defect rate of about 0.0 per
+	// cent" into the README. TestDerivedFieldsAreNeverReadBeforeAssignment now
+	// fails the build on that shape rather than leaving it to a reviewer.
 	if sum.B1PostedWrong > 0 {
-		d.UnwindBreakINR = d.ExtraWorkINR / float64(sum.B1PostedWrong)
+		d.UnwindBreakINR = extraWork / float64(sum.B1PostedWrong)
 		d.UnwindHours = d.UnwindBreakINR / 1000
 	}
 	if sum.B0PostedWrong > 0 {

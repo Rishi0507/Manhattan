@@ -14,7 +14,10 @@ settlement reference. Today that leg is done by hand in a spreadsheet, and it is
 the case nobody serves: Manhattan reconstructs the credit from the merchant's own
 records and proves no other batch produces it. **{{ .D.NoClaim }} settlements in
 this run ({{ pct .D.NoClaimPct }}) arrive with no mapping to check at all**, and
-there reconstruction is the only route to a posting.
+there reconstruction is the only route to a posting. It proves
+{{ .D.NoClaimPosted }} of them here, on a run carrying a modelled window
+misconfiguration; [with that one variable fixed it proves
+{{ pct .D.CleanReconPct }} rather than {{ pct .D.MisconfigPct }}](#the-result).
 
 **A settlement support desk.** "Why is my payout short by 4,180 rupees" is a
 ticket with a cost attached, and the answer is already a receipt: here are the
@@ -23,6 +26,16 @@ chargeback debited this cycle but raised against the last one. On this run's
 numbers that deflects **{{ pct .D.DeflectPct }}** of such tickets without an
 engineer opening a CSV, worth **{{ ni .D.MonthlySavingINR }} INR a month** at
 {{ n .D.DisputesPerMonth }} disputes and {{ .D.MinutesEach }} minutes each.
+
+**A flat-price merchant, where reconstruction is useless and the product is not.**
+Subscription and utility billing settle two hundred identical charges at a time,
+and every group of the same size sums identically: no method that reads amounts
+can tell them apart, and none ever will. Reconstruction posts **0%** there and
+would whatever the solver did. The claim check posts
+{{ range .S.ByArchetype }}{{ if eq .Archetype "subscription_saas" }}**{{ rate .M1PostRate }}**{{ end }}{{ end }}
+and {{ range .S.ByArchetype }}{{ if eq .Archetype "utility_billpay" }}**{{ rate .M1PostRate }}**{{ end }}{{ end }},
+because checking a batch somebody named costs nothing that deriving one costs.
+That is why the composite exists, rather than a weakness discovered later.
 
 **A gateway hardening its own reconciliation.** Manhattan sits on top of Single
 View Recon rather than replacing it, checking the mapping the report already
@@ -286,7 +299,7 @@ Measured, at {{ .D.LiveSettlements }} settlements:
 
 ## What this run deliberately gets wrong
 
-A reconciliation benchmark on perfectly configured data measures nothing an agent could help with, so two misconfigurations are modelled. Both are things a **deployment gets wrong on its own side**:
+A reconciliation benchmark on perfectly configured data measures nothing an agent could help with, so {{ len .D.Conditions }} misconfigurations are modelled across {{ .D.ConditionMerchants }} merchant types. All of them are things a **deployment gets wrong on its own side**:
 
 {{ range .D.Conditions }}- {{ . }}
 {{ end }}
@@ -512,8 +525,8 @@ The extra work is fixed by the held population. The wrong postings prevented
 scale with how often reports are actually wrong. So there is a rate below which
 checking does not pay, and it is computable rather than a matter of opinion:
 
-> **Below a report defect rate of about {{ pct1 .D.BreakEvenDefectPct }}, checking
-> costs more analyst time than it saves.**
+> **If fewer than about {{ pct1 .D.BreakEvenDefectPct }} of your settlement reports
+> are defective, checking costs more analyst time than it saves.**
 
 That is a deployment recommendation, not a disclaimer. If your reports are
 cleaner than that, run this in shadow: it posts nothing, it costs you nothing
@@ -607,8 +620,8 @@ it arrives with the residual attached.
 | one loop, closed | bank credit to posted ledger entry, or to a named and priced exception |
 | match rate reported | **{{ .D.M1Posted }} of {{ .S.Settlements }}**, {{ pct .D.M1PostRate }}, with **{{ .D.M1Wrong }} wrong** |
 | exceptions it could not resolve | **{{ .D.M1Held }}**, each with a cause, a computed remedy, a price and a drafted note |
-| throughput | **{{ ni .S.PerHour }} settlements per hour**, {{ f1 .S.MedianLatencyMS }} ms median pipeline time |
-| agentic design | {{ n .S.ModelCalls }} model calls across {{ len .S.CallsByRole }} jobs, a closed 8-action controller loop, cross-settlement merchant memory, and a graded diagnosis |
+| throughput | **{{ ni .S.PerHour }} settlements per hour** end to end, {{ f1 .S.MedianLatencyMS }} ms median pipeline time, on {{ .D.Host }} |
+| agentic design | a closed 8-action controller loop, a period-close investigation over the receipt store, cross-settlement merchant memory, and three graded jobs. {{ n .S.ModelCalls }} model calls across {{ len .S.CallsByRole }} roles{{ if .D.IsStub }}, all served by the deterministic offline provider on this run; `manhattan live` runs the same code against the API{{ end }} |
 
 Throughput is end to end: {{ .S.Settlements }} settlements in {{ f1 .S.WallClockS }} s of wall clock including the agent loop, both baselines and receipt serialisation. That divides to {{ f1 .D.MsPerSettlement }} ms against a {{ f1 .S.MedianLatencyMS }} ms median pipeline time, and both are printed rather than the flattering one. Memory: **{{ i .D.PeakSolverMB }} MB** deterministic solver peak; **{{ i .D.PeakSampledMB }} MB** sampled process heap, which moves between runs and should never be quoted as a bound.
 
@@ -636,8 +649,10 @@ Stated once, in proportion. The full treatment is [LIMITATIONS.md](LIMITATIONS.m
 
 **Synthetic data.** The pathology mix follows documented Razorpay mechanics
 (paise amounts, T+2 cycles, MDR with 18% GST, netted refunds, chargeback debits,
-zero-MDR UPI), and the report defect rate of {{ pct1 .D.DefectRatePct }} is a
-modelling choice rather than an observation. If a real rate is lower, the
+zero-MDR UPI). Reports are generated defective at a configured
+{{ pct1 .D.DefectConfiguredPct }}, which lands {{ .D.Defects }} defects across
+{{ .S.Settlements }} settlements, and that knob is a modelling choice rather
+than an observation of any gateway. If a real rate is lower, the
 composite's volume advantage scales down with it; the structural property does
 not move, because an unchecked report is undetectably wrong at any rate.
 
@@ -682,6 +697,16 @@ internal/
 web/               the dashboard: Vite, React, TypeScript, Tailwind
 docs/              DESIGN, EXPLAIN, DEMO-SCRIPT, templates, diagrams
 ```
+
+**The documents are tested like the settlements.** `cmd/manhattan/doclint_test.go`
+reads the rendered README, RESULTS and LIMITATIONS and fails the build on a
+hardcoded count that contradicts a generated list, one quantity printed under
+two labels, a malformed number, a dangling anchor, a broken link, or a
+provider-dependent figure quoted without saying what produced it.
+`derive_test.go` walks the document generator's AST and fails if any derived
+figure is read before it is assigned, which is the bug that once published a
+business case worth nothing per month. Each check has been probed by
+introducing the defect it exists to catch and confirming it fails.
 
 **Three tests worth reading.** `internal/solver/solve_test.go` verifies 400 randomised configurations against a 2ⁿ brute-force oracle and caught two real bugs before anything was built on it. `internal/bench/cases_test.go` runs all eleven adversarial cases and **fails if B0 posts nothing wrong**, because a suite the baseline survives is not adversarial. `internal/agent/corroboration_test.go` is the posting rule as an assertion rather than an anecdote.
 

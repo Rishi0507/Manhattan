@@ -122,7 +122,7 @@ The band is scaled by the **witness** cardinality, not the pool size. A pool-wid
 
 An action that cites a real record in a real feed may post. An action that changes a filter, a window or a constraint may not, however cleanly the accounting identity closes afterwards.
 
-That rule exists because of a measured failure rather than a principle chosen in advance. Without it, an agent able to retune narrowing produced **two wrong postings in three hundred settlements**. That figure is recorded by hand from an earlier build and is the only number in this document not emitted by run `run_20260904_0832`. The build that produced it is gone, so the failure it describes is rebuilt as a committed test in `internal/agent/corroboration_test.go`: the property that prevents it is asserted directly, and the test fails if `TIGHTEN_WINDOW` is ever made postable again. What happened: it tightened a value-date window, the candidate pool fell from 44 records to 40, an `AMBIGUOUS` settlement became `VERIFIED`, and the answer was wrong because the tightening had cut real records out of the batch. Every check passed, including the completeness probe, because the surviving rival differed from the found witness by more than the probe's depth bound.
+That rule exists because of a measured failure rather than a principle chosen in advance. Without it, an agent able to retune narrowing produced **two wrong postings in three hundred settlements**. That figure is recorded by hand from an earlier build and is the only number in this document not emitted by run `run_20260904_1218`. The build that produced it is gone, so the failure it describes is rebuilt as a committed test in `internal/agent/corroboration_test.go`: the property that prevents it is asserted directly, and the test fails if `TIGHTEN_WINDOW` is ever made postable again. What happened: it tightened a value-date window, the candidate pool fell from 44 records to 40, an `AMBIGUOUS` settlement became `VERIFIED`, and the answer was wrong because the tightening had cut real records out of the batch. Every check passed, including the completeness probe, because the surviving rival differed from the found witness by more than the probe's depth bound.
 
 The consequence is a real ceiling, and it is a ceiling on the mechanism rather than a shortfall in the result. Most refusals are `UNDERDETERMINED`, caused by a pool that is too wide, and the agent can prove exactly what would fix them but is not permitted to act on it. On the shipped benchmark it repairs **35** settlements into postings and produces **65** proven cures, out of the 458 that entered the loop.
 
@@ -178,7 +178,7 @@ What this cannot detect is a report that is wrong in a way that still balances: 
 
 ## The report-defect rate is an assumption, and the comparison rests on it
 
-The measured answer to "we already ship that mapping" depends on a generated defect rate of 4.0%, and that figure is a modelling choice rather than an observation of any real gateway.
+The measured answer to "we already ship that mapping" depends on a configured defect rate of 6.0%, which lands 20 defective reports across 498 settlements. That knob is a modelling choice rather than an observation of any real gateway.
 
 It is deliberately modest, because the argument does not need reports to be bad. It needs them to be occasionally wrong in a way nothing downstream can detect, which is a much weaker and much more defensible claim. But if a gateway's true defect rate is a tenth of this, the lookup's 20 wrong postings become two or three, and the case for an independent reconstruction is correspondingly smaller in volume terms. It is not smaller in kind: the wrong postings that remain are still silent, still unattributable, and still found at audit rather than at posting.
 
@@ -190,7 +190,7 @@ The three defect shapes modelled are chosen as plausible rather than sampled fro
 
 **A mapping short by one record** is not a payments phenomenon at all; it is what a truncated file or a partial write looks like downstream, and it is included because a reconciliation should not depend on its inputs being well-formed.
 
-A payments engineer will know better than this generator does which of these actually occurs and at what rate, and that is a conversation this document invites rather than forecloses. What the argument does not depend on is the rate: see the sensitivity sweep, where the composite's wrong-posting count stays at zero from a 6 per cent defect rate down to a tenth of it.
+A payments engineer will know better than this generator does which of these actually occurs and at what rate, and that is a conversation this document invites rather than forecloses. What the argument does not depend on is the rate: see the sensitivity sweep, where the composite's wrong-posting count stays at zero from the configured rate down to a tenth of it.
 
 **What is not an assumption** is the structural point underneath it. A reconciliation whose only check on the settlement report is the settlement report cannot detect a defective one at any rate, including zero. Manhattan flagged 20 of 20 and missed 0 because it has an independent account of the money, and that property does not depend on how often the report is wrong.
 
@@ -220,7 +220,7 @@ So the action helps a deployment that is somewhat wrong and cannot help one that
 
 ## The operational conditions are modelled, and the agent's contribution depends on them
 
-This run deliberately models two misconfigurations:
+This run deliberately models 5 misconfigurations across 4 merchant types:
 
 - d2c_ecommerce: reconciliation window misconfigured to plus or minus 24 hours
 - marketplace: disputes feed never joined into the pool
@@ -280,4 +280,4 @@ Being able to name what was left out, why, and exactly which population it would
 
 ---
 
-*This document is generated from run `run_20260904_0832`, seed `20260826`, by `manhattan bench`. Its source is `docs/LIMITATIONS.tmpl.md`. No figure in it is typed by hand, so it cannot come to describe a run other than the one that produced [RESULTS.md](RESULTS.md) and [README.md](README.md).*
+*This document is generated from run `run_20260904_1218`, seed `20260826`, by `manhattan bench`. Its source is `docs/LIMITATIONS.tmpl.md`. No figure in it is typed by hand, so it cannot come to describe a run other than the one that produced [RESULTS.md](RESULTS.md) and [README.md](README.md).*

@@ -1,5 +1,5 @@
 {
-  "run_id": "run_20260904_0832",
+  "run_id": "run_20260904_1218",
   "settlements": 498,
   "seed": 20260826,
   "status_counts": {
@@ -39,12 +39,12 @@
   "m1_clean_reports_checked": 408,
   "settlements_with_no_report_mapping": 70,
   "settlements_with_no_mapping_posted_by_reconstruction": 6,
-  "median_latency_ms": 20.38,
-  "p95_latency_ms": 197.099,
-  "b0_median_latency_ms": 7.631,
-  "wall_clock_s": 37.1999476,
-  "settlements_per_hour": 48193.61627272829,
-  "peak_memory_mb_sampled": 747.1203918457031,
+  "median_latency_ms": 20.333,
+  "p95_latency_ms": 191.386,
+  "b0_median_latency_ms": 8.314,
+  "wall_clock_s": 40.0530723,
+  "settlements_per_hour": 44760.61128524216,
+  "peak_memory_mb_sampled": 747.1194305419922,
   "peak_solver_mb_deterministic": 113.9494743347168,
   "peak_solver_settlement": "bank_credit_marketplace_2026_08_25_1022",
   "parse_calls": 498,
@@ -91,6 +91,8 @@
     "remediate": 384,
     "triage": 20
   },
+  "report_defect_rate_configured": 0.06,
+  "report_defect_rate_realised": 0.040160642570281124,
   "report_defects_diagnosed": 20,
   "report_defect_classes": {
     "CROSS_CYCLE_MEMBER": 6,

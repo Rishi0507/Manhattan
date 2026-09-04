@@ -188,6 +188,15 @@ type Summary struct {
 	// does not have to accept one aggregate figure for "the AI".
 	CallsByRole map[string]int `json:"model_calls_by_role"`
 
+	// DefectRateConfigured is the generator knob. DefectRateRealised is how
+	// many settlements actually received a defect.
+	//
+	// They are different numbers and were both called "the defect rate", which
+	// printed 6.0 per cent in one document and 4.0 in another and read as
+	// drift in a repository whose pitch is that its figures cannot drift.
+	DefectRateConfigured float64 `json:"report_defect_rate_configured"`
+	DefectRateRealised   float64 `json:"report_defect_rate_realised"`
+
 	// DiagnosedDefects counts contradicted report claims the model classified,
 	// and DefectClasses is the distribution of its diagnoses.
 	DiagnosedDefects int            `json:"report_defects_diagnosed"`
@@ -561,6 +570,7 @@ func RunBatch(ctx context.Context, spec BatchSpec, provider llm.Provider) (*evid
 		if spec.ReportDefectRate != nil {
 			gs.ReportDefectRate = *spec.ReportDefectRate
 		}
+		sum.DefectRateConfigured = gs.ReportDefectRate
 		if nr, ok := negotiatedRate[arch]; ok {
 			gs.NegotiatedMDRBps = nr.bps
 			gs.MissingFeeRowRate = nr.missingRows
@@ -984,6 +994,10 @@ func RunBatch(ctx context.Context, spec BatchSpec, provider llm.Provider) (*evid
 	sum.PlanOutcomes = sum.AgentRepaired + sum.AgentProvenCures + sum.AgentInvoked
 	if sum.PlanOutcomes > 0 {
 		sum.PlanTurnsPerOutcome = float64(sum.PlanTurns) / float64(sum.PlanOutcomes)
+	}
+
+	if sum.Settlements > 0 {
+		sum.DefectRateRealised = float64(sum.B1DefectiveRpts) / float64(sum.Settlements)
 	}
 
 	sum.ModelCalls = usage.Calls

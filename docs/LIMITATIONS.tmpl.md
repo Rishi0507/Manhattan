@@ -178,7 +178,7 @@ What this cannot detect is a report that is wrong in a way that still balances: 
 
 ## The report-defect rate is an assumption, and the comparison rests on it
 
-The measured answer to "we already ship that mapping" depends on a generated defect rate of {{ pct1 .D.DefectRatePct }}, and that figure is a modelling choice rather than an observation of any real gateway.
+The measured answer to "we already ship that mapping" depends on a configured defect rate of {{ pct1 .D.DefectConfiguredPct }}, which lands {{ .D.Defects }} defective reports across {{ .S.Settlements }} settlements. That knob is a modelling choice rather than an observation of any real gateway.
 
 It is deliberately modest, because the argument does not need reports to be bad. It needs them to be occasionally wrong in a way nothing downstream can detect, which is a much weaker and much more defensible claim. But if a gateway's true defect rate is a tenth of this, the lookup's {{ .D.B1Wrong }} wrong postings become two or three, and the case for an independent reconstruction is correspondingly smaller in volume terms. It is not smaller in kind: the wrong postings that remain are still silent, still unattributable, and still found at audit rather than at posting.
 
@@ -190,7 +190,7 @@ The three defect shapes modelled are chosen as plausible rather than sampled fro
 
 **A mapping short by one record** is not a payments phenomenon at all; it is what a truncated file or a partial write looks like downstream, and it is included because a reconciliation should not depend on its inputs being well-formed.
 
-A payments engineer will know better than this generator does which of these actually occurs and at what rate, and that is a conversation this document invites rather than forecloses. What the argument does not depend on is the rate: see the sensitivity sweep, where the composite's wrong-posting count stays at zero from a 6 per cent defect rate down to a tenth of it.
+A payments engineer will know better than this generator does which of these actually occurs and at what rate, and that is a conversation this document invites rather than forecloses. What the argument does not depend on is the rate: see the sensitivity sweep, where the composite's wrong-posting count stays at zero from the configured rate down to a tenth of it.
 
 **What is not an assumption** is the structural point underneath it. A reconciliation whose only check on the settlement report is the settlement report cannot detect a defective one at any rate, including zero. Manhattan flagged {{ .D.DefectsCaught }} of {{ .D.Defects }} and missed {{ .D.DefectsMissed }} because it has an independent account of the money, and that property does not depend on how often the report is wrong.
 
@@ -220,7 +220,7 @@ So the action helps a deployment that is somewhat wrong and cannot help one that
 
 ## The operational conditions are modelled, and the agent's contribution depends on them
 
-This run deliberately models two misconfigurations:
+This run deliberately models {{ len .D.Conditions }} misconfigurations across {{ .D.ConditionMerchants }} merchant types:
 
 {{ range .D.Conditions }}- {{ . }}
 {{ end }}

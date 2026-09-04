@@ -36,8 +36,9 @@ func renderResults(
 	fmt.Fprintf(&b, "```\nrun id     %s\nseed       %d\nprovider   %s\nmodels     %s\nmachine    %s\n```\n\n",
 		sum.RunID, sum.Seed, sum.Provider, sum.ProviderModels, sum.Host)
 	if len(sum.Conditions) > 0 {
-		fmt.Fprintf(&b, "This run models two operational misconfigurations, both of them things a\n")
-		fmt.Fprintf(&b, "deployment gets wrong on its own side rather than things a counterparty did:\n\n")
+		fmt.Fprintf(&b, "This run models %d operational misconfigurations, every one a thing a\n",
+			len(sum.Conditions))
+		fmt.Fprintf(&b, "deployment gets wrong on its own side rather than a thing a counterparty did:\n\n")
 		for _, c := range sum.Conditions {
 			fmt.Fprintf(&b, "- %s\n", c)
 		}
@@ -720,7 +721,7 @@ func renderResults(
 		fmt.Fprintf(&b, "problem the agent solves. The answer is a curve rather than an argument: the\n")
 		fmt.Fprintf(&b, "batch is re-run with the modelled misconfiguration scaled from zero, and the\n")
 		fmt.Fprintf(&b, "agent's contribution is reported at each point.\n\n")
-		fmt.Fprintf(&b, "| scenario | slack | defect rate | verified | wrong | repairs | narrowing | cures | M1 | M1 wrong | B1 wrong |\n")
+		fmt.Fprintf(&b, "| scenario | slack | configured defect rate | verified | wrong | repairs | narrowing | cures | M1 | M1 wrong | B1 wrong |\n")
 		fmt.Fprintf(&b, "|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|\n")
 		for _, sp := range sensitivity {
 			fmt.Fprintf(&b, "| %s | %.1f | %.1f%% | %d | %d | %d | %d | %d | %d | %d | %d |\n",
@@ -738,7 +739,7 @@ func renderResults(
 		fmt.Fprintf(&b, "the repair are the ones least able to establish the evidence for it.\n\n")
 		fmt.Fprintf(&b, "The wrong-posting column is zero in every scenario, including the ones where\n")
 		fmt.Fprintf(&b, "the agent is doing the most work.\n\n")
-		fmt.Fprintf(&b, "The B1 column tracks the report defect rate exactly, which is the point of\n")
+		fmt.Fprintf(&b, "The B1 column tracks the configured defect rate exactly, which is the point of\n")
 		fmt.Fprintf(&b, "varying it: the volume of the composite's advantage depends on a rate this\n")
 		fmt.Fprintf(&b, "repository chose, and its existence does not. A reconciliation whose only\n")
 		fmt.Fprintf(&b, "check on the report is the report detects a defective one at no rate at all.\n\n")

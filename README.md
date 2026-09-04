@@ -14,7 +14,10 @@ settlement reference. Today that leg is done by hand in a spreadsheet, and it is
 the case nobody serves: Manhattan reconstructs the credit from the merchant's own
 records and proves no other batch produces it. **70 settlements in
 this run (14%) arrive with no mapping to check at all**, and
-there reconstruction is the only route to a posting.
+there reconstruction is the only route to a posting. It proves
+6 of them here, on a run carrying a modelled window
+misconfiguration; [with that one variable fixed it proves
+29% rather than 13%](#the-result).
 
 **A settlement support desk.** "Why is my payout short by 4,180 rupees" is a
 ticket with a cost attached, and the answer is already a receipt: here are the
@@ -23,6 +26,16 @@ chargeback debited this cycle but raised against the last one. On this run's
 numbers that deflects **72%** of such tickets without an
 engineer opening a CSV, worth **862,651 INR a month** at
 4,000 disputes and 18 minutes each.
+
+**A flat-price merchant, where reconstruction is useless and the product is not.**
+Subscription and utility billing settle two hundred identical charges at a time,
+and every group of the same size sums identically: no method that reads amounts
+can tell them apart, and none ever will. Reconstruction posts **0%** there and
+would whatever the solver did. The claim check posts
+**87%**
+and **78%**,
+because checking a batch somebody named costs nothing that deriving one costs.
+That is why the composite exists, rather than a weakness discovered later.
 
 **A gateway hardening its own reconciliation.** Manhattan sits on top of Single
 View Recon rather than replacing it, checking the mapping the report already
@@ -34,7 +47,7 @@ git clone <this repo> && cd manhattan
 ./run.sh demo          # or:  .\run.ps1 demo    or:  make demo
 ```
 
-No API key required. **Every number in this file, in [RESULTS.md](RESULTS.md) and in [LIMITATIONS.md](LIMITATIONS.md) is emitted by that command**, rendered from one run in one pass so the three cannot drift. Generated from run `run_20260904_0832`, seed `20260826`, on windows/amd64, 4 logical cores, go1.27.0.
+No API key required. **Every number in this file, in [RESULTS.md](RESULTS.md) and in [LIMITATIONS.md](LIMITATIONS.md) is emitted by that command**, rendered from one run in one pass so the three cannot drift. Generated from run `run_20260904_1218`, seed `20260826`, on windows/amd64, 4 logical cores, go1.27.0.
 
 ---
 
@@ -283,7 +296,7 @@ It runs the same batch on the live API and on the stub, and asserts that wrong p
 
 ## What this run deliberately gets wrong
 
-A reconciliation benchmark on perfectly configured data measures nothing an agent could help with, so two misconfigurations are modelled. Both are things a **deployment gets wrong on its own side**:
+A reconciliation benchmark on perfectly configured data measures nothing an agent could help with, so 5 misconfigurations are modelled across 4 merchant types. All of them are things a **deployment gets wrong on its own side**:
 
 - d2c_ecommerce: reconciliation window misconfigured to plus or minus 24 hours
 - marketplace: disputes feed never joined into the pool
@@ -344,7 +357,7 @@ The rule was learned, not designed. The first version let narrowing post if the 
 
 > Removing candidates cannot make the survivor unique. It makes it **unexamined**.
 
-That figure is hand-recorded from a build that no longer exists, and it is the only number in this file not emitted by run `run_20260904_0832`. The failure is rebuilt as a committed test in [`internal/agent/corroboration_test.go`](internal/agent/corroboration_test.go), which fails if `TIGHTEN_WINDOW` is ever made postable again.
+That figure is hand-recorded from a build that no longer exists, and it is the only number in this file not emitted by run `run_20260904_1218`. The failure is rebuilt as a committed test in [`internal/agent/corroboration_test.go`](internal/agent/corroboration_test.go), which fails if `TIGHTEN_WINDOW` is ever made postable again.
 
 **Prohibition was the right default and the wrong permanent answer.** `NARROW_TO_HISTORY` closes the gap: a merchant's prior `VERIFIED` settlements are a second source, and a strong one, since each was proved by exhaustive enumeration without reference to any window hypothesis. The profile is built only from proofs, needs at least twelve, and the bound may never be tighter than the widest offset those proofs show. The verifier still decides. Corroboration buys the right to be tested, not the right to be believed.
 
@@ -519,8 +532,8 @@ The extra work is fixed by the held population. The wrong postings prevented
 scale with how often reports are actually wrong. So there is a rate below which
 checking does not pay, and it is computable rather than a matter of opinion:
 
-> **Below a report defect rate of about 0.0%, checking
-> costs more analyst time than it saves.**
+> **If fewer than about 2.3% of your settlement reports
+> are defective, checking costs more analyst time than it saves.**
 
 That is a deployment recommendation, not a disclaimer. If your reports are
 cleaner than that, run this in shadow: it posts nothing, it costs you nothing
@@ -658,10 +671,10 @@ it arrives with the residual attached.
 | one loop, closed | bank credit to posted ledger entry, or to a named and priced exception |
 | match rate reported | **358 of 498**, 72%, with **0 wrong** |
 | exceptions it could not resolve | **140**, each with a cause, a computed remedy, a price and a drafted note |
-| throughput | **48,194 settlements per hour**, 20.4 ms median pipeline time |
-| agentic design | 1,498 model calls across 5 jobs, a closed 8-action controller loop, cross-settlement merchant memory, and a graded diagnosis |
+| throughput | **44,761 settlements per hour** end to end, 20.3 ms median pipeline time, on windows/amd64, 4 logical cores, go1.27.0 |
+| agentic design | a closed 8-action controller loop, a period-close investigation over the receipt store, cross-settlement merchant memory, and three graded jobs. 1,498 model calls across 5 roles, all served by the deterministic offline provider on this run; `manhattan live` runs the same code against the API |
 
-Throughput is end to end: 498 settlements in 37.2 s of wall clock including the agent loop, both baselines and receipt serialisation. That divides to 74.7 ms against a 20.4 ms median pipeline time, and both are printed rather than the flattering one. Memory: **114 MB** deterministic solver peak; **747 MB** sampled process heap, which moves between runs and should never be quoted as a bound.
+Throughput is end to end: 498 settlements in 40.1 s of wall clock including the agent loop, both baselines and receipt serialisation. That divides to 80.4 ms against a 20.3 ms median pipeline time, and both are printed rather than the flattering one. Memory: **114 MB** deterministic solver peak; **747 MB** sampled process heap, which moves between runs and should never be quoted as a bound.
 
 **Determinism is per commit.** Same seed and same commit gives the same decisions on every settlement. Timings are measurements and move, so receipts are not byte-identical.
 
@@ -690,8 +703,10 @@ Stated once, in proportion. The full treatment is [LIMITATIONS.md](LIMITATIONS.m
 
 **Synthetic data.** The pathology mix follows documented Razorpay mechanics
 (paise amounts, T+2 cycles, MDR with 18% GST, netted refunds, chargeback debits,
-zero-MDR UPI), and the report defect rate of 4.0% is a
-modelling choice rather than an observation. If a real rate is lower, the
+zero-MDR UPI). Reports are generated defective at a configured
+6.0%, which lands 20 defects across
+498 settlements, and that knob is a modelling choice rather
+than an observation of any gateway. If a real rate is lower, the
 composite's volume advantage scales down with it; the structural property does
 not move, because an unchecked report is undetectably wrong at any rate.
 
@@ -736,6 +751,16 @@ internal/
 web/               the dashboard: Vite, React, TypeScript, Tailwind
 docs/              DESIGN, EXPLAIN, DEMO-SCRIPT, templates, diagrams
 ```
+
+**The documents are tested like the settlements.** `cmd/manhattan/doclint_test.go`
+reads the rendered README, RESULTS and LIMITATIONS and fails the build on a
+hardcoded count that contradicts a generated list, one quantity printed under
+two labels, a malformed number, a dangling anchor, a broken link, or a
+provider-dependent figure quoted without saying what produced it.
+`derive_test.go` walks the document generator's AST and fails if any derived
+figure is read before it is assigned, which is the bug that once published a
+business case worth nothing per month. Each check has been probed by
+introducing the defect it exists to catch and confirming it fails.
 
 **Three tests worth reading.** `internal/solver/solve_test.go` verifies 400 randomised configurations against a 2ⁿ brute-force oracle and caught two real bugs before anything was built on it. `internal/bench/cases_test.go` runs all eleven adversarial cases and **fails if B0 posts nothing wrong**, because a suite the baseline survives is not adversarial. `internal/agent/corroboration_test.go` is the posting rule as an assertion rather than an anecdote.
 

@@ -57,7 +57,7 @@
     "pool_n": 40,
     "k_star": 12,
     "collision_index": 6.993192879457462,
-    "latency_ms": 27,
+    "latency_ms": 58,
     "receipt": {
       "settlement_ref": "bank_credit_travel_2026_08_25_1003",
       "run_id": "case_01_clean_positive_only",
@@ -330,11 +330,11 @@
       },
       "timing_ms": {
         "entropy_gate": 0,
-        "feasibility": 10,
+        "feasibility": 18,
         "fee_check": 0,
         "narrow": 0,
         "prove": 6,
-        "reconstruct": 9
+        "reconstruct": 32
       },
       "policy_version": "fees_2026_08",
       "replay_seed": 1001
@@ -412,7 +412,7 @@
     "pool_n": 24,
     "k_star": 12,
     "collision_index": 0.009569086072731547,
-    "latency_ms": 17,
+    "latency_ms": 51,
     "receipt": {
       "settlement_ref": "bank_credit_travel_2026_08_25_1003",
       "run_id": "case_02_signed_items",
@@ -696,11 +696,11 @@
       },
       "timing_ms": {
         "entropy_gate": 0,
-        "feasibility": 9,
+        "feasibility": 23,
         "fee_check": 0,
         "narrow": 0,
         "prove": 1,
-        "reconstruct": 5
+        "reconstruct": 27
       },
       "policy_version": "fees_2026_08",
       "replay_seed": 1002
@@ -780,7 +780,7 @@
     "pool_n": 258,
     "k_star": 3,
     "collision_index": 0.16817783731093572,
-    "latency_ms": 89,
+    "latency_ms": 226,
     "receipt": {
       "settlement_ref": "bank_credit_travel_2026_08_23_1001",
       "run_id": "case_03_large_batch_complement",
@@ -1316,11 +1316,11 @@
       },
       "timing_ms": {
         "entropy_gate": 0,
-        "feasibility": 12,
+        "feasibility": 19,
         "fee_check": 0,
         "narrow": 0,
-        "prove": 4,
-        "reconstruct": 73
+        "prove": 3,
+        "reconstruct": 202
       },
       "policy_version": "fees_2026_08",
       "replay_seed": 1003
@@ -1401,7 +1401,7 @@
     "pool_n": 318,
     "k_star": 4,
     "collision_index": 0.617929367521851,
-    "latency_ms": 10,
+    "latency_ms": 14,
     "receipt": {
       "settlement_ref": "bank_credit_travel_2026_08_23_1001",
       "run_id": "case_04_underdetermined",
@@ -1598,9 +1598,9 @@
       },
       "timing_ms": {
         "entropy_gate": 0,
-        "feasibility": 8,
+        "feasibility": 12,
         "fee_check": 0,
-        "narrow": 2
+        "narrow": 1
       },
       "policy_version": "fees_2026_08",
       "replay_seed": 1003
@@ -1836,7 +1836,7 @@
     "pool_n": 34,
     "k_star": 12,
     "collision_index": 1.343340077841329,
-    "latency_ms": 12,
+    "latency_ms": 16,
     "receipt": {
       "settlement_ref": "bank_credit_travel_2026_08_25_1003",
       "run_id": "case_05_ambiguous_twin",
@@ -2087,11 +2087,11 @@
       },
       "timing_ms": {
         "entropy_gate": 0,
-        "feasibility": 10,
+        "feasibility": 11,
         "fee_check": 0,
-        "narrow": 0,
+        "narrow": 1,
         "prove": 0,
-        "reconstruct": 2
+        "reconstruct": 4
       },
       "policy_version": "fees_2026_08",
       "replay_seed": 1005
@@ -2169,7 +2169,7 @@
     "pool_n": 34,
     "k_star": 12,
     "collision_index": 2.4272189000134428,
-    "latency_ms": 20,
+    "latency_ms": 24,
     "receipt": {
       "settlement_ref": "bank_credit_travel_2026_08_25_1003",
       "run_id": "case_06_fee_anomaly_observed",
@@ -2444,11 +2444,11 @@
       },
       "timing_ms": {
         "entropy_gate": 0,
-        "feasibility": 13,
+        "feasibility": 11,
         "fee_check": 0,
         "narrow": 0,
-        "prove": 3,
-        "reconstruct": 3
+        "prove": 5,
+        "reconstruct": 6
       },
       "policy_version": "fees_2026_08",
       "replay_seed": 1006
@@ -2526,7 +2526,7 @@
     "pool_n": 34,
     "k_star": 12,
     "collision_index": 2.424857733454302,
-    "latency_ms": 17,
+    "latency_ms": 30,
     "receipt": {
       "settlement_ref": "bank_credit_travel_2026_08_25_1003",
       "run_id": "case_07_fee_check_circular",
@@ -2801,11 +2801,11 @@
       },
       "timing_ms": {
         "entropy_gate": 0,
-        "feasibility": 11,
+        "feasibility": 14,
         "fee_check": 0,
         "narrow": 0,
-        "prove": 2,
-        "reconstruct": 4
+        "prove": 9,
+        "reconstruct": 5
       },
       "policy_version": "fees_2026_08",
       "replay_seed": 1006
@@ -2884,7 +2884,7 @@
     "pool_n": 26,
     "k_star": 12,
     "collision_index": 0.06644663346613545,
-    "latency_ms": 16,
+    "latency_ms": 18,
     "receipt": {
       "settlement_ref": "bank_credit_travel_2026_08_25_1003",
       "run_id": "case_08_rounding_inferred",
@@ -3163,11 +3163,11 @@
       },
       "timing_ms": {
         "entropy_gate": 0,
-        "feasibility": 12,
+        "feasibility": 10,
         "fee_check": 0,
         "narrow": 0,
-        "prove": 4,
-        "reconstruct": 0
+        "prove": 2,
+        "reconstruct": 4
       },
       "policy_version": "fees_2026_08",
       "replay_seed": 1008
@@ -3246,7 +3246,7 @@
     "pool_n": 25,
     "k_star": 12,
     "collision_index": 0.019657506384222142,
-    "latency_ms": 28,
+    "latency_ms": 50,
     "receipt": {
       "settlement_ref": "bank_credit_travel_2026_08_25_1003",
       "run_id": "case_09_unjoined_disputes_feed",
@@ -3557,11 +3557,11 @@
       },
       "timing_ms": {
         "entropy_gate": 0,
-        "feasibility": 4,
+        "feasibility": 15,
         "fee_check": 0,
         "narrow": 0,
-        "prove": 0,
-        "reconstruct": 10
+        "prove": 5,
+        "reconstruct": 7
       },
       "policy_version": "fees_2026_08",
       "replay_seed": 1009
@@ -3638,7 +3638,7 @@
     "pool_n": 29,
     "k_star": 12,
     "collision_index": 0.3749135973981732,
-    "latency_ms": 14,
+    "latency_ms": 79,
     "receipt": {
       "settlement_ref": "bank_credit_travel_2026_08_25_1003",
       "run_id": "case_10_narrowing_sensitive",
@@ -3935,11 +3935,11 @@
       },
       "timing_ms": {
         "entropy_gate": 0,
-        "feasibility": 4,
+        "feasibility": 14,
         "fee_check": 0,
         "narrow": 0,
-        "prove": 1,
-        "reconstruct": 9
+        "prove": 54,
+        "reconstruct": 10
       },
       "policy_version": "fees_2026_08",
       "replay_seed": 1010
