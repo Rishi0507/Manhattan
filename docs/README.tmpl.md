@@ -404,17 +404,35 @@ Only the deflection rate is measured; the volume and the handling time are assum
 
 The mechanism is the part that is not an assumption. A deflected ticket is one where the answer already exists as a receipt: here are the records that make up the credit, here is the fee applied to each, here is the chargeback debited this cycle but raised against the last one. The {{ .D.M1Held }} that are not deflected arrive with a named cause, a computed remedy and a drafted note, which is a shorter investigation rather than none.
 
-### What refusing is worth
+### What checking costs, and what it buys
+
+Against B1, because that is the system a gateway actually has.
+
+B1 posts everything it can read and holds only the {{ .D.B1Held }} settlements
+whose mapping it has no way to read. M1 holds those too, so they cancel. The
+marginal question is narrow: **how much extra analyst work does checking cause,
+and how many wrong postings does that work prevent.**
 
 | | |
 |---|---:|
-| money sitting unposted | {{ ni .D.ExceptionValueINR }} INR |
-| analyst time to clear it | {{ f0 .D.ExceptionHours }} hours |
-| the queue, at the configured rate | **{{ n .D.ExceptionCostINR }} INR** |
-| B0's {{ .S.B0PostedWrong }} wrong postings at {{ n .D.RemediationEachINR }} INR each to unwind | **{{ n .D.WrongPostingCostINR }} INR** |
-| difference | **{{ n .D.NetINR }} INR in Manhattan's favour** |
+| settlements M1 holds that B1 posted | {{ .D.ExtraHeld }} |
+| at {{ ni .D.AvgHandleINR }} INR average handling | **{{ ni .D.ExtraWorkINR }} INR** |
+| wrong postings prevented | **{{ .D.B1Wrong }}** |
+| so checking pays if unwinding one costs more than | **{{ ni .D.UnwindBreakINR }} INR** |
 
-The {{ n .D.RemediationEachINR }} INR is an assumption, printed so it can be replaced: roughly two hours of a mid-level analyst noticing the error at month end, finding the credit, reversing the journal, re-posting, and explaining the movement. Substitute your own; B0 only wins if unwinding costs under {{ ni .D.BreakEvenINR }} INR. **And that break-even is conservative in our favour**, because it charges B0 nothing for its own {{ sub .S.Settlements .S.B0Posted }} held settlements.
+That break-even is **{{ f1 .D.UnwindHours }} analyst hours per wrong posting**,
+and the question is whether unwinding one costs more than that.
+
+A wrong settlement posting is not corrected by an edit. Nobody notices it at
+posting time, because it balanced. It surfaces at month end as a reconciliation
+difference, or at audit, and then somebody has to work out which credit it
+belonged to, reverse the journal, re-post, and explain the movement to whoever
+signs the accounts. Four hours is a floor for that, not a ceiling, and it
+excludes every case that reaches an auditor or a merchant dispute.
+
+The arithmetic is printed rather than the conclusion. Substitute your own
+handling cost and unwind cost and it moves; what does not move is that B1's
+{{ .D.B1Wrong }} errors are invisible until something else finds them.
 
 ---
 

@@ -34,7 +34,7 @@ git clone <this repo> && cd manhattan
 ./run.sh demo          # or:  .\run.ps1 demo    or:  make demo
 ```
 
-No API key required. **Every number in this file, in [RESULTS.md](RESULTS.md) and in [LIMITATIONS.md](LIMITATIONS.md) is emitted by that command**, rendered from one run in one pass so the three cannot drift. Generated from run `run_20260904_0722`, seed `20260826`, on windows/amd64, 4 logical cores, go1.27.0.
+No API key required. **Every number in this file, in [RESULTS.md](RESULTS.md) and in [LIMITATIONS.md](LIMITATIONS.md) is emitted by that command**, rendered from one run in one pass so the three cannot drift. Generated from run `run_20260904_0737`, seed `20260826`, on windows/amd64, 4 logical cores, go1.27.0.
 
 ---
 
@@ -267,7 +267,7 @@ The rule was learned, not designed. The first version let narrowing post if the 
 
 > Removing candidates cannot make the survivor unique. It makes it **unexamined**.
 
-That figure is hand-recorded from a build that no longer exists, and it is the only number in this file not emitted by run `run_20260904_0722`. The failure is rebuilt as a committed test in [`internal/agent/corroboration_test.go`](internal/agent/corroboration_test.go), which fails if `TIGHTEN_WINDOW` is ever made postable again.
+That figure is hand-recorded from a build that no longer exists, and it is the only number in this file not emitted by run `run_20260904_0737`. The failure is rebuilt as a committed test in [`internal/agent/corroboration_test.go`](internal/agent/corroboration_test.go), which fails if `TIGHTEN_WINDOW` is ever made postable again.
 
 **Prohibition was the right default and the wrong permanent answer.** `NARROW_TO_HISTORY` closes the gap: a merchant's prior `VERIFIED` settlements are a second source, and a strong one, since each was proved by exhaustive enumeration without reference to any window hypothesis. The profile is built only from proofs, needs at least twelve, and the bound may never be tighter than the widest offset those proofs show. The verifier still decides. Corroboration buys the right to be tested, not the right to be believed.
 
@@ -410,17 +410,35 @@ Only the deflection rate is measured; the volume and the handling time are assum
 
 The mechanism is the part that is not an assumption. A deflected ticket is one where the answer already exists as a receipt: here are the records that make up the credit, here is the fee applied to each, here is the chargeback debited this cycle but raised against the last one. The 140 that are not deflected arrive with a named cause, a computed remedy and a drafted note, which is a shorter investigation rather than none.
 
-### What refusing is worth
+### What checking costs, and what it buys
+
+Against B1, because that is the system a gateway actually has.
+
+B1 posts everything it can read and holds only the 70 settlements
+whose mapping it has no way to read. M1 holds those too, so they cancel. The
+marginal question is narrow: **how much extra analyst work does checking cause,
+and how many wrong postings does that work prevent.**
 
 | | |
 |---|---:|
-| money sitting unposted | 15,149,775 INR |
-| analyst time to clear it | 153 hours |
-| the queue, at the configured rate | **153,236 INR** |
-| B0's 290 wrong postings at 2,400 INR each to unwind | **696,000 INR** |
-| difference | **542,764 INR in Manhattan's favour** |
+| settlements M1 holds that B1 posted | 76 |
+| at 362 INR average handling | **27,532 INR** |
+| wrong postings prevented | **20** |
+| so checking pays if unwinding one costs more than | **1,377 INR** |
 
-The 2,400 INR is an assumption, printed so it can be replaced: roughly two hours of a mid-level analyst noticing the error at month end, finding the credit, reversing the journal, re-posting, and explaining the movement. Substitute your own; B0 only wins if unwinding costs under 528 INR. **And that break-even is conservative in our favour**, because it charges B0 nothing for its own 153 held settlements.
+That break-even is **1.4 analyst hours per wrong posting**,
+and the question is whether unwinding one costs more than that.
+
+A wrong settlement posting is not corrected by an edit. Nobody notices it at
+posting time, because it balanced. It surfaces at month end as a reconciliation
+difference, or at audit, and then somebody has to work out which credit it
+belonged to, reverse the journal, re-post, and explain the movement to whoever
+signs the accounts. Four hours is a floor for that, not a ceiling, and it
+excludes every case that reaches an auditor or a merchant dispute.
+
+The arithmetic is printed rather than the conclusion. Substitute your own
+handling cost and unwind cost and it moves; what does not move is that B1's
+20 errors are invisible until something else finds them.
 
 ---
 
@@ -548,10 +566,10 @@ it arrives with the residual attached.
 | one loop, closed | bank credit to posted ledger entry, or to a named and priced exception |
 | match rate reported | **358 of 498**, 72%, with **0 wrong** |
 | exceptions it could not resolve | **140**, each with a cause, a computed remedy, a price and a drafted note |
-| throughput | **49,129 settlements per hour**, 19.2 ms median pipeline time |
+| throughput | **47,222 settlements per hour**, 20.3 ms median pipeline time |
 | agentic design | 1,494 model calls across 5 jobs, a closed 8-action controller loop, cross-settlement merchant memory, and a graded diagnosis |
 
-Throughput is end to end: 498 settlements in 36.5 s of wall clock including the agent loop, both baselines and receipt serialisation. That divides to 73.3 ms against a 19.2 ms median pipeline time, and both are printed rather than the flattering one. Memory: **114 MB** deterministic solver peak; **595 MB** sampled process heap, which moves between runs and should never be quoted as a bound.
+Throughput is end to end: 498 settlements in 38.0 s of wall clock including the agent loop, both baselines and receipt serialisation. That divides to 76.2 ms against a 20.3 ms median pipeline time, and both are printed rather than the flattering one. Memory: **114 MB** deterministic solver peak; **747 MB** sampled process heap, which moves between runs and should never be quoted as a bound.
 
 **Determinism is per commit.** Same seed and same commit gives the same decisions on every settlement. Timings are measurements and move, so receipts are not byte-identical.
 

@@ -227,6 +227,24 @@ type Derived struct {
 	// The archetypes that post nothing, named rather than buried.
 	ZeroArchetypes []string
 
+	// The economics of refusing, against B1 rather than against the fuzzy
+	// matcher. B1 is the system a gateway actually has, so it is the only
+	// comparison whose arithmetic anybody should care about.
+	// The like-for-like comparison against B1.
+	//
+	// B1 holds nothing it can read, so the only settlements it does not post
+	// are the ones with no mapping at all. M1 holds those too, plus the ones
+	// it declines to trust. The marginal question is therefore narrow and
+	// answerable: how much extra analyst work does checking cause, and how
+	// many wrong postings does that work prevent.
+	B1Held         int
+	ExtraHeld      int
+	AvgHandleINR   float64
+	ExtraWorkINR   float64
+	B1UnwindINR    int
+	UnwindBreakINR float64
+	UnwindHours    float64
+
 	// The economics of refusing.
 	ExceptionCostINR    int
 	WrongPostingCostINR int
@@ -567,6 +585,22 @@ func deriveDocs(sum bench.Summary, cases []bench.CaseOutcome, sweep []bench.Swee
 	d.RemediationEachINR = remediationCostINR
 	d.WrongPostingCostINR = sum.B0PostedWrong * remediationCostINR
 	d.NetINR = d.WrongPostingCostINR - d.ExceptionCostINR
+	// B1 cannot post a settlement whose mapping it has no way to read, so
+	// those are held by both systems and cancel out of the comparison.
+	d.B1Held = sum.NoClaim
+	d.ExtraHeld = sum.M1Held - (sum.NoClaim - sum.NoClaimPosted)
+	if d.ExtraHeld < 0 {
+		d.ExtraHeld = 0
+	}
+	if sum.Exceptions > 0 {
+		d.AvgHandleINR = float64(sum.ExceptionCostINR) / float64(sum.Exceptions)
+	}
+	d.ExtraWorkINR = float64(d.ExtraHeld) * d.AvgHandleINR
+	d.B1UnwindINR = sum.B1PostedWrong * remediationCostINR
+	if sum.B1PostedWrong > 0 {
+		d.UnwindBreakINR = d.ExtraWorkINR / float64(sum.B1PostedWrong)
+		d.UnwindHours = d.UnwindBreakINR / 1000
+	}
 	if sum.B0PostedWrong > 0 {
 		d.BreakEvenINR = float64(sum.ExceptionCostINR) / float64(sum.B0PostedWrong)
 	}

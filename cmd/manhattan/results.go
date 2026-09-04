@@ -822,6 +822,12 @@ func commas(n int64) string {
 	if n >= solver.Cap {
 		return "over 1e18"
 	}
+	// A negative number rendered by grouping its digits from the right puts a
+	// separator immediately after the sign, which is how "-105236" became
+	// "-,105,236" in a published table.
+	if n < 0 {
+		return "-" + commas(-n)
+	}
 	s := fmt.Sprintf("%d", n)
 	var out []byte
 	for i, c := range []byte(s) {
