@@ -458,19 +458,6 @@ func deriveDocs(sum bench.Summary, cases []bench.CaseOutcome, sweep []bench.Swee
 	}
 	d.OperatingLimits = opLimits
 
-	// The deflection arithmetic, from stated assumptions rather than a claim.
-	//
-	// Every figure here is an assumption except the deflection rate, which is
-	// this run's own composite posting rate. A reader who disagrees with the
-	// volume or the handling time substitutes theirs and redoes one
-	// multiplication, which is the only honest way to publish a commercial
-	// number from synthetic data.
-	d.DisputesPerMonth, d.MinutesEach = 4000, 18
-	d.DeflectPct = d.M1PostRate
-	d.HoursSavedMonthly = float64(d.DisputesPerMonth) * (d.DeflectPct / 100) *
-		float64(d.MinutesEach) / 60
-	d.MonthlySavingINR = d.HoursSavedMonthly * 1000
-
 	d.TotalSweptConfigs = len(sweep)
 	d.PeakSampledMB, d.PeakSolverMB, d.Host = sum.PeakMemoryMB, sum.PeakSolverMB, sum.Host
 	d.Conditions = sum.Conditions
@@ -490,6 +477,29 @@ func deriveDocs(sum bench.Summary, cases []bench.CaseOutcome, sweep []bench.Swee
 	if sum.M1CleanReports > 0 {
 		d.M1FalseAlarmPct = 100 * float64(sum.M1FalseAlarms) / float64(sum.M1CleanReports)
 	}
+
+	// The deflection arithmetic, from stated assumptions rather than a claim.
+	//
+	// Every figure here is an assumption except the deflection rate, which is
+	// this run's own composite posting rate. A reader who disagrees with the
+	// volume or the handling time substitutes theirs and redoes one
+	// multiplication, which is the only honest way to publish a commercial
+	// number from synthetic data.
+	//
+	// Derived from `sum` rather than from `d`, deliberately. An earlier
+	// version read d.M1PostRate before it had been assigned, so the whole
+	// business case rendered as zero rupees saved per month, in the README's
+	// headline commercial section, and shipped. A derived field that reads
+	// another derived field depends on the order of statements in this
+	// function, which is an invisible contract nothing checks. Reading the
+	// summary makes the dependency explicit and unorderable.
+	d.DisputesPerMonth, d.MinutesEach = 4000, 18
+	if sum.Settlements > 0 {
+		d.DeflectPct = 100 * float64(sum.M1Posted) / float64(sum.Settlements)
+	}
+	d.HoursSavedMonthly = float64(d.DisputesPerMonth) * (d.DeflectPct / 100) *
+		float64(d.MinutesEach) / 60
+	d.MonthlySavingINR = d.HoursSavedMonthly * 1000
 
 	for k, n := range sum.AgentRepairedByAction {
 		d.RepairsByAction = append(d.RepairsByAction, FlagRow{Flag: k, Count: n})
@@ -782,6 +792,45 @@ var docFuncs = template.FuncMap{
 	},
 }
 
+// validate refuses to publish a document whose headline figures are impossible.
+//
+// This exists because a derived field read another derived field before it had
+// been assigned, the deflection rate rendered as zero, and the README shipped a
+// business case worth nothing per month. Nothing failed. The template was
+// valid, the build was green, the tests passed, and the single most
+// commercially important number in the submission was 0 because of the order of
+// two statements.
+//
+// The rule the whole project runs on applies to its own documents: a figure
+// nobody checked is a claim, not a measurement. So the figures that would be
+// absurd at zero are asserted before anything is written, and a violation stops
+// the render rather than producing a confident, wrong page.
+func (d Derived) validate(sum bench.Summary) error {
+	type check struct {
+		name string
+		bad  bool
+	}
+	for _, c := range []check{
+		{"composite posting rate", sum.M1Posted > 0 && d.M1PostRate <= 0},
+		{"deflection rate", sum.M1Posted > 0 && d.DeflectPct <= 0},
+		{"analyst hours saved", sum.M1Posted > 0 && d.HoursSavedMonthly <= 0},
+		{"monthly saving", sum.M1Posted > 0 && d.MonthlySavingINR <= 0},
+		{"exception queue value", sum.Exceptions > 0 && d.ExceptionValueINR <= 0},
+		{"exception cost spread", sum.Exceptions > 0 && d.ExceptionCostMax <= 0},
+		{"cost per 1k settlements", sum.INRPer1k > 0 && d.INRPer1k <= 0},
+		{"throughput", sum.PerHour > 0 && d.MsPerSettlement <= 0},
+		{"model roles", sum.ModelCalls > 0 && len(d.RoleRows) == 0},
+		{"break-even", sum.B0PostedWrong > 0 && d.BreakEvenINR <= 0},
+	} {
+		if c.bad {
+			return fmt.Errorf("%s derived as zero while the run reports otherwise; this is the "+
+				"ordering bug that shipped a business case worth nothing per month, so the "+
+				"render is stopped rather than publishing it", c.name)
+		}
+	}
+	return nil
+}
+
 // renderDoc executes one template against the run's figures.
 func renderDoc(tmplPath, outPath string, data docData) error {
 	raw, err := os.ReadFile(tmplPath)
@@ -839,6 +888,10 @@ func renderNarrativeDocs(ctx context.Context, sum bench.Summary, cases []bench.C
 	if store != nil {
 		d.QATranscript = recordQA(ctx, store, p)
 	}
+	if err := d.validate(sum); err != nil {
+		return fmt.Errorf("refusing to render: %w", err)
+	}
+
 	data := docData{
 		S: sum, Cases: cases, Sweep: sweep,
 		Buckets: bench.LogSpaced(sweep, 8), Envelope: env, Sensitivity: sens, D: d,

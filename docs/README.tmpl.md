@@ -12,7 +12,13 @@ Three readers, and the middle one is the buyer.
 
 **A gateway's support desk.** "Why is my payout short by 4,180 rupees" is a ticket with a cost attached. Manhattan answers it from a receipt: here are the records that make up the credit, here is the fee applied to each, here is the chargeback debited this cycle but raised against the last one. That is a settlement dispute closed without an engineer reading a CSV.
 
-**A gateway's own reconciliation, made provable.** Manhattan does not replace Single View Recon. It sits on top of it, checking the mapping the report already ships against the money that actually moved. In this run it contradicted **{{ .D.M1Contradicted }} of {{ .D.Defects }}** defective reports while raising **{{ .D.M1FalseAlarms }} false alarms on {{ .D.M1CleanChecked }} clean ones**. A report you can prove is a report support never has to argue about.
+**A gateway's own reconciliation, made provable.** Manhattan does not replace Single View Recon. It sits on top of it and checks the mapping the report already ships against the money that actually moved.
+
+> **A reconciliation whose only check on the settlement report is the settlement report detects a defective one at no rate at all, including zero.**
+>
+> That is a structural property, not a volume claim. It holds whether reports are wrong four times in a hundred or four times in a hundred thousand, and it is why a validation layer is worth having even for a team whose reports are excellent. What changes with the rate is how often it pays; what does not change is that without it nobody knows.
+
+This run contradicts **{{ .D.M1Contradicted }} of {{ .D.Defects }}** defective reports with **{{ .D.M1FalseAlarms }} false alarms on {{ .D.M1CleanChecked }} clean ones**. The defect rate that produces those is modelled, not observed, and if yours is a tenth of it then the volume is a tenth and the property is unchanged.
 
 **A merchant reconciling independently**, where the mapping is absent or unverified: no settlement reference on the narration, a lump credit, two aggregators shipping different formats, historical backfill.
 
@@ -27,7 +33,7 @@ No API key required. **Every number in this file, in [RESULTS.md](RESULTS.md) an
 
 ## For a judge, in four minutes
 
-1. **The table below.** {{ .D.M1Posted }} posted, {{ .D.M1Wrong }} wrong, against a lookup's {{ .D.B1Posted }} posted and {{ .D.B1Wrong }} wrong on identical data.
+1. **[The one slide](#the-one-slide).** A confidence matcher's correct-answer count is flat at {{ .D.B0MaxRight }} across every threshold it could be tuned to, while M1 posts {{ .D.M1Posted }} with {{ .D.M1Wrong }} wrong on identical data.
 2. **[The controller](#the-controller)**, where the model reads the whole period and names the root causes. Graded at **{{ pct .D.CloseRecallPct }} recall** against operational conditions it was never told about.
 3. **[Where the rest of the AI is](#where-the-rest-of-the-ai-is)**: {{ n .S.ModelCalls }} calls across {{ len .S.CallsByRole }} jobs, a second one graded at {{ pct (mul .S.DiagnosisAccuracy 100) }}.
 4. **[RESULTS.md](RESULTS.md), the calibration section.** Whether the system knows *in advance* when it is about to be wrong.
@@ -49,13 +55,27 @@ Three comparison systems, identical inputs, identical narrowing.
 | defective reports flagged | 0 | 0 of {{ .D.Defects }} | | **{{ .D.M1Contradicted }} of {{ .D.Defects }}** |
 | false alarms on {{ .D.M1CleanChecked }} clean reports | | | | **{{ .D.M1FalseAlarms }}** |
 
-**M1 is the product, and the split matters, so here it is before you find it.** {{ .D.M1FromProof }} of its {{ .D.M1Posted }} postings ({{ pct .D.ProofSharePct }}) are Manhattan's own proofs. The other {{ .D.M1FromClaim }} are the gateway's claim, checked against the money.
+### The one slide
 
-A fair reading of that is *most of this is a validation rule, and the solver mostly refuses*. Two things answer it.
+B0 is a confidence matcher on identical inputs and identical narrowing. Sweeping its posting threshold across the same {{ .S.Settlements }} decisions:
 
-**{{ .D.NoClaim }} settlements in this run ({{ pct .D.NoClaimPct }}) arrive with no mapping to check at all** and reconstruction is the only route to a posting on them. A bank credit whose narration carries no usable settlement reference, a gateway shipping only a net figure, a historical period being backfilled. Reconstruction posts **{{ .D.NoClaimPosted }}** of those {{ .D.NoClaim }}, which is not a flattering number and is published as one; it is also {{ .D.NoClaimPosted }} settlements no validation rule could ever reach.
+| threshold | posted | **correct** | wrong |
+|---:|---:|---:|---:|
+{{- range knees .S.B0Sweep }}
+| {{ f2 .Threshold }}{{ if .Shipped }} *(shipped)*{{ end }} | {{ .Posted }} | **{{ .Right }}** | {{ .Wrong }} |
+{{- end }}
 
-**And the check is only trustworthy because the reconstruction exists.** The claim check knows a report is wrong by comparing it against an independent account of the money, and that account is the same contribution model the solver searches over. Delete the solver and you delete the thing the check checks against.
+**The correct column does not move.** B0's right answers are exact integer hits, which score above its own posting bar, so every threshold below that admits only additional *wrong* postings. Lowering the bar never finds another right answer. The confidence score carries no information about correctness anywhere a team would tune, and no threshold makes this class of matcher both useful and safe.
+
+At its very best B0 produces **{{ .D.B0MaxRight }}** correct postings. M1 produces **{{ .D.M1Posted }}**, with **{{ .D.M1Wrong }}** wrong.
+
+---
+
+**M1 posts two different kinds of answer and the receipt never blurs them.** {{ .D.M1FromProof }} of its {{ .D.M1Posted }} postings ({{ pct .D.ProofSharePct }}) are proofs: exactly one batch produces this credit, counted exhaustively, nobody trusted. The other {{ .D.M1FromClaim }} are the gateway's claim, checked against an independent account of the money.
+
+Both are worth posting and the second is worth much more than posting it unchecked, which is what a lookup does. **{{ .D.NoClaim }} settlements ({{ pct .D.NoClaimPct }}) arrive with no mapping to check at all**, and there reconstruction is the only route: reconstruction posts {{ .D.NoClaimPosted }} of them. And the check is only trustworthy because the reconstruction exists, since the independent account it compares against is the contribution model the solver searches over.
+
+*(Where those numbers are weaker than they look, and what the composite cannot detect, is in [known weaknesses](#known-weaknesses).)*
 
 ### And it works where reconstruction cannot
 
@@ -82,21 +102,15 @@ The verdict is deliberately weaker than a proof, and the receipt never blurs the
 | `CLAIM_CONTRADICTED` | the report's own account does not survive checking. Here is the residual and the diagnosis. |
 | `CLAIM_UNCHECKABLE` | part of the claim lives in a feed nobody joined. Our problem, not the report's. |
 
-### The false-alarm rate, and why it is no longer a tautology
+### Holding a good report is worse than trusting one
 
-A composite that holds settlements a lookup would have posted correctly is worse than the lookup, so this decides whether it ships: **{{ .D.FeeFalseAlarms }} false alarms on {{ .D.FeeFAClean }} clean reports** ({{ pct1 .D.FeeFAPct }}).
+A validation layer that flags correct reports is worse than no validation layer, so this is the number that decides whether it ships: **{{ .D.FeeFalseAlarms }} false alarms on {{ .D.FeeFAClean }} clean reports** ({{ pct1 .D.FeeFAPct }}).
 
-**That zero used to mean nothing, and the reason is worth stating plainly.** The generator and the accounting engine derive contributions from the same fee schedule, so a correct report could not disagree with the check: both sides computed the same number from the same policy. Zero false alarms was arithmetic agreeing with itself.
+It gets there by taking the counterparty's data more seriously than its own config. Real reports drop a per-payment fee row on some payments, and large merchants are signed below the published schedule. Pricing a missing row at the configured rate then makes a *correct* report look wrong: a merchant on 178 bps priced at 200 is off by 66 rupees on a 30,000 rupee ticket, which is nowhere near a pricing tolerance and fatal to a sum that must close to zero. Naively priced, this run raises **{{ .D.NaiveFalseAlarm }}** false alarms.
 
-So the benchmark now models the thing that actually breaks this in production. **Negotiated rates.** Two merchants are signed below the published schedule, the way large merchants are, and their reports drop a per-payment fee row on a fraction of payments, the way real reports do. Where the row is present the pipeline uses it. Where it is missing, something must be assumed about a number the whole proof rests on, and a merchant on 178 bps priced at 200 is wrong by 66 rupees on a 30,000 rupee ticket. Nowhere near a pricing tolerance; fatal to a sum that must close to zero.
+So a missing row is priced at the rate the merchant's **own report** demonstrates, per instrument, from at least six observed rows, and the `fee_basis` guard refuses any reconstruction whose pool was inferred from less evidence than that.
 
-Priced naively at the configured schedule that produces **{{ .D.NaiveFalseAlarm }} false alarms**, and it is a named scenario in [the sensitivity sweep](#the-agent). The fix was not a better guard but a better assumption: **price a missing row at the rate the merchant's own report demonstrates**, per instrument, from at least six observed rows. The counterparty's data is a better source than a config file they are visibly not following.
-
-The `fee_basis` guard stops that becoming a new hiding place, refusing any reconstruction whose pool contains contributions inferred from too little evidence. It cost two wrong postings to get right, because the first version tested the **witness** and never fired: mispriced records are the ones that do not sum, so the search excludes them and the witness is always clean, while the true batch containing one loses to a coincidence that does.
-
-> The question is not whether the answer used bad data. It is whether bad data was in the pool the answer was selected from.
-
-Still outside this benchmark: slab boundaries, per-network card rates, and promotional pricing that varies within an instrument. Named in [LIMITATIONS.md](LIMITATIONS.md) rather than modelled.
+*(Why this number used to be meaningless, and what it still does not cover, is in [known weaknesses](#known-weaknesses).)*
 
 ---
 
@@ -395,13 +409,11 @@ The {{ n .D.RemediationEachINR }} INR is an assumption, printed so it can be rep
 
 ## The baseline, published so it can be attacked
 
-{{ .S.B0PostedWrong }} wrong of {{ .S.B0Posted }} posted is a number my own code produced about my own code, so here is everything B0 scores on:
+{{ .S.B0PostedWrong }} wrong of {{ .S.B0Posted }} posted is a number my own code produced about my own code, so here is everything B0's confidence score is computed from:
 
 {{ range .S.B0Features }}- {{ . }}
 {{ end }}
-[RESULTS.md sweeps its threshold](RESULTS.md#the-baseline-across-every-threshold) across the same {{ .S.Settlements }} decisions. **Its right-hand column is flat at {{ .D.B0MaxRight }} correct from 0.10 to 0.90, and that is the sharpest fact in the table.** B0's correct proposals are exact integer hits, which score at or above 0.90 under its own function, so every lower threshold admits only additional *wrong* postings. The score carries no information about correctness anywhere a team would tune.
-
-> **At no threshold does B0 produce more correct postings than Manhattan.** Its maximum is {{ .D.B0MaxRight }}, against M1's {{ .D.M1Posted }}. Every extra posting it appears to offer is a wrong one it cannot identify.
+That is the whole function. It measures how good a match *looks*, never whether it is the only one, and those come apart exactly where the money is, which is why [its correct count does not move](#the-one-slide) as the threshold falls. The full sweep is in [RESULTS.md](RESULTS.md#the-baseline-across-every-threshold).
 
 ---
 
@@ -418,6 +430,52 @@ The {{ n .D.RemediationEachINR }} INR is an assumption, printed so it can be rep
 > `{{ . }}`{{ end }}
 {{ end }}
 The last one matters most. **An agent that answers every question is not grounded in anything.** The receipts record what the system decided and why; they do not record who approved anything, because no human approval step exists in this pipeline.
+
+---
+
+## How this ships
+
+It is a library and a binary, not a platform, and that is the point: the whole
+system is one Go module with no runtime dependencies, no database and no
+network calls outside the model boundary.
+
+**The integration surface is four feeds and one config.** Payments with their
+fee rows, refunds, chargebacks and adjustments, plus the bank credit. Every one
+maps onto fields a settlement report already carries:
+
+| Manhattan | Razorpay settlement report |
+|---|---|
+| `payment.gross_paise`, `captured_at`, `instrument` | `amount`, `created_at`, `method` on a settlement's payment rows |
+| `payment.fee_observed_paise`, `tax_observed_paise` | `fee`, `tax` per row, which is what makes the fee check independent |
+| `payment.settlement_id` | `settlement_id`, treated as a claim to verify rather than an answer |
+| `chargeback.disputed_paise`, `fee_paise` | dispute amount and dispute fee from the disputes feed |
+| `credit.amount_paise`, `value_date`, `narration` | the bank statement line, which is the only unstructured input |
+| `policy.mdr_bps_by_instrument`, `gst_bps` | the merchant's rate card |
+
+Amounts are integer paise throughout because that is how the settlement API
+reports them, which is the fact that makes exact verification legitimate rather
+than a modelling choice.
+
+**Three ways to run it, in increasing order of commitment:**
+
+```
+manhattan recon   one batch, prints receipts, no state         # evaluate
+manhattan bench   a period, writes receipts and the close      # pilot
+manhattan serve   HTTP API and dashboard over a receipt store  # deploy
+```
+
+`serve` exposes the receipt store as JSON and streams a run over SSE, so it
+drops behind an existing recon UI rather than replacing one. A receipt is a
+flat JSON object with a stable schema: an operations tool consumes it, a
+support desk renders it next to a ticket, a data warehouse loads it.
+
+**What a first deployment looks like.** Run it in shadow beside the existing
+reconciliation for one settlement cycle. It posts nothing; it produces receipts
+and a close. Compare its `CLAIM_CONTRADICTED` list against what the existing
+process posted, and the disagreements are the entire evaluation. If it
+contradicts nothing, the reports are clean and that is worth knowing. If it
+contradicts something, that is a defect nobody would otherwise have seen, and
+it arrives with the residual attached.
 
 ---
 
@@ -452,19 +510,50 @@ Cost tracks cardinality, not pool size: a 164-record pool at k=5 costs what a 1,
 
 ---
 
-## What this cannot do
+## Known weaknesses
 
-The full list is [LIMITATIONS.md](LIMITATIONS.md). The four that matter:
+Everything below is a real limit on the claims above, and the full list is in
+[LIMITATIONS.md](LIMITATIONS.md), which is longer and does not spare anything.
 
-**Reconstruction has a narrow regime.** Uniqueness is attainable only when free cardinality is roughly 3 to 7. Outside it, `UNDERDETERMINED` is the honest answer and no solver improvement changes that. The claim check is what reaches past it.
+**The report defect rate is invented.** {{ pct1 .D.DefectRatePct }}, chosen in this
+repository's generator, not observed anywhere. If a real gateway's rate is a
+tenth of it, the composite's volume advantage is a tenth. The structural
+property above does not move, and the volume argument should not be leaned on.
 
-**The claim check does not model every fee divergence.** Negotiated rates and missing fee rows are modelled and defeated by calibration. Slab boundaries, per-network card rates and promotional pricing that varies within an instrument are not, and a merchant whose rate moves mid-period would defeat the per-instrument calibration.
+**The false-alarm rate used to be a tautology and is now merely narrow.** The
+generator and the accounting engine derive contributions from the same fee
+schedule, so before negotiated rates and missing fee rows were modelled, a
+correct report could not disagree with the check. That mechanism now exists and
+is defeated by calibration. Still unmodelled: slab boundaries, per-network card
+rates, and promotional pricing that varies within an instrument. A merchant
+whose rate moves mid-period would defeat the per-instrument calibration.
 
-**The report defect rate is a modelling choice.** {{ pct1 .D.DefectRatePct }}, chosen here, not observed. The sensitivity sweep varies it down to a tenth so the volume argument does not rest on it. The structural point does not move at all, because a reconciliation whose only check on the report is the report detects a defective one at no rate.
+**Reconstruction posts {{ .D.NoClaimPosted }} of the {{ .D.NoClaim }} settlements
+where it is the only option.** That is the honest measure of the solver on the
+population that needs it, and it is low. The window misconfiguration modelled in
+this run suppresses it; the sensitivity sweep shows what a correctly configured
+deployment does.
 
-**No live model run at batch scale.** Every figure is offline-stub and the cost is modelled. `manhattan live` exists to close this and needs a key.
+**A checked claim is not a proof.** {{ .D.M1FromClaim }} of {{ .D.M1Posted }}
+postings are the counterparty's batch, verified to produce this credit. Other
+batches may also produce it, and on a flat-price merchant a great many would.
+What this cannot detect is a report wrong in a way that still balances: a
+substituted record of identical contribution, or a fee error exactly offsetting
+a membership error.
 
-Benchmarked on synthetic data throughout. The pathology mix reflects documented Razorpay mechanics (paise amounts, T+2 cycles, MDR with 18% GST, netted refunds, chargeback debits, zero-MDR UPI), but real merchant data will contain things the generator does not model.
+**Uniqueness is proved within a cardinality scope, not absolutely.** Attainable
+only at free cardinality of roughly 3 to 7. Outside it `UNDERDETERMINED` is the
+honest answer and no solver improvement changes that.
+
+**No live model run at batch scale.** Every figure is offline-stub and the cost
+is modelled at published rates rather than billed. `manhattan live` exists to
+close this and needs a key. Until it runs, the honest summary of the AI evidence
+is that the architecture is demonstrated and the model quality is not measured.
+
+Benchmarked on synthetic data throughout. The pathology mix reflects documented
+Razorpay mechanics (paise amounts, T+2 cycles, MDR with 18% GST, netted refunds,
+chargeback debits, zero-MDR UPI), but real merchant data will contain things the
+generator does not model.
 
 ---
 
