@@ -24,10 +24,13 @@ misconfiguration; [with that one variable fixed it proves
 **A settlement support desk.** "Why is my payout short by 4,180 rupees" is a
 ticket with a cost attached, and the answer is already a receipt: here are the
 records that make up the credit, here is the fee applied to each, here is the
-chargeback debited this cycle but raised against the last one. On this run's
-numbers that deflects **{{ pct .D.DeflectPct }}** of such tickets without an
-engineer opening a CSV, worth **{{ ni .D.MonthlySavingINR }} INR a month** at
-{{ n .D.DisputesPerMonth }} disputes and {{ .D.MinutesEach }} minutes each.
+chargeback debited this cycle but raised against the last one. On this run's numbers that answers **{{ pct .D.DeflectPct }}** of such tickets
+from an existing receipt. Only that percentage is measured. Turning it into a
+rupee figure takes three assumptions, so the arithmetic is published rather than
+the conclusion: {{ n .D.DisputesPerMonth }} disputes a month, at
+{{ .D.MinutesEach }} analyst minutes each, at 1,000 INR an hour, gives
+{{ ni .D.MonthlySavingINR }} INR a month. [Substitute your own three
+numbers](#value-to-a-support-desk); the multiplication is the same.
 
 **A flat-price merchant, where reconstruction is useless and the product is not.**
 Subscription and utility billing settle two hundred identical charges at a time,
@@ -52,6 +55,14 @@ git clone <this repo> && cd manhattan
 No API key required. **Every number in this file, in [RESULTS.md](RESULTS.md) and in [LIMITATIONS.md](LIMITATIONS.md) is emitted by that command**, rendered from one run in one pass so the three cannot drift. Generated from run `{{ .S.RunID }}`, seed `{{ .S.Seed }}`, on {{ .D.Host }}.
 
 ---
+
+**The idea, in one line.** Deriving a batch from amounts is a search, and it
+fails on merchants whose amounts repeat. Checking a batch somebody already named
+is not a search, and it costs the same on every merchant. Manhattan does the
+first where it can and the second everywhere else, which is why it posts
+{{ range .S.ByArchetype }}{{ if eq .Archetype "subscription_saas" }}**{{ rate .M1PostRate }}**{{ end }}{{ end }}
+of a flat-price subscription merchant's settlements with zero wrong, on data
+where reconstruction alone posts **0%** and always will.
 
 ## Start here
 
@@ -112,7 +123,9 @@ B1 posts {{ sub .D.B1Posted .D.M1Posted }} more settlements. It also posts {{ .D
 
 That is the trade in one line: **{{ sub .D.B1Posted .D.M1Posted }} settlements of extra coverage, against every wrong posting being invisible.** A team whose reports are already perfect loses nothing by checking. A team whose reports are not, finds out at posting instead of at audit.
 
-*(A confidence matcher on the same inputs posts {{ .S.B0Posted }} and gets {{ .S.B0PostedWrong }} wrong. It is the wrong comparison for a gateway and it is in [RESULTS.md](RESULTS.md#the-baseline-across-every-threshold) with a full threshold sweep, because the sweep says something the operating point does not: its correct-answer count is flat at {{ .D.B0MaxRight }} across every threshold, so tuning it never finds another right answer.)*
+*(A confidence matcher on the same inputs posts {{ .S.B0Posted }} and gets {{ .S.B0PostedWrong }} wrong. It is the wrong comparison for a gateway and it is in [RESULTS.md](RESULTS.md#the-baseline-across-every-threshold) with a full threshold sweep, because the sweep says something the operating point does not: its correct-answer count is flat at {{ .D.B0MaxRight }} from 0.10 through 0.90, so tuning it never finds another right answer.)*
+
+The flat column is a measurement rather than a defect, and it is worth saying why, because a constant in a sweep usually means a broken harness. B0 scores how closely a candidate set resembles the credit. A set that sums exactly resembles it maximally, so the {{ .D.B0MaxRight }} it gets right score at the very top and survive every threshold that removes anything at all: raising the bar strips wrong postings first, which is precisely what a working confidence score should do. It only starts losing correct answers at 0.95, and by then it has also stopped posting about a third of the batch. So the score is not noise. It is a genuine ranking that ranks the wrong quantity, because resemblance and uniqueness come apart exactly where the money is.
 
 ### What this adds over trusting the report
 
@@ -673,7 +686,9 @@ it arrives with the residual attached.
 | throughput | **{{ ni .S.PerHour }} settlements per hour** end to end, {{ f1 .S.MedianLatencyMS }} ms median pipeline time, on {{ .D.Host }} |
 | agentic design | a closed 8-action controller loop, a period-close investigation over the receipt store, cross-settlement merchant memory, and three graded jobs. {{ n .S.ModelCalls }} model calls across {{ len .S.CallsByRole }} roles{{ if .D.IsStub }}, all served by the deterministic offline provider on this run; `manhattan live` runs the same code against the API{{ end }} |
 
-Throughput is end to end: {{ .S.Settlements }} settlements in {{ f1 .S.WallClockS }} s of wall clock including the agent loop, both baselines and receipt serialisation. That divides to {{ f1 .D.MsPerSettlement }} ms against a {{ f1 .S.MedianLatencyMS }} ms median pipeline time, and both are published. Memory: **{{ i .D.PeakSolverMB }} MB** deterministic solver peak; **{{ i .D.PeakSampledMB }} MB** sampled process heap, which moves between runs and should never be quoted as a bound.
+Throughput is end to end: {{ .S.Settlements }} settlements in {{ f1 .S.WallClockS }} s of wall clock including the agent loop, both baselines and receipt serialisation. That divides to {{ f1 .D.MsPerSettlement }} ms against a {{ f1 .S.MedianLatencyMS }} ms median pipeline time, and both are published.
+
+Memory is **{{ i .D.PeakSolverMB }} MB**, the deterministic solver peak, computed from the entry counts on each receipt at twelve bytes each. That is the figure a capacity estimate should use. A sampled process-heap high-water mark is also recorded, and it is deliberately kept away from the throughput figures because it is noise: two runs of the same commit on the same seed have reported values an order of magnitude apart, depending only on when the collector happened to run. It is in [LIMITATIONS.md](LIMITATIONS.md) with that caveat attached and it is not a bound.
 
 **Determinism is per commit.** Same seed and same commit gives the same decisions on every settlement. Timings are measurements and move, so receipts are not byte-identical.
 
