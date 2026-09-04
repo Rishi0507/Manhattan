@@ -181,19 +181,26 @@ type Derived struct {
 	// ActionCount is the size of the controller's action vocabulary, read
 	// from the vocabulary itself so the documented number cannot drift from
 	// the enum the model is actually constrained to.
-	// The delta against B1, stated rather than left to be derived.
+	// The delta against B1, stated rather than left to be derived, and stated
+	// in units that add up.
 	//
-	// Most of what the composite posts, B1 would also have posted. The part
-	// that is genuinely this system's contribution is the defective reports it
-	// contradicted plus the settlements it posted where no mapping existed at
-	// all, bought by declining to post the ones it could not stand behind. A
-	// reader works this out in about ninety seconds, so publishing it is
-	// strictly better than being seen to leave it out.
-	DeltaDefectsCaught int
-	DeltaNoMapping     int
-	DeltaTotal         int
-	DeltaPct           float64
-	DeltaSurrendered   int
+	// A first version of this table computed the overlap as postings minus
+	// "contribution", which mixed two different things: a settlement whose
+	// defective report was contradicted is one this system WITHHELD, not one it
+	// posted, so subtracting it from a posting count is a unit error. It also
+	// labelled the net posting difference as the count of B1-only postings,
+	// which are different quantities that happen to sit near each other.
+	//
+	// So the two effects are separated. Coverage is a posting count and nets
+	// out. Errors prevented is a different unit and gets its own line.
+	DeltaBoth         int // posted by both
+	DeltaM1Only       int // posted here, no mapping existed for B1 to trust
+	DeltaB1Only       int // B1 posted, this system declined
+	DeltaSurrendered  int // net posting difference, B1 minus composite
+	DeltaWrongStopped int // wrong postings B1 made that this system did not
+	DeltaContradicted int // of those, contradicted by arithmetic
+	DeltaUncheckable  int // of those, held because the claim could not be checked
+	DeltaDeclinedBadP float64
 
 	ActionCount     int
 	DiagAccuracyPct float64
@@ -584,13 +591,19 @@ func deriveDocs(sum bench.Summary, cases []bench.CaseOutcome, sweep []bench.Swee
 	d.ModelFailures = sum.ModelFailures
 	d.ModelSchemaViolations = sum.ModelSchemaViolated
 	d.ModelRoles = len(sum.CallsByRole)
-	d.DeltaDefectsCaught = sum.M1CaughtDefects
-	d.DeltaNoMapping = sum.NoClaimPosted
-	d.DeltaTotal = d.DeltaDefectsCaught + d.DeltaNoMapping
-	if sum.Settlements > 0 {
-		d.DeltaPct = 100 * float64(d.DeltaTotal) / float64(sum.Settlements)
-	}
+	// Of the settlements reconstructed, the ones that also carried a mapping are
+	// the ones B1 could have posted too.
+	proofsWithMapping := sum.M1FromProof - sum.NoClaimPosted
+	d.DeltaBoth = sum.M1FromClaim + proofsWithMapping
+	d.DeltaM1Only = sum.NoClaimPosted
+	d.DeltaB1Only = sum.B1Posted - d.DeltaBoth
 	d.DeltaSurrendered = sum.B1Posted - sum.M1Posted
+	d.DeltaWrongStopped = sum.B1PostedWrong
+	d.DeltaContradicted = sum.M1CaughtDefects
+	d.DeltaUncheckable = sum.M1HeldUncheckable
+	if d.DeltaB1Only > 0 {
+		d.DeltaDeclinedBadP = 100 * float64(d.DeltaWrongStopped) / float64(d.DeltaB1Only)
+	}
 
 	d.ActionCount = len(agent.AllActions)
 	d.DiagAccuracyPct = 100 * sum.DiagnosisAccuracy

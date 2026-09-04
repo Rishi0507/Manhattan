@@ -116,27 +116,38 @@ That is the trade in one line: **117 settlements of extra coverage, against ever
 
 ### What this adds over trusting the report
 
-Most of what the composite posts, B1 would have posted too. Stating the
-difference plainly is more useful than leaving it to be derived:
+Most of what the composite posts, B1 would have posted too. The difference is
+worth stating outright, in two parts, because they are measured in different
+units and adding them together would be wrong.
+
+**Coverage.** A posting count, which nets out.
 
 | | settlements |
 |---|---:|
-| Posted by both Manhattan and B1 | 667 |
-| **Defective reports Manhattan contradicted and B1 posted anyway** | **34** |
-| **Posted where the report carried no mapping to trust** | **30** |
-| **Net addition** | **64** (6.4% of 996) |
-| Postings declined that B1 made | 117 |
+| Posted by both | 701 |
+| Posted here only, because the report carried no mapping to trust | **+30** |
+| Posted by B1 only, declined here | **&minus;147** |
+| Net posting difference | &minus;117 |
 
-So the trade is 64 settlements gained for
-117 declined. That is the honest shape of it, and it is
-worth taking because the 117 declined are returned as
-priced exceptions with a named cause, while the 34
-B1 gets wrong are posted silently and surface at quarter end. A decision you
-know you have not made costs an analyst minutes. A wrong posting you do not
-know about costs an investigation.
+**Errors prevented.** Not a posting count. These are settlements B1 posted and
+got wrong, and this system did not post at all.
 
-The 30 in the second row are the ones no claim-checking
-approach can reach at all, because there is no claim to check.
+| | settlements |
+|---|---:|
+| Wrong postings B1 made that this system did not | **39** |
+| of which, the report's claim was contradicted by arithmetic | 34 |
+| of which, the claim could not be checked and was held | 5 |
+
+The two tables read together give the trade: **147 postings
+declined to prevent 39 wrong ones**, so
+26.5% of what was declined would in fact have been
+wrong, and 30 settlements were posted that no claim-checking
+approach can reach at all, because there is no claim there to check.
+
+That is the shape of the trade and it is worth taking, because a declined
+settlement comes back as a priced exception with a named cause and costs an
+analyst minutes, while a wrong posting is silent and costs an investigation at
+quarter end.
 
 ### Where reconstruction is impossible
 

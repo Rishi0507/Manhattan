@@ -116,27 +116,38 @@ That is the trade in one line: **{{ sub .D.B1Posted .D.M1Posted }} settlements o
 
 ### What this adds over trusting the report
 
-Most of what the composite posts, B1 would have posted too. Stating the
-difference plainly is more useful than leaving it to be derived:
+Most of what the composite posts, B1 would have posted too. The difference is
+worth stating outright, in two parts, because they are measured in different
+units and adding them together would be wrong.
+
+**Coverage.** A posting count, which nets out.
 
 | | settlements |
 |---|---:|
-| Posted by both Manhattan and B1 | {{ sub .D.M1Posted .D.DeltaTotal }} |
-| **Defective reports Manhattan contradicted and B1 posted anyway** | **{{ .D.DeltaDefectsCaught }}** |
-| **Posted where the report carried no mapping to trust** | **{{ .D.DeltaNoMapping }}** |
-| **Net addition** | **{{ .D.DeltaTotal }}** ({{ pct1 .D.DeltaPct }} of {{ .S.Settlements }}) |
-| Postings declined that B1 made | {{ .D.DeltaSurrendered }} |
+| Posted by both | {{ .D.DeltaBoth }} |
+| Posted here only, because the report carried no mapping to trust | **+{{ .D.DeltaM1Only }}** |
+| Posted by B1 only, declined here | **&minus;{{ .D.DeltaB1Only }}** |
+| Net posting difference | &minus;{{ .D.DeltaSurrendered }} |
 
-So the trade is {{ .D.DeltaTotal }} settlements gained for
-{{ .D.DeltaSurrendered }} declined. That is the honest shape of it, and it is
-worth taking because the {{ .D.DeltaSurrendered }} declined are returned as
-priced exceptions with a named cause, while the {{ .D.DeltaDefectsCaught }}
-B1 gets wrong are posted silently and surface at quarter end. A decision you
-know you have not made costs an analyst minutes. A wrong posting you do not
-know about costs an investigation.
+**Errors prevented.** Not a posting count. These are settlements B1 posted and
+got wrong, and this system did not post at all.
 
-The {{ .D.DeltaNoMapping }} in the second row are the ones no claim-checking
-approach can reach at all, because there is no claim to check.
+| | settlements |
+|---|---:|
+| Wrong postings B1 made that this system did not | **{{ .D.DeltaWrongStopped }}** |
+| of which, the report's claim was contradicted by arithmetic | {{ .D.DeltaContradicted }} |
+| of which, the claim could not be checked and was held | {{ .D.DeltaUncheckable }} |
+
+The two tables read together give the trade: **{{ .D.DeltaB1Only }} postings
+declined to prevent {{ .D.DeltaWrongStopped }} wrong ones**, so
+{{ pct1 .D.DeltaDeclinedBadP }} of what was declined would in fact have been
+wrong, and {{ .D.DeltaM1Only }} settlements were posted that no claim-checking
+approach can reach at all, because there is no claim there to check.
+
+That is the shape of the trade and it is worth taking, because a declined
+settlement comes back as a priced exception with a named cause and costs an
+analyst minutes, while a wrong posting is silent and costs an investigation at
+quarter end.
 
 ### Where reconstruction is impossible
 
