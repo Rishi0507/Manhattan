@@ -158,6 +158,17 @@ type Derived struct {
 	HoursSavedMonthly float64
 	MonthlySavingINR  float64
 
+	// IsStub says whether this run's model calls were served by the
+	// deterministic offline provider.
+	//
+	// It exists so a graded figure can never be printed as model accuracy when
+	// a rule engine produced it. That is the category error this project
+	// polices everywhere else, and it would have been made here.
+	IsStub       bool
+	GradedBy     string
+	B1Wrong1k    float64
+	SilentErrPct float64
+
 	// The period close, which is the controller doing the job the track names.
 	Close          *evidence.PeriodClose
 	CloseRecallPct float64
@@ -457,6 +468,16 @@ func deriveDocs(sum bench.Summary, cases []bench.CaseOutcome, sweep []bench.Swee
 		}
 	}
 	d.OperatingLimits = opLimits
+
+	d.IsStub = strings.Contains(sum.Provider, "stub") || strings.Contains(sum.ProviderModels, "replay")
+	d.GradedBy = "the deterministic offline provider"
+	if !d.IsStub {
+		d.GradedBy = sum.ProviderModels
+	}
+	if sum.B1Posted > 0 {
+		d.SilentErrPct = 100 * float64(sum.B1PostedWrong) / float64(sum.B1Posted)
+		d.B1Wrong1k = 1000 * float64(sum.B1PostedWrong) / float64(sum.Settlements)
+	}
 
 	d.TotalSweptConfigs = len(sweep)
 	d.PeakSampledMB, d.PeakSolverMB, d.Host = sum.PeakMemoryMB, sum.PeakSolverMB, sum.Host
