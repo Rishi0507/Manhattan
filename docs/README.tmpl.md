@@ -135,6 +135,24 @@ file they are visibly not following.
 The track is called AI Finance Controller, and a controller does not reconcile one settlement at a time. It reads the period. Which merchants are degrading, whether {{ .D.M1Held }} exceptions have {{ .D.M1Held }} causes or three, which single change recovers the most held value, and what needs a human this week.
 
 Every input to that is arithmetic and every one is already computed. What is missing is the step that reads {{ .S.Settlements }} receipts and notices that eighty of them are the same problem wearing different reference numbers. **That step is the model's, and it is the only output in this system that works above a single settlement.**
+{{ if .D.CloseSteps }}
+**It investigates before it writes.** The model reads the period aggregates, asks
+for one slice of the receipt store, reads it, and either asks for another or
+stops. Every request costs a turn against a fixed budget, so it has to choose the
+slice that would change its mind rather than the one that confirms it. This run
+used {{ len .D.CloseSteps }} turns:
+
+| # | asked to see | why |
+|---:|---|---|
+{{- range .D.CloseSteps }}
+| {{ .N }} | `{{ .LookedAt }}`{{ if .Argument }} `{{ .Argument }}`{{ end }} | {{ clip .Why 96 }} |
+{{- end }}
+
+The trace is the point. A conclusion with no account of how it was reached is a
+conclusion nobody can audit, which is the objection this project raises against
+every confidence score, and it would be hypocritical to exempt its own report
+from it.
+{{ end }}
 {{ if .D.Close }}
 > {{ .D.Close.Narrative }}
 
@@ -143,6 +161,21 @@ Every input to that is arithmetic and every one is already computed. What is mis
 {{- range .D.Close.RootCauses }}
 | {{ .Scope }} | `{{ .Class }}` | {{ n64 .ValueINR }} | {{ clip .Evidence 76 }} |
 {{- end }}
+
+### Two jobs scored, not one
+
+`plan` chooses one action per turn from a closed set of eight, and the loop
+already records which action was chosen and which one the verifier accepted, so
+it grades itself:
+
+| | |
+|---|---:|
+| turns taken | {{ n .D.PlanTurns }} |
+| repairs reached on the **first** action chosen | {{ pct .D.PlanFirstTryPct }} |
+| turns spent on an action that could not apply | {{ pct1 .D.PlanWastePct }} |
+| turns per useful outcome | {{ f1 .D.PlanPerOutcome }} |
+
+{{ if .D.IsStub }}Both accuracy figures saturate here, and that is the finding rather than the result: a fixed decision tree either picks the right action immediately or never picks it, and never proposes one that cannot apply. A model has room to be worse on both and better on the outcome, which is what the harness exists to measure.{{ end }}
 
 ### It is graded, and the harness is the contribution
 
@@ -184,13 +217,47 @@ The generator records which defect it injected, the pipeline never sees it, and 
 
 {{ if .D.Confusions }}The errors are {{ .D.Confusions }}: exactly the pair that needs the class of record involved rather than the sign of the residual, which is what the deterministic stub reads and all it reads. {{ end }}That is headroom a real model has, stated as a number rather than a hope, and `manhattan live` is what turns it into a measurement.
 
+**Two things about that table, said plainly rather than left to be noticed.**
+
+`parse` is the largest number and the least interesting job. Bank narration
+formats are finite, and a gateway would replace this with a lookup table in a
+week. It is a model call here because that is honest about a system that has to
+read narrations it has never seen, and it should not be read as the AI doing
+{{ n (index .S.CallsByRole "parse") }} settlements' worth of work.
+
+And **{{ .S.AgentSkipped }} exceptions never reach a model at all**, which is
+cost discipline rather than AI avoidance. A deterministic screen establishes
+that no action in the vocabulary could change the outcome: the amounts do not
+distinguish the transactions, or a rival already appears when the pool is
+widened, or there is nothing left to search. Paying a model to conclude that
+nothing can help, across most of a queue, is the same mistake as paying it to
+add up a column. The {{ .S.AgentInvoked }} that do reach it are the ones where
+judgement is the whole task, and they cost {{ f1 .D.PlanPerOutcome }} turns per
+useful outcome.
+
 **The highest-volume model job is the one with no safety risk at all.** {{ n .S.NotesDrafted }} analyst-facing notes: what to do, why it works in terms of what was measured, and what it will **not** fix. Every fact is supplied and every figure is substituted from the receipt afterwards, so a draft containing a digit is rejected wholesale ({{ .S.NotesRejected }} were, this run). A note is attached to a settlement held either way, so the worst a bad draft costs is a confusing sentence in a work queue.
 
 ### What the model must not do, and how that is enforced
 
-**The model never decides whether a settlement is correctly posted.** That is settled by an integer identity and an exhaustive count, both of which run unmodified regardless of what the model proposed. The boundary is enforced by the type system rather than by discipline: no method on the provider interface returns free text into a decision path.
+> **A wrong model output cannot produce a wrong posting.** Not unlikely to. Cannot.
 
-The property that follows is the one a finance team needs: **the correctness of a posting does not depend on which model proposed anything.** A better model clears more exceptions and a worse one clears fewer, and neither can put a wrong number in a ledger. That is what makes an agent safe to point at settlements at all, and it is why the model is given the open-ended work rather than the arithmetic.
+That is the property, and it is enforced rather than intended. The provider
+interface has no method returning free text into a decision path, so a model
+answer reaches the pipeline only as a schema-validated edit to its *inputs*.
+Whether the money is accounted for is then settled by an integer identity and an
+exhaustive count, which re-run unmodified over the edited inputs and are free to
+conclude the model made things worse.
+
+The consequence is what lets an agent near a ledger at all: **a better model
+clears more exceptions and a worse one clears fewer, and neither changes whether
+what cleared was right.** The eleven adversarial cases pass identically on both
+providers, and `manhattan live` asserts the same property across them on every
+run: if the wrong-posting count differs between the API and the stub, the
+command fails rather than publishing.
+
+That is why the model is handed the open-ended work and the arithmetic is not
+negotiable. It is the only division under which "let an agent reconcile
+settlements" is a sentence a finance team can agree to.
 
 Those are two different claims and this repository owes both. **`manhattan live` measures the difference:**
 
@@ -439,9 +506,24 @@ belonged to, reverse the journal, re-post, and explain the movement to whoever
 signs the accounts. Four hours is a floor for that, not a ceiling, and it
 excludes every case that reaches an auditor or a merchant dispute.
 
+### At what defect rate is this worth buying
+
+The extra work is fixed by the held population. The wrong postings prevented
+scale with how often reports are actually wrong. So there is a rate below which
+checking does not pay, and it is computable rather than a matter of opinion:
+
+> **Below a report defect rate of about {{ pct1 .D.BreakEvenDefectPct }}, checking
+> costs more analyst time than it saves.**
+
+That is a deployment recommendation, not a disclaimer. If your reports are
+cleaner than that, run this in shadow: it posts nothing, it costs you nothing
+beyond compute, and the first month tells you your real rate. If it contradicts
+nothing, that is the most valuable negative result a reconciliation team can
+have, and you stop. If it contradicts something, you were wrong about your rate
+and you found out from a receipt rather than from an auditor.
+
 The arithmetic is printed rather than the conclusion. Substitute your own
-handling cost and unwind cost and it moves; what does not move is that B1's
-{{ .D.B1Wrong }} errors are invisible until something else finds them.
+handling cost and unwind cost and the break-even moves with them.
 
 ---
 

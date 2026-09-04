@@ -230,6 +230,18 @@ type Derived struct {
 	// The economics of refusing, against B1 rather than against the fuzzy
 	// matcher. B1 is the system a gateway actually has, so it is the only
 	// comparison whose arithmetic anybody should care about.
+	// BreakEvenDefectPct is the report defect rate at which checking starts to
+	// pay for itself in expected rupees. Below it, run in shadow.
+	BreakEvenDefectPct float64
+
+	// Plan, graded.
+	PlanTurns        int
+	PlanFirstTryPct  float64
+	PlanInapplicable int
+	PlanWastePct     float64
+	PlanPerOutcome   float64
+	CloseSteps       []evidence.CloseStep
+
 	// Reconstruction's rate on a correctly configured deployment, isolating
 	// the one variable this run deliberately breaks.
 	//
@@ -497,6 +509,25 @@ func deriveDocs(sum bench.Summary, cases []bench.CaseOutcome, sweep []bench.Swee
 		}
 	}
 	d.OperatingLimits = opLimits
+	d.PlanTurns, d.PlanInapplicable = sum.PlanTurns, sum.PlanInapplicable
+	d.PlanFirstTryPct = sum.PlanFirstTryRate * 100
+	d.PlanWastePct = sum.PlanWasteRate * 100
+	d.PlanPerOutcome = sum.PlanTurnsPerOutcome
+	if sum.Close != nil {
+		d.CloseSteps = sum.Close.Steps
+	}
+
+	// The defect rate at which checking pays for itself.
+	//
+	// Extra analyst work is fixed by the held population; the wrong postings
+	// prevented scale with the defect rate. So the break-even is the rate at
+	// which (settlements x rate x unwind cost) covers the extra work, and
+	// below it the honest recommendation is to run in shadow rather than to
+	// buy anything.
+	if sum.Settlements > 0 && remediationCostINR > 0 {
+		d.BreakEvenDefectPct = 100 * d.ExtraWorkINR /
+			(float64(sum.Settlements) * float64(remediationCostINR))
+	}
 
 	// Same defect rate, window fixed: one variable, isolated.
 	for _, sp := range sens {

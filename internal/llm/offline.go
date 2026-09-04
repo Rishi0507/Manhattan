@@ -52,7 +52,15 @@ func (o offlineProvider) Structured(ctx context.Context, req Request) (*Result, 
 	case RoleRemediate:
 		out, err = o.remediate(req.User)
 	case RoleControl:
-		out, err = o.control(req.User)
+		// The control role serves two schemas: one turn of the investigation,
+		// and the close itself. They are told apart by the schema asked for,
+		// because a provider that guesses which of two contracts it is being
+		// held to is a provider that will eventually guess wrong.
+		if req.SchemaName == "controller_step" {
+			out, err = o.controlStep(req.User)
+		} else {
+			out, err = o.control(req.User)
+		}
 	default:
 		err = fmt.Errorf("llm: offline provider has no behaviour for role %q", req.Role)
 	}
@@ -636,5 +644,59 @@ func (o offlineProvider) control(user string) (any, error) {
 		"what_i_cannot_tell": "Whether two merchants showing the same class share one underlying " +
 			"configuration or two separate ones, and whether a merchant flagged for one cause also " +
 			"has a second. The stub reports the first rule that matches per merchant and stops.",
+	}, nil
+}
+
+// controlStep walks a fixed investigation.
+//
+// It looks at the merchant holding the most value, then at the exact
+// residuals, then at the computed remedies, and writes. That is a reasonable
+// order and it is the same order every time, which is exactly the difference
+// between a procedure and an investigation: it never changes what it looks at
+// next based on what the last slice said.
+//
+// The trace it produces is therefore real and dull, and the gap between it and
+// a model choosing its next question is what `manhattan live` measures.
+func (o offlineProvider) controlStep(user string) (any, error) {
+	seen := func(k string) bool { return strings.Contains(user, "you asked to see "+k) }
+
+	// The merchant carrying the most held value, which the period summary
+	// lists first.
+	target := ""
+	if i := strings.Index(user, "BY MERCHANT TYPE"); i >= 0 {
+		rest := user[i:]
+		if j := strings.Index(rest, "\n  "); j >= 0 {
+			line := rest[j+3:]
+			if k := strings.Index(line, ":"); k > 0 {
+				target = strings.TrimSpace(line[:k])
+			}
+		}
+	}
+
+	switch {
+	case target != "" && !seen("INSPECT_MERCHANT"):
+		return map[string]any{
+			"look_at": "INSPECT_MERCHANT", "argument": target,
+			"why": "this merchant type holds the most value, so whatever is wrong with it " +
+				"is worth more than anything else; expecting either large pools against small " +
+				"declared batches, which is narrowing, or exact residuals, which is a missing feed",
+		}, nil
+	case !seen("INSPECT_RESIDUALS"):
+		return map[string]any{
+			"look_at": "INSPECT_RESIDUALS", "argument": "",
+			"why": "an exact unexplained shortfall means the arithmetic is sound and a record " +
+				"is absent, so this separates a missing feed from a window that is too wide",
+		}, nil
+	case !seen("INSPECT_REMEDIES"):
+		return map[string]any{
+			"look_at": "INSPECT_REMEDIES", "argument": "",
+			"why": "the system has already computed and re-verified remedies, and ranking them " +
+				"by held value says which single change recovers the most",
+		}, nil
+	}
+	return map[string]any{
+		"look_at": "WRITE_CLOSE", "argument": "",
+		"why": "the aggregates, one merchant, the residuals and the remedies are enough to " +
+			"name the causes; further slices would confirm rather than change them",
 	}, nil
 }

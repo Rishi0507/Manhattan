@@ -7,6 +7,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/Rishi0507/manhattan/internal/agent"
 	"github.com/Rishi0507/manhattan/internal/bench"
 	"github.com/Rishi0507/manhattan/internal/evidence"
 	"github.com/Rishi0507/manhattan/internal/solver"
@@ -52,6 +53,21 @@ func renderResults(
 		fmt.Fprintf(&b, "questions that only exist above a single settlement: do these %d exceptions\n", sum.M1Held)
 		fmt.Fprintf(&b, "have %d causes or three, which change recovers the most held value, and what\n", sum.M1Held)
 		fmt.Fprintf(&b, "needs a human this week.\n\n")
+		if len(pc.Steps) > 0 {
+			fmt.Fprintf(&b, "It investigates before it writes. Each turn it asks for one slice\n")
+			fmt.Fprintf(&b, "of the receipt store against a budget of %d, so it has to choose the\n", agent.MaxCloseSteps)
+			fmt.Fprintf(&b, "slice that would change its mind rather than the one that confirms it.\n\n")
+			fmt.Fprintf(&b, "| # | asked to see | why | what came back |\n|---:|---|---|---|\n")
+			for _, st := range pc.Steps {
+				arg := st.Argument
+				if arg != "" {
+					arg = " `" + arg + "`"
+				}
+				fmt.Fprintf(&b, "| %d | `%s`%s | %s | %s |\n",
+					st.N, st.LookedAt, arg, cell(st.Why, 90), cell(st.Found, 90))
+			}
+			b.WriteString("\n")
+		}
 		fmt.Fprintf(&b, "> %s\n\n", pc.Narrative)
 
 		if len(pc.RootCauses) > 0 {

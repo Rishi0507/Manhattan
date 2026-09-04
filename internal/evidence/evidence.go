@@ -259,6 +259,19 @@ type RootCause struct {
 	ValueINR    int64  `json:"value_held_inr"`
 }
 
+// CloseStep is one turn of the controller's investigation.
+//
+// Recorded because the trace is the thing a person can check. A conclusion with
+// no account of how it was reached is a conclusion nobody can audit, which is
+// the objection this project raises against every confidence score.
+type CloseStep struct {
+	N        int    `json:"step"`
+	LookedAt string `json:"looked_at"`
+	Argument string `json:"argument,omitempty"`
+	Why      string `json:"why"`
+	Found    string `json:"found,omitempty"`
+}
+
 // PeriodClose is the controller's report on a whole run.
 //
 // It is the one output in this system that reads across settlements rather
@@ -275,6 +288,9 @@ type PeriodClose struct {
 	Escalations []string    `json:"escalations"`
 	Unknowns    string      `json:"what_i_cannot_tell"`
 	Provider    string      `json:"provider"`
+	// Steps is the investigation: what it asked to see, what it expected, and
+	// what came back.
+	Steps []CloseStep `json:"investigation,omitempty"`
 	// Dropped counts findings discarded for citing no evidence or naming a
 	// cause outside the vocabulary. A requirement to cite is only a
 	// requirement if something enforces it.

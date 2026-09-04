@@ -141,14 +141,86 @@ and you cannot tell whether it is one cause or two, say that.`
 // PeriodClose is the controller's report on a whole run.
 type PeriodClose = evidence.PeriodClose
 
-// Close reads the run and writes the period close.
-func (c *Closer) Close(ctx context.Context, in CloseInput) (*PeriodClose, llm.Usage, error) {
-	var usage llm.Usage
+// MaxCloseSteps bounds the investigation.
+//
+// Six is enough to look at two merchants, one status band, the residuals and
+// the remedies before writing, which is what a person doing this job actually
+// does. It is also small enough that the whole close stays one bounded cost
+// per period rather than an open-ended agent.
+const MaxCloseSteps = 6
 
+// Close investigates the period and then writes it up.
+//
+// The first version was one call: aggregates in, report out. That is a
+// summariser. A controller reads a number, forms a suspicion, goes and looks at
+// the thing the number is about, and either confirms it or drops it.
+//
+// So this is a loop. The model sees the period aggregates, asks for one slice
+// of the receipt store, reads it, and either asks for another or writes the
+// close. Every request costs a turn and the budget is MaxCloseSteps, which is
+// the discipline the settlement agent already works under: an investigator with
+// unlimited free lookups never has to decide which lookup matters.
+//
+// The trace is kept because the trace is the point. "Held value is concentrated
+// on marketplace, so look at marketplace; its residuals are exact rather than
+// its pools being large, so this is a missing feed and not a wide window" is a
+// chain a person can check. A conclusion with no trace is a conclusion nobody
+// can audit, which is the objection this project raises against every
+// confidence score.
+//
+// Nothing in the loop can write. Every slice is text derived from receipts, and
+// the close still posts nothing, so no guarantee elsewhere in the system moves.
+func (c *Closer) Close(ctx context.Context, in CloseInput, insp *Inspector) (*PeriodClose, llm.Usage, error) {
+	var usage llm.Usage
+	var trace []evidence.CloseStep
+
+	transcript := in.render()
+	gathered := ""
+
+	for n := 1; n <= MaxCloseSteps; n++ {
+		res, err := c.Provider.Structured(ctx, llm.Request{
+			Role:       llm.RoleControl,
+			System:     investigateSystem,
+			User:       transcript + gathered + "\n\nWhat do you want to look at next?\n",
+			SchemaName: "controller_step",
+			Schema:     stepSchema(),
+		})
+		if err != nil {
+			return nil, usage, err
+		}
+		usage.Add(res.Usage)
+
+		var step struct {
+			Look      string `json:"look_at"`
+			Arg       string `json:"argument"`
+			Rationale string `json:"why"`
+		}
+		if err := json.Unmarshal(res.JSON, &step); err != nil {
+			return nil, usage, err
+		}
+
+		kind := SliceKind(step.Look)
+		if kind == SliceWrite || insp == nil {
+			trace = append(trace, evidence.CloseStep{
+				N: n, LookedAt: string(SliceWrite), Why: strings.TrimSpace(step.Rationale),
+			})
+			break
+		}
+
+		found := insp.Serve(kind, strings.TrimSpace(step.Arg))
+		trace = append(trace, evidence.CloseStep{
+			N: n, LookedAt: string(kind), Argument: strings.TrimSpace(step.Arg),
+			Why: strings.TrimSpace(step.Rationale), Found: firstLines(found, 3),
+		})
+		gathered += fmt.Sprintf("\n\n--- you asked to see %s %s, because: %s@%s",
+			kind, step.Arg, step.Rationale, found)
+	}
+
+	// Compose, with everything the loop gathered in front of it.
 	res, err := c.Provider.Structured(ctx, llm.Request{
 		Role:       llm.RoleControl,
 		System:     closeSystem,
-		User:       in.render(),
+		User:       transcript + gathered + "\n\nNow write the close.\n",
 		SchemaName: "period_close",
 		Schema:     closeSchema(),
 	})
@@ -171,6 +243,7 @@ func (c *Closer) Close(ctx context.Context, in CloseInput) (*PeriodClose, llm.Us
 		Narrative: strings.TrimSpace(out.Narrative),
 		Unknowns:  strings.TrimSpace(out.Unknowns),
 		Provider:  c.Provider.Name(),
+		Steps:     trace,
 	}
 	for _, e := range out.Escalations {
 		if e = strings.TrimSpace(e); e != "" {
@@ -178,24 +251,49 @@ func (c *Closer) Close(ctx context.Context, in CloseInput) (*PeriodClose, llm.Us
 		}
 	}
 	for _, rc := range out.RootCauses {
-		// A finding with no evidence is dropped rather than published. The
-		// requirement to cite is only a requirement if something enforces it.
-		if strings.TrimSpace(rc.Evidence) == "" {
-			pc.Dropped++
-			continue
-		}
-		if !validCause(rc.Class) {
+		if strings.TrimSpace(rc.Evidence) == "" || !validCause(rc.Class) {
 			pc.Dropped++
 			continue
 		}
 		pc.RootCauses = append(pc.RootCauses, evidence.RootCause{
-			Scope: rc.Scope, Class: rc.Class, Evidence: strings.TrimSpace(rc.Evidence),
+			Scope:       rc.Scope,
+			Class:       rc.Class,
+			Evidence:    strings.TrimSpace(rc.Evidence),
 			Action:      strings.TrimSpace(rc.Action),
-			Settlements: rc.SettlementsAffected, ValueINR: rc.ValueHeldINR,
+			Settlements: rc.SettlementsAffected,
+			ValueINR:    rc.ValueHeldINR,
 		})
 	}
 	return pc, usage, nil
 }
+
+const investigateSystem = `You are a finance controller working out what went wrong this period.
+
+You are shown the period's aggregates. You may ask to see ONE slice of the underlying
+receipts per turn, and the budget is small, so choose the slice that would change your
+mind rather than the one that confirms it.
+
+INSPECT_MERCHANT         one merchant type's held settlements, with pool sizes, declared
+                         batch sizes, twin mass and the exact residual where there is one.
+                         Argument: the merchant type's name.
+INSPECT_STATUS           one status across all merchants, which is how a cause that spans
+                         merchants becomes visible. Argument: AMBIGUOUS, UNDERDETERMINED,
+                         NARROWING_SENSITIVE or UNRESOLVED.
+INSPECT_RESIDUALS        every settlement where nothing reconstructs the credit and the
+                         shortfall is EXACT. That combination means the arithmetic is
+                         sound and a record is absent. No argument.
+INSPECT_REMEDIES         what the system already computed and re-verified, by held value.
+                         No argument.
+INSPECT_CLAIM_FAILURES   settlements whose gateway report failed its arithmetic check,
+                         with the diagnosis. No argument.
+WRITE_CLOSE              stop looking and write it up.
+
+How to choose. A large pool against a small declared batch is a narrowing problem. An
+exact residual is a missing record. High twin mass is neither and no amount of looking
+changes it. If the aggregates already settle which, do not spend a turn confirming it:
+spend it on the merchant you are least sure about, or write.
+
+Say what you expect to find before you look. That is the part a person can check.`
 
 func validCause(c string) bool {
 	for _, k := range AllCauses {
@@ -366,4 +464,41 @@ func closeSchema() map[string]any {
 // SortCauses orders findings by the value they would recover.
 func SortCauses(cs []evidence.RootCause) {
 	sort.SliceStable(cs, func(i, j int) bool { return cs[i].ValueINR > cs[j].ValueINR })
+}
+
+// firstLines keeps a slice's headline on the receipt without storing the whole
+// thing twice.
+func firstLines(s string, n int) string {
+	lines := strings.Split(strings.TrimSpace(s), "\n")
+	if len(lines) > n {
+		lines = lines[:n]
+	}
+	return strings.TrimSpace(strings.Join(lines, " "))
+}
+
+func stepSchema() map[string]any {
+	kinds := make([]string, len(AllSlices))
+	for i, k := range AllSlices {
+		kinds[i] = string(k)
+	}
+	return map[string]any{
+		"type": "object",
+		"properties": map[string]any{
+			"look_at": map[string]any{
+				"type": "string", "enum": kinds,
+				"description": "The one slice to read next, or WRITE_CLOSE to stop.",
+			},
+			"argument": map[string]any{
+				"type": "string",
+				"description": "The merchant type for INSPECT_MERCHANT, the status for " +
+					"INSPECT_STATUS, empty otherwise.",
+			},
+			"why": map[string]any{
+				"type":        "string",
+				"description": "What you expect to find and what it would change. One sentence.",
+			},
+		},
+		"required":             []string{"look_at", "argument", "why"},
+		"additionalProperties": false,
+	}
 }

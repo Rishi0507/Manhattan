@@ -6,6 +6,7 @@ import (
 	"math"
 	"runtime"
 	"sort"
+	"strings"
 	"time"
 
 	"github.com/Rishi0507/manhattan/internal/agent"
@@ -160,6 +161,28 @@ type Summary struct {
 	// AgentRepairedByAction splits repairs by the action that produced them,
 	// which is the only honest way to report what the agent contributed.
 	AgentRepairedByAction map[string]int `json:"agent_repairs_by_action"`
+
+	// Plan is the action-selection grade: of the settlements the agent
+	// eventually repaired, how often did it choose the repairing action on its
+	// FIRST turn, and how many turns did it spend on actions that could not
+	// apply at all.
+	//
+	// This is gradeable without any new machinery because the loop already
+	// records which action was chosen on each turn and which one was accepted.
+	// Two jobs scored instead of one, and it is the job with volume.
+	PlanTurns        int     `json:"plan_turns"`
+	PlanFirstTry     int     `json:"plan_repaired_on_first_turn"`
+	PlanRepaired     int     `json:"plan_repaired_total"`
+	PlanFirstTryRate float64 `json:"plan_first_turn_accuracy"`
+	PlanInapplicable int     `json:"plan_turns_on_inapplicable_actions"`
+	PlanWasteRate    float64 `json:"plan_inapplicable_rate"`
+	// PlanTurnsPerOutcome is turns divided by everything a turn can usefully
+	// produce: a repair, a proven cure, or an escalation carrying the evidence
+	// that nothing in the vocabulary applies. Quoting turns against repairs
+	// alone counts the last two as waste, and they are the loop's most common
+	// useful output.
+	PlanOutcomes        int     `json:"plan_useful_outcomes"`
+	PlanTurnsPerOutcome float64 `json:"plan_turns_per_useful_outcome"`
 
 	// CallsByRole is where the model is actually used, per job, so a reader
 	// does not have to accept one aggregate figure for "the AI".
@@ -621,7 +644,17 @@ func RunBatch(ctx context.Context, spec BatchSpec, provider llm.Provider) (*evid
 					sum.AgentSkipped++
 				}
 				cured := false
-				for _, s := range st {
+				for i, s := range st {
+					sum.PlanTurns++
+					if strings.HasPrefix(s.Note, "not applicable") {
+						sum.PlanInapplicable++
+					}
+					if s.Accepted {
+						sum.PlanRepaired++
+						if i == 0 {
+							sum.PlanFirstTry++
+						}
+					}
 					if s.Accepted {
 						sum.AgentRepaired++
 						repairedBy[string(s.Action.Kind)]++
@@ -940,6 +973,17 @@ func RunBatch(ctx context.Context, spec BatchSpec, provider llm.Provider) (*evid
 
 	if sum.DiagnosedDefects > 0 {
 		sum.DiagnosisAccuracy = float64(sum.DiagnosisCorrect) / float64(sum.DiagnosedDefects)
+	}
+
+	if sum.PlanRepaired > 0 {
+		sum.PlanFirstTryRate = float64(sum.PlanFirstTry) / float64(sum.PlanRepaired)
+	}
+	if sum.PlanTurns > 0 {
+		sum.PlanWasteRate = float64(sum.PlanInapplicable) / float64(sum.PlanTurns)
+	}
+	sum.PlanOutcomes = sum.AgentRepaired + sum.AgentProvenCures + sum.AgentInvoked
+	if sum.PlanOutcomes > 0 {
+		sum.PlanTurnsPerOutcome = float64(sum.PlanTurns) / float64(sum.PlanOutcomes)
 	}
 
 	sum.ModelCalls = usage.Calls

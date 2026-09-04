@@ -34,7 +34,7 @@ git clone <this repo> && cd manhattan
 ./run.sh demo          # or:  .\run.ps1 demo    or:  make demo
 ```
 
-No API key required. **Every number in this file, in [RESULTS.md](RESULTS.md) and in [LIMITATIONS.md](LIMITATIONS.md) is emitted by that command**, rendered from one run in one pass so the three cannot drift. Generated from run `run_20260904_0747`, seed `20260826`, on windows/amd64, 4 logical cores, go1.27.0.
+No API key required. **Every number in this file, in [RESULTS.md](RESULTS.md) and in [LIMITATIONS.md](LIMITATIONS.md) is emitted by that command**, rendered from one run in one pass so the three cannot drift. Generated from run `run_20260904_0832`, seed `20260826`, on windows/amd64, 4 logical cores, go1.27.0.
 
 ---
 
@@ -42,7 +42,7 @@ No API key required. **Every number in this file, in [RESULTS.md](RESULTS.md) an
 
 1. **[The result](#against-the-system-that-already-exists).** Reading the settlement report and posting it gets 20 of 428 wrong, invisibly. Verifying it first gets 0 of 358 wrong.
 2. **[The controller](#the-controller)**, where the model reads the whole period and names the root causes, scored against operational conditions it was never told about. A graded harness, currently reporting an 80% baseline from the deterministic provider.
-3. **[Where the rest of the AI is](#where-the-rest-of-the-ai-is)**: 1,494 calls across 5 jobs, two of them scored against ground truth.
+3. **[Where the rest of the AI is](#where-the-rest-of-the-ai-is)**: 1,498 calls across 5 jobs, two of them scored against ground truth.
 4. **[RESULTS.md](RESULTS.md), the calibration section.** Whether the system knows *in advance* when it is about to be wrong.
 5. **`./run.sh demo`**, which opens on adversarial case 10: narrowing drops a real record, a coincidental subset closes the identity exactly, and the guard catches it.
 
@@ -139,7 +139,26 @@ The track is called AI Finance Controller, and a controller does not reconcile o
 
 Every input to that is arithmetic and every one is already computed. What is missing is the step that reads 498 receipts and notices that eighty of them are the same problem wearing different reference numbers. **That step is the model's, and it is the only output in this system that works above a single settlement.**
 
-> This period closed with 6 systemic findings across 6 merchant types: WINDOW_TOO_WIDE on travel; UNJOINED_FEED on marketplace; WINDOW_TOO_WIDE on d2c_ecommerce; UNJOINED_FEED on quick_commerce; AMOUNTS_DO_NOT_DISTINGUISH on utility_billpay; AMOUNTS_DO_NOT_DISTINGUISH on subscription_saas. They are ranked by held value below, and each names the figures it was read from. This close was written by the deterministic stub, which applies one fixed rule per merchant and reports only the first that matches, so a merchant with two problems shows one.
+**It investigates before it writes.** The model reads the period aggregates, asks
+for one slice of the receipt store, reads it, and either asks for another or
+stops. Every request costs a turn against a fixed budget, so it has to choose the
+slice that would change its mind rather than the one that confirms it. This run
+used 4 turns:
+
+| # | asked to see | why |
+|---:|---|---|
+| 1 | `INSPECT_MERCHANT` `travel` | this merchant type holds the most value, so whatever is wrong with it is worth more than... |
+| 2 | `INSPECT_RESIDUALS` | an exact unexplained shortfall means the arithmetic is sound and a record is absent, so this... |
+| 3 | `INSPECT_REMEDIES` | the system has already computed and re-verified remedies, and ranking them by held value says... |
+| 4 | `WRITE_CLOSE` | the aggregates, one merchant, the residuals and the remedies are enough to name the causes;... |
+
+The trace is the point. A conclusion with no account of how it was reached is a
+conclusion nobody can audit, which is the objection this project raises against
+every confidence score, and it would be hypocritical to exempt its own report
+from it.
+
+
+> This period closed with 6 systemic findings across 7 merchant types: WINDOW_TOO_WIDE on travel; UNJOINED_FEED on marketplace; WINDOW_TOO_WIDE on d2c_ecommerce; UNJOINED_FEED on quick_commerce; AMOUNTS_DO_NOT_DISTINGUISH on utility_billpay; AMOUNTS_DO_NOT_DISTINGUISH on subscription_saas. They are ranked by held value below, and each names the figures it was read from. This close was written by the deterministic stub, which applies one fixed rule per merchant and reports only the first that matches, so a merchant with two problems shows one.
 
 | scope | cause | held INR | evidence it cited |
 |---|---|---:|---|
@@ -149,6 +168,21 @@ Every input to that is arithmetic and every one is already computed. What is mis
 | travel | `WINDOW_TOO_WIDE` | 5,431 | mean pool of 47 candidates for a mean batch of 7, and refusals are... |
 | utility_billpay | `AMOUNTS_DO_NOT_DISTINGUISH` | 2,394 | twin mass 0.77, above the 0.30 refusal threshold, across 83 settlements |
 | subscription_saas | `AMOUNTS_DO_NOT_DISTINGUISH` | 1,463 | twin mass 0.95, above the 0.30 refusal threshold, across 83 settlements |
+
+### Two jobs scored, not one
+
+`plan` chooses one action per turn from a closed set of eight, and the loop
+already records which action was chosen and which one the verifier accepted, so
+it grades itself:
+
+| | |
+|---|---:|
+| turns taken | 591 |
+| repairs reached on the **first** action chosen | 100% |
+| turns spent on an action that could not apply | 0.0% |
+| turns per useful outcome | 1.5 |
+
+Both accuracy figures saturate here, and that is the finding rather than the result: a fixed decision tree either picks the right action immediately or never picks it, and never proposes one that cannot apply. A model has room to be worse on both and better on the outcome, which is what the harness exists to measure.
 
 ### It is graded, and the harness is the contribution
 
@@ -175,7 +209,7 @@ The fair criticism of this project is that arithmetic does the deciding, so what
 
 | job | calls | what it contributes | graded? |
 |---|---:|---|---|
-| `control` | 1 | reads the WHOLE period and writes the close: which merchants are degrading, whether four hundred exceptions have four hundred causes or three, which single change recovers the most held value, and what needs a human this week. The only output here that works above a single settlement, and the only one not bounded by a closed action vocabulary, because it cannot act | **yes**, on whether it found the operational conditions this run injected |
+| `control` | 5 | reads the WHOLE period and writes the close: which merchants are degrading, whether four hundred exceptions have four hundred causes or three, which single change recovers the most held value, and what needs a human this week. The only output here that works above a single settlement, and the only one not bounded by a closed action vocabulary, because it cannot act | **yes**, on whether it found the operational conditions this run injected |
 | `triage` | 20 | names WHY a report's stated mapping failed its arithmetic check, from a closed vocabulary of five defect classes. The same failed check has several causes needing different remedies, and telling them apart is reading rather than counting | **yes**, against the generator's record of what it injected |
 | `plan` | 591 | chooses one action from a closed set of eight for a settlement that did not post, including whether this merchant's own proved history corroborates a tighter window | indirectly: the entire stack re-runs and rejects anything that did not improve |
 | `remediate` | 384 | drafts the analyst-facing note: what to do, why it works in terms of what was measured, and what it will not fix. Facts supplied, figures substituted afterwards | no, and it carries no safety risk: the settlement is held either way |
@@ -192,13 +226,47 @@ The generator records which defect it injected, the pipeline never sees it, and 
 
 The errors are 1 `TRUNCATED_MAPPING` read as `OMITTED_DISPUTE` and 6 `OMITTED_DISPUTE` read as `TRUNCATED_MAPPING`: exactly the pair that needs the class of record involved rather than the sign of the residual, which is what the deterministic stub reads and all it reads. That is headroom a real model has, stated as a number rather than a hope, and `manhattan live` is what turns it into a measurement.
 
+**Two things about that table, said plainly rather than left to be noticed.**
+
+`parse` is the largest number and the least interesting job. Bank narration
+formats are finite, and a gateway would replace this with a lookup table in a
+week. It is a model call here because that is honest about a system that has to
+read narrations it has never seen, and it should not be read as the AI doing
+498 settlements' worth of work.
+
+And **166 exceptions never reach a model at all**, which is
+cost discipline rather than AI avoidance. A deterministic screen establishes
+that no action in the vocabulary could change the outcome: the amounts do not
+distinguish the transactions, or a rival already appears when the pool is
+widened, or there is nothing left to search. Paying a model to conclude that
+nothing can help, across most of a queue, is the same mistake as paying it to
+add up a column. The 292 that do reach it are the ones where
+judgement is the whole task, and they cost 1.5 turns per
+useful outcome.
+
 **The highest-volume model job is the one with no safety risk at all.** 384 analyst-facing notes: what to do, why it works in terms of what was measured, and what it will **not** fix. Every fact is supplied and every figure is substituted from the receipt afterwards, so a draft containing a digit is rejected wholesale (0 were, this run). A note is attached to a settlement held either way, so the worst a bad draft costs is a confusing sentence in a work queue.
 
 ### What the model must not do, and how that is enforced
 
-**The model never decides whether a settlement is correctly posted.** That is settled by an integer identity and an exhaustive count, both of which run unmodified regardless of what the model proposed. The boundary is enforced by the type system rather than by discipline: no method on the provider interface returns free text into a decision path.
+> **A wrong model output cannot produce a wrong posting.** Not unlikely to. Cannot.
 
-The property that follows is the one a finance team needs: **the correctness of a posting does not depend on which model proposed anything.** A better model clears more exceptions and a worse one clears fewer, and neither can put a wrong number in a ledger. That is what makes an agent safe to point at settlements at all, and it is why the model is given the open-ended work rather than the arithmetic.
+That is the property, and it is enforced rather than intended. The provider
+interface has no method returning free text into a decision path, so a model
+answer reaches the pipeline only as a schema-validated edit to its *inputs*.
+Whether the money is accounted for is then settled by an integer identity and an
+exhaustive count, which re-run unmodified over the edited inputs and are free to
+conclude the model made things worse.
+
+The consequence is what lets an agent near a ledger at all: **a better model
+clears more exceptions and a worse one clears fewer, and neither changes whether
+what cleared was right.** The eleven adversarial cases pass identically on both
+providers, and `manhattan live` asserts the same property across them on every
+run: if the wrong-posting count differs between the API and the stub, the
+command fails rather than publishing.
+
+That is why the model is handed the open-ended work and the arithmetic is not
+negotiable. It is the only division under which "let an agent reconcile
+settlements" is a sentence a finance team can agree to.
 
 Those are two different claims and this repository owes both. **`manhattan live` measures the difference:**
 
@@ -276,7 +344,7 @@ The rule was learned, not designed. The first version let narrowing post if the 
 
 > Removing candidates cannot make the survivor unique. It makes it **unexamined**.
 
-That figure is hand-recorded from a build that no longer exists, and it is the only number in this file not emitted by run `run_20260904_0747`. The failure is rebuilt as a committed test in [`internal/agent/corroboration_test.go`](internal/agent/corroboration_test.go), which fails if `TIGHTEN_WINDOW` is ever made postable again.
+That figure is hand-recorded from a build that no longer exists, and it is the only number in this file not emitted by run `run_20260904_0832`. The failure is rebuilt as a committed test in [`internal/agent/corroboration_test.go`](internal/agent/corroboration_test.go), which fails if `TIGHTEN_WINDOW` is ever made postable again.
 
 **Prohibition was the right default and the wrong permanent answer.** `NARROW_TO_HISTORY` closes the gap: a merchant's prior `VERIFIED` settlements are a second source, and a strong one, since each was proved by exhaustive enumeration without reference to any window hypothesis. The profile is built only from proofs, needs at least twelve, and the bound may never be tighter than the widest offset those proofs show. The verifier still decides. Corroboration buys the right to be tested, not the right to be believed.
 
@@ -445,9 +513,24 @@ belonged to, reverse the journal, re-post, and explain the movement to whoever
 signs the accounts. Four hours is a floor for that, not a ceiling, and it
 excludes every case that reaches an auditor or a merchant dispute.
 
+### At what defect rate is this worth buying
+
+The extra work is fixed by the held population. The wrong postings prevented
+scale with how often reports are actually wrong. So there is a rate below which
+checking does not pay, and it is computable rather than a matter of opinion:
+
+> **Below a report defect rate of about 0.0%, checking
+> costs more analyst time than it saves.**
+
+That is a deployment recommendation, not a disclaimer. If your reports are
+cleaner than that, run this in shadow: it posts nothing, it costs you nothing
+beyond compute, and the first month tells you your real rate. If it contradicts
+nothing, that is the most valuable negative result a reconciliation team can
+have, and you stop. If it contradicts something, you were wrong about your rate
+and you found out from a receipt rather than from an auditor.
+
 The arithmetic is printed rather than the conclusion. Substitute your own
-handling cost and unwind cost and it moves; what does not move is that B1's
-20 errors are invisible until something else finds them.
+handling cost and unwind cost and the break-even moves with them.
 
 ---
 
@@ -575,10 +658,10 @@ it arrives with the residual attached.
 | one loop, closed | bank credit to posted ledger entry, or to a named and priced exception |
 | match rate reported | **358 of 498**, 72%, with **0 wrong** |
 | exceptions it could not resolve | **140**, each with a cause, a computed remedy, a price and a drafted note |
-| throughput | **34,449 settlements per hour**, 26.4 ms median pipeline time |
-| agentic design | 1,494 model calls across 5 jobs, a closed 8-action controller loop, cross-settlement merchant memory, and a graded diagnosis |
+| throughput | **48,194 settlements per hour**, 20.4 ms median pipeline time |
+| agentic design | 1,498 model calls across 5 jobs, a closed 8-action controller loop, cross-settlement merchant memory, and a graded diagnosis |
 
-Throughput is end to end: 498 settlements in 52.0 s of wall clock including the agent loop, both baselines and receipt serialisation. That divides to 104.5 ms against a 26.4 ms median pipeline time, and both are printed rather than the flattering one. Memory: **114 MB** deterministic solver peak; **747 MB** sampled process heap, which moves between runs and should never be quoted as a bound.
+Throughput is end to end: 498 settlements in 37.2 s of wall clock including the agent loop, both baselines and receipt serialisation. That divides to 74.7 ms against a 20.4 ms median pipeline time, and both are printed rather than the flattering one. Memory: **114 MB** deterministic solver peak; **747 MB** sampled process heap, which moves between runs and should never be quoted as a bound.
 
 **Determinism is per commit.** Same seed and same commit gives the same decisions on every settlement. Timings are measurements and move, so receipts are not byte-identical.
 

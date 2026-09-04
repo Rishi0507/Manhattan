@@ -1,5 +1,5 @@
 {
-  "run_id": "run_20260904_0747",
+  "run_id": "run_20260904_0832",
   "settlements": 498,
   "seed": 20260826,
   "status_counts": {
@@ -39,12 +39,12 @@
   "m1_clean_reports_checked": 408,
   "settlements_with_no_report_mapping": 70,
   "settlements_with_no_mapping_posted_by_reconstruction": 6,
-  "median_latency_ms": 26.393,
-  "p95_latency_ms": 273.555,
-  "b0_median_latency_ms": 10.111,
-  "wall_clock_s": 52.0418395,
-  "settlements_per_hour": 34449.205047796204,
-  "peak_memory_mb_sampled": 747.1634216308594,
+  "median_latency_ms": 20.38,
+  "p95_latency_ms": 197.099,
+  "b0_median_latency_ms": 7.631,
+  "wall_clock_s": 37.1999476,
+  "settlements_per_hour": 48193.61627272829,
+  "peak_memory_mb_sampled": 747.1203918457031,
   "peak_solver_mb_deterministic": 113.9494743347168,
   "peak_solver_settlement": "bank_credit_marketplace_2026_08_25_1022",
   "parse_calls": 498,
@@ -54,9 +54,9 @@
   "agent_invoked": 292,
   "agent_skipped": 166,
   "agent_proven_cures": 65,
-  "model_calls": 1494,
-  "input_tokens": 1047377,
-  "output_tokens": 98803,
+  "model_calls": 1498,
+  "input_tokens": 1060218,
+  "output_tokens": 99018,
   "exception_rate": 0.8493975903614458,
   "inr_per_1k_settlements": 1356.5933333333335,
   "b0_input_tokens_per_1k": 2293253.012048193,
@@ -76,8 +76,16 @@
     "NARROW_TO_HISTORY": 22,
     "SEARCH_FEED": 13
   },
+  "plan_turns": 591,
+  "plan_repaired_on_first_turn": 35,
+  "plan_repaired_total": 35,
+  "plan_first_turn_accuracy": 1,
+  "plan_turns_on_inapplicable_actions": 0,
+  "plan_inapplicable_rate": 0,
+  "plan_useful_outcomes": 392,
+  "plan_turns_per_useful_outcome": 1.5076530612244898,
   "model_calls_by_role": {
-    "control": 1,
+    "control": 5,
     "parse": 498,
     "plan": 591,
     "remediate": 384,
@@ -105,7 +113,7 @@
     }
   },
   "period_close": {
-    "narrative": "This period closed with 6 systemic findings across 6 merchant types: WINDOW_TOO_WIDE on travel; UNJOINED_FEED on marketplace; WINDOW_TOO_WIDE on d2c_ecommerce; UNJOINED_FEED on quick_commerce; AMOUNTS_DO_NOT_DISTINGUISH on utility_billpay; AMOUNTS_DO_NOT_DISTINGUISH on subscription_saas. They are ranked by held value below, and each names the figures it was read from. This close was written by the deterministic stub, which applies one fixed rule per merchant and reports only the first that matches, so a merchant with two problems shows one.",
+    "narrative": "This period closed with 6 systemic findings across 7 merchant types: WINDOW_TOO_WIDE on travel; UNJOINED_FEED on marketplace; WINDOW_TOO_WIDE on d2c_ecommerce; UNJOINED_FEED on quick_commerce; AMOUNTS_DO_NOT_DISTINGUISH on utility_billpay; AMOUNTS_DO_NOT_DISTINGUISH on subscription_saas. They are ranked by held value below, and each names the figures it was read from. This close was written by the deterministic stub, which applies one fixed rule per merchant and reports only the first that matches, so a merchant with two problems shows one.",
     "root_causes": [
       {
         "scope": "quick_commerce",
@@ -162,6 +170,32 @@
     ],
     "what_i_cannot_tell": "Whether two merchants showing the same class share one underlying configuration or two separate ones, and whether a merchant flagged for one cause also has a second. The stub reports the first rule that matches per merchant and stops.",
     "provider": "offline-stub",
+    "investigation": [
+      {
+        "step": 1,
+        "looked_at": "INSPECT_MERCHANT",
+        "argument": "travel",
+        "why": "this merchant type holds the most value, so whatever is wrong with it is worth more than anything else; expecting either large pools against small declared batches, which is narrowing, or exact residuals, which is a missing feed",
+        "found": "travel: 9 held settlements. The 9 largest by value:    AMBIGUOUS ₹2,65,580.54  pool 36  declared 8  twin 0.00  index 1.19"
+      },
+      {
+        "step": 2,
+        "looked_at": "INSPECT_RESIDUALS",
+        "why": "an exact unexplained shortfall means the arithmetic is sound and a record is absent, so this separates a missing feed from a window that is too wide",
+        "found": "22 settlements where nothing reconstructs the credit and the shortfall is exact.   by merchant type: map[marketplace:12 quick_commerce:10]"
+      },
+      {
+        "step": 3,
+        "looked_at": "INSPECT_REMEDIES",
+        "why": "the system has already computed and re-verified remedies, and ranking them by held value says which single change recovers the most",
+        "found": "Remedies already computed and re-verified, by held value:      74 settlements,  ₹27,46,846.74 held : supply the settlement reference, or the settlement_id to payment_id mapping"
+      },
+      {
+        "step": 4,
+        "looked_at": "WRITE_CLOSE",
+        "why": "the aggregates, one merchant, the residuals and the remedies are enough to name the causes; further slices would confirm rather than change them"
+      }
+    ],
     "findings_dropped": 0,
     "conditions_injected": [
       "d2c_ecommerce: reconciliation window misconfigured to plus or minus 24 hours",

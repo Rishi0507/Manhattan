@@ -146,7 +146,7 @@ func runClose(
 	sum Summary, archOf map[string]string,
 ) (*evidence.PeriodClose, llm.Usage) {
 	in := buildCloseInput(store, sum, archOf)
-	pc, usage, err := closer.Close(ctx, in)
+	pc, usage, err := closer.Close(ctx, in, agent.NewInspector(store, archOf))
 	if err != nil || pc == nil {
 		return nil, usage
 	}
