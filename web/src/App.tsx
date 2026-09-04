@@ -3,6 +3,7 @@ import type { CaseOutcome, EnvelopePoint, Receipt, Summary, SweepPoint } from ".
 import { api, cls } from "./lib";
 import { Tabs } from "./ui";
 import { Landing } from "./Landing";
+import { Close } from "./Close";
 import { HeadToHead } from "./HeadToHead";
 import { Run } from "./Run";
 import { Cases } from "./Cases";
@@ -11,7 +12,7 @@ import { Calibration } from "./Calibration";
 import { Ask } from "./Ask";
 import { ReceiptView } from "./ReceiptView";
 
-type Tab = "hook" | "run" | "cases" | "exceptions" | "calibration" | "ask";
+type Tab = "close" | "hook" | "run" | "cases" | "exceptions" | "calibration" | "ask";
 
 /**
  * The shell.
@@ -24,7 +25,13 @@ type Tab = "hook" | "run" | "cases" | "exceptions" | "calibration" | "ask";
  */
 export default function App() {
   const [entered, setEntered] = useState(false);
-  const [tab, setTab] = useState<Tab>("hook");
+  // The close is the landing tab.
+  //
+  // Every other view answers "what happened to these settlements". The close
+  // answers "what do I do on Monday", which is the question an operations lead
+  // actually arrives with, and it is the one view that reads across the period
+  // rather than within one settlement.
+  const [tab, setTab] = useState<Tab>("close");
   const [receipts, setReceipts] = useState<Receipt[]>([]);
   const [summary, setSummary] = useState<Summary | null>(null);
   const [cases, setCases] = useState<CaseOutcome[]>([]);
@@ -199,6 +206,7 @@ export default function App() {
               active={tab}
               onChange={setTab}
               tabs={[
+                { id: "close", label: "The close" },
                 { id: "hook", label: "Head to head" },
                 { id: "run", label: "Run", badge: receipts.length || undefined },
                 { id: "cases", label: "Cases", badge: cases.length || undefined },
@@ -226,6 +234,7 @@ export default function App() {
         </div>
       ) : (
         <main key={tab} className="view-in mx-auto max-w-[1240px] px-4 py-4 sm:px-6 sm:py-5">
+          {tab === "close" && <Close summary={summary} />}
           {tab === "hook" && <HeadToHead cases={cases} />}
           {tab === "run" && (
             <Run

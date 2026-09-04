@@ -41,6 +41,10 @@ func DefaultAnthropicConfig() AnthropicConfig {
 			// to add up a column.
 			RoleTriage:    "claude-sonnet-5",
 			RoleRemediate: "claude-sonnet-5",
+			// The close is one call per run over the whole period, so it is
+			// the cheapest thing in the system to point at the best model and
+			// the place where reasoning quality is most visible.
+			RoleControl: "claude-opus-5",
 		},
 	}
 }

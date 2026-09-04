@@ -68,6 +68,19 @@ const (
 	// can send, naming the change, its effect and what it will not fix. The
 	// facts are supplied and schema-checked; the model never sources them.
 	RoleRemediate Role = "remediate"
+
+	// RoleControl reads a whole period and writes the close.
+	//
+	// This is the role the track is named after and it is the only one that
+	// works above a single settlement. Four hundred exceptions do not have
+	// four hundred causes; they have three or four wearing different reference
+	// numbers, and finding them is reading across receipts rather than
+	// counting within one.
+	//
+	// It cannot act. The close posts nothing, narrows nothing and amends no
+	// input. A person reads it and then decides, which is why it is the one
+	// model output here not bounded by a closed action vocabulary.
+	RoleControl Role = "control"
 )
 
 // Request is one structured call. The model is always given a JSON schema

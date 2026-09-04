@@ -21,16 +21,17 @@ git clone <this repo> && cd manhattan
 ./run.sh demo          # or:  .\run.ps1 demo    or:  make demo
 ```
 
-No API key required. **Every number in this file, in [RESULTS.md](RESULTS.md) and in [LIMITATIONS.md](LIMITATIONS.md) is emitted by that command**, rendered from one run in one pass so the three cannot drift. Generated from run `run_20260903_1536`, seed `20260826`, on windows/amd64, 4 logical cores, go1.27.0.
+No API key required. **Every number in this file, in [RESULTS.md](RESULTS.md) and in [LIMITATIONS.md](LIMITATIONS.md) is emitted by that command**, rendered from one run in one pass so the three cannot drift. Generated from run `run_20260904_0158`, seed `20260826`, on windows/amd64, 4 logical cores, go1.27.0.
 
 ---
 
 ## For a judge, in four minutes
 
 1. **The table below.** 406 posted, 0 wrong, against a lookup's 498 posted and 29 wrong on identical data.
-2. **[Where the AI is](#where-the-ai-actually-is)**, the honest accounting: 1,426 model calls across 4 jobs, one of them graded at 72% against ground truth.
-3. **[RESULTS.md](RESULTS.md), the calibration section.** Whether the system knows *in advance* when it is about to be wrong. This is what separates it from a solver demo.
-4. **`./run.sh demo`**, which opens on adversarial case 10: narrowing drops a real record, a coincidental subset closes the identity exactly, and the guard catches it.
+2. **[The controller](#the-controller)**, where the model reads the whole period and names the root causes. Graded at **100% recall** against operational conditions it was never told about.
+3. **[Where the rest of the AI is](#where-the-rest-of-the-ai-is)**: 1,427 calls across 5 jobs, a second one graded at 72%.
+4. **[RESULTS.md](RESULTS.md), the calibration section.** Whether the system knows *in advance* when it is about to be wrong.
+5. **`./run.sh demo`**, which opens on adversarial case 10: narrowing drops a real record, a coincidental subset closes the identity exactly, and the guard catches it.
 
 Longer: [docs/EXPLAIN.md](docs/EXPLAIN.md) is the system from first principles in plain language. [docs/DESIGN.md](docs/DESIGN.md) has every derivation. [LIMITATIONS.md](LIMITATIONS.md) is what it cannot do, and it is the document I would read first if I were judging this.
 
@@ -80,12 +81,47 @@ The verdict is deliberately weaker than a proof, and the receipt never blurs the
 
 ---
 
-## Where the AI actually is
+## The controller
+
+The track is called AI Finance Controller, and a controller does not reconcile one settlement at a time. It reads the period. Which merchants are degrading, whether 92 exceptions have 92 causes or three, which single change recovers the most held value, and what needs a human this week.
+
+Every input to that is arithmetic and every one is already computed. What is missing is the step that reads 498 receipts and notices that eighty of them are the same problem wearing different reference numbers. **That step is the model's, and it is the only output in this system that works above a single settlement.**
+
+> This period closed with 6 systemic findings across 6 merchant types: UNJOINED_FEED on marketplace; WINDOW_TOO_WIDE on travel; UNJOINED_FEED on quick_commerce; WINDOW_TOO_WIDE on d2c_ecommerce; AMOUNTS_DO_NOT_DISTINGUISH on subscription_saas; AMOUNTS_DO_NOT_DISTINGUISH on utility_billpay. They are ranked by held value below, and each names the figures it was read from. This close was written by the deterministic stub, which applies one fixed rule per merchant and reports only the first that matches, so a merchant with two problems shows one.
+
+| scope | cause | held INR | evidence it cited |
+|---|---|---:|---|
+| quick_commerce | `UNJOINED_FEED` | 23,033 | 20 settlements where nothing reconstructs the credit and the residual is... |
+| marketplace | `UNJOINED_FEED` | 18,206 | 8 settlements where nothing reconstructs the credit and the residual is... |
+| travel | `WINDOW_TOO_WIDE` | 2,182 | mean pool of 51 candidates for a mean batch of 6, and refusals are... |
+| subscription_saas | `AMOUNTS_DO_NOT_DISTINGUISH` | 665 | twin mass 0.94, above the 0.30 refusal threshold, across 83 settlements |
+| d2c_ecommerce | `WINDOW_TOO_WIDE` | 300 | mean pool of 53 candidates for a mean batch of 6, and refusals are... |
+| utility_billpay | `AMOUNTS_DO_NOT_DISTINGUISH` | 266 | twin mass 0.76, above the 0.30 refusal threshold, across 83 settlements |
+
+### It is graded
+
+This run injects operational misconfigurations and records exactly what they are. **None of that reaches the model.** It sees status mixes, pool sizes, twin masses, held values and remedy counts, and has to infer the cause the way a controller would.
+
+| | |
+|---|---:|
+| conditions injected | 4 |
+| **identified, on the right merchant** | **4** |
+| **recall** | **100%** |
+| findings dropped for citing no evidence | 0 |
+
+Findings corresponding to no injected condition: `subscription_saas: AMOUNTS_DO_NOT_DISTINGUISH`, `utility_billpay: AMOUNTS_DO_NOT_DISTINGUISH`. Listed rather than counted against recall, because at least some are true: the flat-price archetypes genuinely cannot be reconstructed from amounts and saying so is correct even though nobody injected it. Deciding which true findings count would be exactly the sort of scoring nobody should accept on assertion.
+
+**The close cannot act.** It posts nothing, narrows nothing, amends no input and alters no receipt. That is precisely why it is the one model output not bounded by a closed action vocabulary: a person reads it and then decides. Everywhere the model *can* influence a posting it is fenced; here it cannot, so it is given the whole period and asked to think.
+
+---
+
+## Where the rest of the AI is
 
 The fair criticism of this project is that arithmetic does the deciding, so what is the model for. Here is the accounting rather than an argument.
 
 | job | calls | what it contributes | graded? |
 |---|---:|---|---|
+| `control` | 1 | reads the WHOLE period and writes the close: which merchants are degrading, whether four hundred exceptions have four hundred causes or three, which single change recovers the most held value, and what needs a human this week. The only output here that works above a single settlement, and the only one not bounded by a closed action vocabulary, because it cannot act | **yes**, on whether it found the operational conditions this run injected |
 | `triage` | 25 | names WHY a report's stated mapping failed its arithmetic check, from a closed vocabulary of five defect classes. The same failed check has several causes needing different remedies, and telling them apart is reading rather than counting | **yes**, against the generator's record of what it injected |
 | `plan` | 567 | chooses one action from a closed set of eight for a settlement that did not post, including whether this merchant's own proved history corroborates a tighter window | indirectly: the entire stack re-runs and rejects anything that did not improve |
 | `remediate` | 336 | drafts the analyst-facing note: what to do, why it works in terms of what was measured, and what it will not fix. Facts supplied, figures substituted afterwards | no, and it carries no safety risk: the settlement is held either way |
@@ -140,8 +176,8 @@ Repairs, split by the action that produced them, because one total hides which m
 
 | action | repairs | corroborated by |
 |---|---:|---|
-| `SEARCH_FEED` | 16 | a real record, cited by id, in a feed nobody joined |
 | `NARROW_TO_HISTORY` | 16 | this merchant's own prior VERIFIED settlements |
+| `SEARCH_FEED` | 16 | a real record, cited by id, in a feed nobody joined |
 
 And the contribution as a function of how bad the configuration is:
 
@@ -182,7 +218,7 @@ The rule was learned, not designed. The first version let narrowing post if the 
 
 > Removing candidates cannot make the survivor unique. It makes it **unexamined**.
 
-That figure is hand-recorded from a build that no longer exists, and it is the only number in this file not emitted by run `run_20260903_1536`. The failure is rebuilt as a committed test in [`internal/agent/corroboration_test.go`](internal/agent/corroboration_test.go), which fails if `TIGHTEN_WINDOW` is ever made postable again.
+That figure is hand-recorded from a build that no longer exists, and it is the only number in this file not emitted by run `run_20260904_0158`. The failure is rebuilt as a committed test in [`internal/agent/corroboration_test.go`](internal/agent/corroboration_test.go), which fails if `TIGHTEN_WINDOW` is ever made postable again.
 
 **Prohibition was the right default and the wrong permanent answer.** `NARROW_TO_HISTORY` closes the gap: a merchant's prior `VERIFIED` settlements are a second source, and a strong one, since each was proved by exhaustive enumeration without reference to any window hypothesis. The profile is built only from proofs, needs at least twelve, and the bound may never be tighter than the widest offset those proofs show. The verifier still decides. Corroboration buys the right to be tested, not the right to be believed.
 
@@ -281,6 +317,8 @@ flowchart TB
 
 | | |
 |---|---|
+| ![the close](docs/screenshots/00-the-close.jpg) | **The close, and its grade.** The landing tab, because it answers the question an operations lead arrives with. The model read the period, named the root causes, and was scored on whether it found conditions it was never told about. |
+| ![root causes](docs/screenshots/08-root-causes.jpg) | **Root causes, ranked by held value**, each citing the figures it was read from, each with the action it implies. Plus what needs a human, and what the close says it cannot tell. |
 | ![head to head](docs/screenshots/02-head-to-head.jpg) | **Head to head.** One credit, identical inputs. B0 proposes six records at 0.95 confidence and posts, and is wrong. Manhattan closes the identity to zero, then widens the pool, finds a rival, and holds. |
 | ![diagnosis](docs/screenshots/07-diagnosis-and-note.jpg) | **The model at work.** The gateway's claim fails its arithmetic check with an exact residual. The model names the defect class, the system owns the remedy for that class, and a drafted note tells an analyst what to do and what it will not fix. |
 | ![receipt](docs/screenshots/04-receipt.jpg) | **A consistent claim.** `consistent` is not `verified` and the panel says so: the named batch does produce this credit, others may too, and none was searched for. |
@@ -400,10 +438,10 @@ The last one matters most. **An agent that answers every question is not grounde
 | one loop, closed | bank credit to posted ledger entry, or to a named and priced exception |
 | match rate reported | **406 of 498**, 82%, with **0 wrong** |
 | exceptions it could not resolve | **92**, each with a cause, a computed remedy, a price and a drafted note |
-| throughput | **54,994 settlements per hour**, 18.9 ms median pipeline time |
-| agentic design | 1,426 model calls across 4 jobs, a closed 8-action controller loop, cross-settlement merchant memory, and a graded diagnosis |
+| throughput | **45,945 settlements per hour**, 23.4 ms median pipeline time |
+| agentic design | 1,427 model calls across 5 jobs, a closed 8-action controller loop, cross-settlement merchant memory, and a graded diagnosis |
 
-Throughput is end to end: 498 settlements in 32.6 s of wall clock including the agent loop, both baselines and receipt serialisation. That divides to 65.5 ms against a 18.9 ms median pipeline time, and both are printed rather than the flattering one. Memory: **200 MB** deterministic solver peak; **479 MB** sampled process heap, which moves between runs and should never be quoted as a bound.
+Throughput is end to end: 498 settlements in 39.0 s of wall clock including the agent loop, both baselines and receipt serialisation. That divides to 78.4 ms against a 23.4 ms median pipeline time, and both are printed rather than the flattering one. Memory: **200 MB** deterministic solver peak; **343 MB** sampled process heap, which moves between runs and should never be quoted as a bound.
 
 **Determinism is per commit.** Same seed and same commit gives the same decisions on every settlement. Timings are measurements and move, so receipts are not byte-identical.
 

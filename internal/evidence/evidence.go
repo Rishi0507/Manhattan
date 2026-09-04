@@ -249,6 +249,45 @@ type CostBlock struct {
 	INRMicros    int64 `json:"inr_micros"`
 }
 
+// RootCause is one systemic finding across a whole period.
+type RootCause struct {
+	Scope       string `json:"scope"`
+	Class       string `json:"cause_class"`
+	Evidence    string `json:"evidence"`
+	Action      string `json:"recommended_action"`
+	Settlements int    `json:"settlements_affected"`
+	ValueINR    int64  `json:"value_held_inr"`
+}
+
+// PeriodClose is the controller's report on a whole run.
+//
+// It is the one output in this system that reads across settlements rather
+// than within one, and it is the only model output that is not bounded by a
+// closed action vocabulary, because it cannot act. It cannot post, narrow,
+// amend an input or alter a receipt. A person reads it and then decides.
+//
+// It is graded. The benchmark injects specific operational conditions and
+// records what they are, and the close is scored on whether it found them from
+// the receipts alone.
+type PeriodClose struct {
+	Narrative   string      `json:"narrative"`
+	RootCauses  []RootCause `json:"root_causes"`
+	Escalations []string    `json:"escalations"`
+	Unknowns    string      `json:"what_i_cannot_tell"`
+	Provider    string      `json:"provider"`
+	// Dropped counts findings discarded for citing no evidence or naming a
+	// cause outside the vocabulary. A requirement to cite is only a
+	// requirement if something enforces it.
+	Dropped int `json:"findings_dropped"`
+
+	// Graded, filled in by the benchmark against the conditions it injected.
+	ConditionsInjected []string `json:"conditions_injected,omitempty"`
+	ConditionsFound    []string `json:"conditions_found,omitempty"`
+	ConditionsMissed   []string `json:"conditions_missed,omitempty"`
+	Spurious           []string `json:"findings_not_injected,omitempty"`
+	Recall             float64  `json:"condition_recall"`
+}
+
 // ClaimVerdict is the outcome of checking a mapping somebody else asserted.
 type ClaimVerdict string
 

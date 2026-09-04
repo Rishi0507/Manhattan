@@ -1,5 +1,5 @@
 {
-  "run_id": "run_20260903_1536",
+  "run_id": "run_20260904_0158",
   "settlements": 498,
   "seed": 20260826,
   "status_counts": {
@@ -36,12 +36,12 @@
   "m1_report_defects_posted_anyway": 0,
   "m1_false_alarms_on_clean_reports": 0,
   "m1_clean_reports_checked": 469,
-  "median_latency_ms": 18.919,
-  "p95_latency_ms": 250.783,
-  "b0_median_latency_ms": 8.092,
-  "wall_clock_s": 32.599679,
-  "settlements_per_hour": 54994.40654001531,
-  "peak_memory_mb_sampled": 479.1297378540039,
+  "median_latency_ms": 23.404,
+  "p95_latency_ms": 302.75,
+  "b0_median_latency_ms": 8.393,
+  "wall_clock_s": 39.0203385,
+  "settlements_per_hour": 45945.270310763706,
+  "peak_memory_mb_sampled": 343.0406036376953,
   "peak_solver_mb_deterministic": 199.85614013671875,
   "peak_solver_settlement": "bank_credit_travel_2026_09_23_1051",
   "parse_calls": 498,
@@ -51,9 +51,9 @@
   "agent_invoked": 260,
   "agent_skipped": 166,
   "agent_proven_cures": 50,
-  "model_calls": 1426,
-  "input_tokens": 1002359,
-  "output_tokens": 93468,
+  "model_calls": 1427,
+  "input_tokens": 1004774,
+  "output_tokens": 94182,
   "exception_rate": 0.7911646586345381,
   "inr_per_1k_settlements": 1298.529236947791,
   "b0_input_tokens_per_1k": 1977429.718875502,
@@ -73,6 +73,7 @@
     "SEARCH_FEED": 16
   },
   "model_calls_by_role": {
+    "control": 1,
     "parse": 498,
     "plan": 567,
     "remediate": 336,
@@ -98,6 +99,83 @@
       "OMITTED_DISPUTE": 1,
       "TRUNCATED_MAPPING": 4
     }
+  },
+  "period_close": {
+    "narrative": "This period closed with 6 systemic findings across 6 merchant types: UNJOINED_FEED on marketplace; WINDOW_TOO_WIDE on travel; UNJOINED_FEED on quick_commerce; WINDOW_TOO_WIDE on d2c_ecommerce; AMOUNTS_DO_NOT_DISTINGUISH on subscription_saas; AMOUNTS_DO_NOT_DISTINGUISH on utility_billpay. They are ranked by held value below, and each names the figures it was read from. This close was written by the deterministic stub, which applies one fixed rule per merchant and reports only the first that matches, so a merchant with two problems shows one.",
+    "root_causes": [
+      {
+        "scope": "quick_commerce",
+        "cause_class": "UNJOINED_FEED",
+        "evidence": "20 settlements where nothing reconstructs the credit and the residual is exact",
+        "recommended_action": "join the disputes feed for this merchant and re-run",
+        "settlements_affected": 20,
+        "value_held_inr": 23033
+      },
+      {
+        "scope": "marketplace",
+        "cause_class": "UNJOINED_FEED",
+        "evidence": "8 settlements where nothing reconstructs the credit and the residual is exact",
+        "recommended_action": "join the disputes feed for this merchant and re-run",
+        "settlements_affected": 8,
+        "value_held_inr": 18206
+      },
+      {
+        "scope": "travel",
+        "cause_class": "WINDOW_TOO_WIDE",
+        "evidence": "mean pool of 51 candidates for a mean batch of 6, and refusals are UNDERDETERMINED rather than UNRESOLVED",
+        "recommended_action": "narrow the value-date window to what this merchant's proved settlements support",
+        "settlements_affected": 8,
+        "value_held_inr": 2182
+      },
+      {
+        "scope": "subscription_saas",
+        "cause_class": "AMOUNTS_DO_NOT_DISTINGUISH",
+        "evidence": "twin mass 0.94, above the 0.30 refusal threshold, across 83 settlements",
+        "recommended_action": "supply a settlement reference or a per-payment fee row; no amount-based method can work here",
+        "settlements_affected": 5,
+        "value_held_inr": 665
+      },
+      {
+        "scope": "d2c_ecommerce",
+        "cause_class": "WINDOW_TOO_WIDE",
+        "evidence": "mean pool of 53 candidates for a mean batch of 6, and refusals are UNDERDETERMINED rather than UNRESOLVED",
+        "recommended_action": "narrow the value-date window to what this merchant's proved settlements support",
+        "settlements_affected": 28,
+        "value_held_inr": 300
+      },
+      {
+        "scope": "utility_billpay",
+        "cause_class": "AMOUNTS_DO_NOT_DISTINGUISH",
+        "evidence": "twin mass 0.76, above the 0.30 refusal threshold, across 83 settlements",
+        "recommended_action": "supply a settlement reference or a per-payment fee row; no amount-based method can work here",
+        "settlements_affected": 2,
+        "value_held_inr": 266
+      }
+    ],
+    "escalations": [
+      "confirm with operations which merchants are expected to have a disputes feed connected",
+      "confirm the value-date window configured for each merchant against their capture cutoff"
+    ],
+    "what_i_cannot_tell": "Whether two merchants showing the same class share one underlying configuration or two separate ones, and whether a merchant flagged for one cause also has a second. The stub reports the first rule that matches per merchant and stops.",
+    "provider": "offline-stub",
+    "findings_dropped": 0,
+    "conditions_injected": [
+      "d2c_ecommerce: reconciliation window misconfigured to plus or minus 24 hours",
+      "marketplace: disputes feed never joined into the pool",
+      "quick_commerce: disputes feed never joined into the pool",
+      "travel: reconciliation window misconfigured to plus or minus 22 hours"
+    ],
+    "conditions_found": [
+      "d2c_ecommerce: WINDOW_TOO_WIDE",
+      "marketplace: UNJOINED_FEED",
+      "quick_commerce: UNJOINED_FEED",
+      "travel: WINDOW_TOO_WIDE"
+    ],
+    "findings_not_injected": [
+      "subscription_saas: AMOUNTS_DO_NOT_DISTINGUISH",
+      "utility_billpay: AMOUNTS_DO_NOT_DISTINGUISH"
+    ],
+    "condition_recall": 1
   },
   "analyst_notes_drafted": 336,
   "analyst_notes_rejected": 0,

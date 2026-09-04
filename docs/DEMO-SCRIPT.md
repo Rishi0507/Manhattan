@@ -13,7 +13,24 @@ and the sixty seconds are spent on the argument rather than on a progress bar:
 
 ---
 
-## 0:00 to 0:08  The problem
+## 0:00 to 0:10  The close
+
+**On screen:** the dashboard's landing tab, The close.
+
+> This is a settlement period, closed. Not four hundred exceptions in arrival
+> order: four root causes, ranked by the money they are holding, each citing the
+> figures it was read from.
+>
+> Two of those causes are misconfigurations this benchmark injected on purpose,
+> and the model was never told about them. It read status mixes and pool sizes
+> and inferred them, on the right merchant, four out of four.
+
+**Point at the recall figure.**
+
+> That is the AI in this system doing the job the track is named after, and
+> being scored on it.
+
+## 0:10 to 0:16  The problem
 
 **On screen:** the landing page, top of the hero.
 
@@ -21,7 +38,7 @@ and the sixty seconds are spent on the argument rather than on a progress bar:
 > payments, minus fees, tax, refunds and chargebacks. Somebody has to work out
 > which transactions produced it.
 
-## 0:08 to 0:14  The claim
+## 0:16 to 0:22  The claim
 
 **On screen:** scroll to the two-column comparison on the landing page. Both
 figures are visible at once.
@@ -31,7 +48,7 @@ figures are visible at once.
 > posts 406 and gets none wrong, because it checks the report's claim against
 > the money before it believes it.
 
-## 0:14 to 0:32  Why, in one settlement
+## 0:22 to 0:38  Why, in one settlement
 
 **On screen:** click through to Head to head. Let the single credit and both
 panels sit on screen for a beat.
@@ -49,7 +66,7 @@ panels sit on screen for a beat.
 > first answer was not unique, it was just the one that survived the filter.
 > Manhattan holds it and names the constraint responsible.
 
-## 0:32 to 0:40  The model, visibly
+## 0:38 to 0:46  The model inside one settlement
 
 **On screen:** Run tab, open a settlement whose report claim was contradicted.
 Scroll to the claim panel.
@@ -64,7 +81,7 @@ Scroll to the claim panel.
 > The model reads. The arithmetic decides. Those are different jobs and this is
 > the only arrangement in which an agent should be allowed near a ledger.
 
-## 0:40 to 0:50  It knows in advance
+## 0:46 to 0:54  It knows in advance
 
 **On screen:** the Calibration tab, on the outcome-band chart.
 
@@ -78,7 +95,7 @@ Scroll to the claim panel.
 > Which means the system can tell a merchant what fraction of their
 > settlements it will post before a single file is exchanged.
 
-## 0:50 to 0:56  The evidence
+## 0:54 to 0:58  The evidence
 
 **On screen:** back to Run, click any row to open a receipt. Expand Narrowing
 and Feasibility.
@@ -91,7 +108,7 @@ and Feasibility.
 > Nothing here is a score. It is a derivation somebody can be asked to defend
 > at audit.
 
-## 0:56 to 1:00  The close
+## 0:58 to 1:00  The close, again
 
 **On screen:** the Exceptions tab, sorted by cost.
 
@@ -110,4 +127,5 @@ and Feasibility.
 - Do not narrate the architecture. A judge who wants it will read the README,
   and sixty seconds spent on boxes and arrows is sixty seconds not spent on the
   one number that distinguishes the submission.
-- The rival panel at 0:14 is the single most important frame. Hold it.
+- Two frames matter more than the rest: the recall figure at 0:05 and the rival
+  panel at 0:22. Hold both.

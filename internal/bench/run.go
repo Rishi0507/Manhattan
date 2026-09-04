@@ -172,6 +172,11 @@ type Summary struct {
 	// classes the model confuses rather than only how often it is right.
 	DiagnosisConfusion map[string]map[string]int `json:"report_defect_confusion"`
 
+	// Close is the controller's report on the whole period: the one model
+	// output that reads across settlements rather than within one, and the
+	// only one graded on whether it found the conditions this run injected.
+	Close *evidence.PeriodClose `json:"period_close,omitempty"`
+
 	// NotesDrafted counts analyst-facing notes the model wrote for held
 	// settlements. NotesRejected counts drafts thrown away for containing a
 	// figure, which the schema forbids because every number in a rendered note
@@ -986,6 +991,24 @@ func RunBatch(ctx context.Context, spec BatchSpec, provider llm.Provider) (*evid
 		}
 	}
 	sum.Drift = guards.DetectDrift(rates, spec.Baseline, 0.10)
+
+	// The period close. One call, after everything else has been decided,
+	// reading aggregates rather than receipts. It is the only model output
+	// that works above a single settlement, and it is graded against the
+	// operational conditions this run injected, which the model never sees.
+	if pc, u := runClose(ctx, agent.NewCloser(provider), store, sum, archOf); pc != nil {
+		usage.Add(u)
+		sum.Close = pc
+		sum.ModelCalls = usage.Calls
+		if len(usage.ByRole) > 0 {
+			sum.CallsByRole = map[string]int{}
+			for r, n := range usage.ByRole {
+				sum.CallsByRole[string(r)] = n
+			}
+		}
+		sum.InputTokens = usage.InputTokens
+		sum.OutputTokens = usage.OutputTokens
+	}
 
 	run := &evidence.Run{
 		RunID:           spec.RunID,

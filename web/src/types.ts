@@ -345,6 +345,26 @@ export interface Summary {
     gate: string;
     note: string;
   }[];
+  period_close?: {
+    narrative: string;
+    root_causes: {
+      scope: string;
+      cause_class: string;
+      evidence: string;
+      recommended_action: string;
+      settlements_affected: number;
+      value_held_inr: number;
+    }[];
+    escalations?: string[];
+    what_i_cannot_tell?: string;
+    provider?: string;
+    findings_dropped?: number;
+    conditions_injected?: string[];
+    conditions_found?: string[];
+    conditions_missed?: string[];
+    findings_not_injected?: string[];
+    condition_recall?: number;
+  };
 }
 
 export interface CaseOutcome {

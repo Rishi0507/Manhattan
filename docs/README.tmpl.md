@@ -28,9 +28,10 @@ No API key required. **Every number in this file, in [RESULTS.md](RESULTS.md) an
 ## For a judge, in four minutes
 
 1. **The table below.** {{ .D.M1Posted }} posted, {{ .D.M1Wrong }} wrong, against a lookup's {{ .D.B1Posted }} posted and {{ .D.B1Wrong }} wrong on identical data.
-2. **[Where the AI is](#where-the-ai-actually-is)**, the honest accounting: {{ n .S.ModelCalls }} model calls across {{ len .S.CallsByRole }} jobs, one of them graded at {{ pct (mul .S.DiagnosisAccuracy 100) }} against ground truth.
-3. **[RESULTS.md](RESULTS.md), the calibration section.** Whether the system knows *in advance* when it is about to be wrong. This is what separates it from a solver demo.
-4. **`./run.sh demo`**, which opens on adversarial case 10: narrowing drops a real record, a coincidental subset closes the identity exactly, and the guard catches it.
+2. **[The controller](#the-controller)**, where the model reads the whole period and names the root causes. Graded at **{{ pct .D.CloseRecallPct }} recall** against operational conditions it was never told about.
+3. **[Where the rest of the AI is](#where-the-rest-of-the-ai-is)**: {{ n .S.ModelCalls }} calls across {{ len .S.CallsByRole }} jobs, a second one graded at {{ pct (mul .S.DiagnosisAccuracy 100) }}.
+4. **[RESULTS.md](RESULTS.md), the calibration section.** Whether the system knows *in advance* when it is about to be wrong.
+5. **`./run.sh demo`**, which opens on adversarial case 10: narrowing drops a real record, a coincidental subset closes the identity exactly, and the guard catches it.
 
 Longer: [docs/EXPLAIN.md](docs/EXPLAIN.md) is the system from first principles in plain language. [docs/DESIGN.md](docs/DESIGN.md) has every derivation. [LIMITATIONS.md](LIMITATIONS.md) is what it cannot do, and it is the document I would read first if I were judging this.
 
@@ -77,7 +78,38 @@ The verdict is deliberately weaker than a proof, and the receipt never blurs the
 
 ---
 
-## Where the AI actually is
+## The controller
+
+The track is called AI Finance Controller, and a controller does not reconcile one settlement at a time. It reads the period. Which merchants are degrading, whether {{ .D.M1Held }} exceptions have {{ .D.M1Held }} causes or three, which single change recovers the most held value, and what needs a human this week.
+
+Every input to that is arithmetic and every one is already computed. What is missing is the step that reads {{ .S.Settlements }} receipts and notices that eighty of them are the same problem wearing different reference numbers. **That step is the model's, and it is the only output in this system that works above a single settlement.**
+{{ if .D.Close }}
+> {{ .D.Close.Narrative }}
+
+| scope | cause | held INR | evidence it cited |
+|---|---|---:|---|
+{{- range .D.Close.RootCauses }}
+| {{ .Scope }} | `{{ .Class }}` | {{ n64 .ValueINR }} | {{ clip .Evidence 76 }} |
+{{- end }}
+
+### It is graded
+
+This run injects operational misconfigurations and records exactly what they are. **None of that reaches the model.** It sees status mixes, pool sizes, twin masses, held values and remedy counts, and has to infer the cause the way a controller would.
+
+| | |
+|---|---:|
+| conditions injected | {{ .D.CloseInjected }} |
+| **identified, on the right merchant** | **{{ .D.CloseFound }}** |
+| **recall** | **{{ pct .D.CloseRecallPct }}** |
+| findings dropped for citing no evidence | {{ .D.Close.Dropped }} |
+{{ if .D.Close.Spurious }}
+Findings corresponding to no injected condition: {{ range $i, $s := .D.Close.Spurious }}{{ if $i }}, {{ end }}`{{ $s }}`{{ end }}. Listed rather than counted against recall, because at least some are true: the flat-price archetypes genuinely cannot be reconstructed from amounts and saying so is correct even though nobody injected it. Deciding which true findings count would be exactly the sort of scoring nobody should accept on assertion.
+{{ end }}
+**The close cannot act.** It posts nothing, narrows nothing, amends no input and alters no receipt. That is precisely why it is the one model output not bounded by a closed action vocabulary: a person reads it and then decides. Everywhere the model *can* influence a posting it is fenced; here it cannot, so it is given the whole period and asked to think.
+{{ end }}
+---
+
+## Where the rest of the AI is
 
 The fair criticism of this project is that arithmetic does the deciding, so what is the model for. Here is the accounting rather than an argument.
 
@@ -122,6 +154,7 @@ Measured, at {{ .D.LiveSettlements }} settlements:
 | verified | {{ .D.LiveVerified }} | {{ .D.StubVerified }} |
 | agent repairs | {{ .D.LiveRepairs }} | {{ .D.StubRepairs }} |
 | diagnosis accuracy | {{ pct (mul .D.LiveDiagAcc 100) }} | {{ pct (mul .D.StubDiagAcc 100) }} |
+| close condition recall | {{ pct (mul .D.LiveCloseRecall 100) }} | {{ pct (mul .D.StubCloseRecall 100) }} |
 | INR per 1k, **billed** | {{ ni .D.LiveINR }} | {{ ni .D.ModelledINR }}, modelled |
 {{ else }}
 **This has not been run yet**, because it needs an API key. Every published figure comes from `{{ .S.Provider }}` ({{ .S.ProviderModels }}) and the cost column is modelled at published rates rather than billed. That is stated here, in [LIMITATIONS.md](LIMITATIONS.md#no-live-model-run-at-batch-scale) and in [RESULTS.md](RESULTS.md), because it is the most attackable sentence in the repository and burying it would be worse than having it.
@@ -283,6 +316,8 @@ flowchart TB
 
 | | |
 |---|---|
+| ![the close](docs/screenshots/00-the-close.jpg) | **The close, and its grade.** The landing tab, because it answers the question an operations lead arrives with. The model read the period, named the root causes, and was scored on whether it found conditions it was never told about. |
+| ![root causes](docs/screenshots/08-root-causes.jpg) | **Root causes, ranked by held value**, each citing the figures it was read from, each with the action it implies. Plus what needs a human, and what the close says it cannot tell. |
 | ![head to head](docs/screenshots/02-head-to-head.jpg) | **Head to head.** One credit, identical inputs. B0 proposes six records at 0.95 confidence and posts, and is wrong. Manhattan closes the identity to zero, then widens the pool, finds a rival, and holds. |
 | ![diagnosis](docs/screenshots/07-diagnosis-and-note.jpg) | **The model at work.** The gateway's claim fails its arithmetic check with an exact residual. The model names the defect class, the system owns the remedy for that class, and a drafted note tells an analyst what to do and what it will not fix. |
 | ![receipt](docs/screenshots/04-receipt.jpg) | **A consistent claim.** `consistent` is not `verified` and the panel says so: the named batch does produce this credit, others may too, and none was searched for. |

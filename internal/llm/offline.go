@@ -51,6 +51,8 @@ func (o offlineProvider) Structured(ctx context.Context, req Request) (*Result, 
 		out, err = o.triage(req.User)
 	case RoleRemediate:
 		out, err = o.remediate(req.User)
+	case RoleControl:
+		out, err = o.control(req.User)
 	default:
 		err = fmt.Errorf("llm: offline provider has no behaviour for role %q", req.Role)
 	}
@@ -513,5 +515,126 @@ func (o offlineProvider) remediate(user string) (any, error) {
 		"why_it_works":             why,
 		"what_it_will_not_fix":     not,
 		"what_to_ask_the_merchant": ask,
+	}, nil
+}
+
+// control writes the period close, deterministically.
+//
+// This is the stub's hardest job and the one where it most obviously falls
+// short, which is the point of it existing rather than returning an apology.
+// It applies four fixed rules per merchant: a large pool against a small batch
+// means the window is wide, exact unexplained residuals mean a feed is missing,
+// high twin mass means the amounts do not distinguish, and claim failures
+// clustering means the report is at fault.
+//
+// What it cannot do is the actual controller's job. It cannot notice that two
+// merchants share one root cause, cannot weigh a small expensive population
+// against a large cheap one except by sorting, cannot tell that a wide window
+// and a missing feed on the same merchant are one story rather than two, and
+// writes a narrative by concatenation. Those are the judgements `manhattan
+// live` measures, and the condition-recall figure beside this is the number
+// that moves when a real model runs.
+func (o offlineProvider) control(user string) (any, error) {
+	type block struct {
+		name                       string
+		pool, batch, held, settle  float64
+		twin                       float64
+		exact, claimFails, feeAnom int
+		heldINR                    int64
+		underdet, unresolved       int
+	}
+
+	var blocks []block
+	for _, chunk := range strings.Split(user, "\n\n  ")[1:] {
+		lines := strings.Split(chunk, "\n")
+		if len(lines) == 0 || !strings.Contains(lines[0], "settlements,") {
+			continue
+		}
+		bl := block{name: strings.TrimSpace(strings.SplitN(lines[0], ":", 2)[0])}
+		bl.settle = grabFloat(chunk, `(\d+) settlements,`)
+		bl.pool = grabFloat(chunk, `mean pool after narrowing (\d+(?:\.\d+)?) candidates`)
+		bl.batch = grabFloat(chunk, `mean batch of (\d+(?:\.\d+)?)`)
+		bl.twin = grabFloat(chunk, `twin mass (\d+(?:\.\d+)?)`)
+		bl.exact = grabInt(chunk, `residual is exact: (\d+)`)
+		bl.claimFails = grabInt(chunk, `report claim failed its check: (\d+)`)
+		bl.feeAnom = grabInt(chunk, `fee anomaly: (\d+)`)
+		bl.heldINR = int64(grabFloat(chunk, `clearing cost (\d+) INR`))
+		bl.underdet = grabInt(chunk, `UNDERDETERMINED (\d+)`)
+		bl.unresolved = grabInt(chunk, `UNRESOLVED (\d+)`)
+		bl.held = grabFloat(chunk, `(\d+) held`)
+		if bl.name != "" {
+			blocks = append(blocks, bl)
+		}
+	}
+
+	var causes []map[string]any
+	add := func(scope, class, ev, action string, n int, inr int64) {
+		causes = append(causes, map[string]any{
+			"scope": scope, "cause_class": class, "evidence": ev,
+			"recommended_action": action, "settlements_affected": n, "value_held_inr": inr,
+		})
+	}
+
+	for _, b := range blocks {
+		switch {
+		case b.twin >= 0.30:
+			add(b.name, "AMOUNTS_DO_NOT_DISTINGUISH",
+				fmt.Sprintf("twin mass %.2f, above the 0.30 refusal threshold, across %.0f settlements",
+					b.twin, b.settle),
+				"supply a settlement reference or a per-payment fee row; no amount-based method can work here",
+				int(b.held), b.heldINR)
+		case b.exact > 2:
+			add(b.name, "UNJOINED_FEED",
+				fmt.Sprintf("%d settlements where nothing reconstructs the credit and the residual is exact",
+					b.exact),
+				"join the disputes feed for this merchant and re-run", b.exact, b.heldINR)
+		case b.batch > 0 && b.pool/b.batch > 3.5 && b.underdet > b.unresolved:
+			add(b.name, "WINDOW_TOO_WIDE",
+				fmt.Sprintf("mean pool of %.0f candidates for a mean batch of %.0f, and refusals are UNDERDETERMINED rather than UNRESOLVED",
+					b.pool, b.batch),
+				"narrow the value-date window to what this merchant's proved settlements support",
+				b.underdet, b.heldINR)
+		case b.claimFails > 3:
+			add(b.name, "REPORT_DEFECTS",
+				fmt.Sprintf("%d settlements where the gateway's own stated mapping failed its arithmetic check",
+					b.claimFails),
+				"raise the failing references with the gateway", b.claimFails, b.heldINR)
+		case b.feeAnom > 3:
+			add(b.name, "FEE_POLICY_DRIFT",
+				fmt.Sprintf("%d settlements carrying a fee anomaly", b.feeAnom),
+				"confirm the fee schedule configured for this merchant", b.feeAnom, b.heldINR)
+		}
+		// A merchant can have two problems, and the stub only ever reports the
+		// first that matches. That is the single clearest thing a real model
+		// improves here and it is left in rather than papered over.
+	}
+	if len(causes) == 0 {
+		add("all", "NOTHING_SYSTEMIC",
+			"no merchant crossed a threshold on any modelled cause",
+			"work the queue by value per analyst hour", 0, 0)
+	}
+
+	var names []string
+	for _, c := range causes {
+		names = append(names, fmt.Sprintf("%s on %s", c["cause_class"], c["scope"]))
+	}
+	narrative := fmt.Sprintf(
+		"This period closed with %d systemic findings across %d merchant types: %s. "+
+			"They are ranked by held value below, and each names the figures it was read from. "+
+			"This close was written by the deterministic stub, which applies one fixed rule per "+
+			"merchant and reports only the first that matches, so a merchant with two problems "+
+			"shows one.",
+		len(causes), len(blocks), strings.Join(names, "; "))
+
+	return map[string]any{
+		"narrative":   narrative,
+		"root_causes": causes,
+		"escalations": []string{
+			"confirm with operations which merchants are expected to have a disputes feed connected",
+			"confirm the value-date window configured for each merchant against their capture cutoff",
+		},
+		"what_i_cannot_tell": "Whether two merchants showing the same class share one underlying " +
+			"configuration or two separate ones, and whether a merchant flagged for one cause also " +
+			"has a second. The stub reports the first rule that matches per merchant and stops.",
 	}, nil
 }

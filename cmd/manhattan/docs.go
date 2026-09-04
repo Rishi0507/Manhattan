@@ -137,6 +137,12 @@ type Derived struct {
 	// per pair, which read as a stutter when a map was ranged over directly.
 	Confusions string
 
+	// The period close, which is the controller doing the job the track names.
+	Close          *evidence.PeriodClose
+	CloseRecallPct float64
+	CloseFound     int
+	CloseInjected  int
+
 	// RoleRows is where the model is used, per job, with what it contributes
 	// and whether that contribution is graded. This is the table that answers
 	// "the AI does almost nothing" with an accounting rather than a rebuttal.
@@ -157,6 +163,8 @@ type Derived struct {
 	StubDiagAcc     float64
 	LiveINR         float64
 	ModelledINR     float64
+	LiveCloseRecall float64
+	StubCloseRecall float64
 
 	// The lookup, which is the answer everybody gives.
 	B1Posted        int
@@ -240,6 +248,7 @@ type RoleRow struct {
 var roleFacts = []struct {
 	role, what, graded string
 }{
+	{"control", "reads the WHOLE period and writes the close: which merchants are degrading, whether four hundred exceptions have four hundred causes or three, which single change recovers the most held value, and what needs a human this week. The only output here that works above a single settlement, and the only one not bounded by a closed action vocabulary, because it cannot act", "**yes**, on whether it found the operational conditions this run injected"},
 	{"triage", "names WHY a report's stated mapping failed its arithmetic check, from a closed vocabulary of five defect classes. The same failed check has several causes needing different remedies, and telling them apart is reading rather than counting", "**yes**, against the generator's record of what it injected"},
 	{"resolve", "proposes the class of unmodelled event behind an exact residual, so the system knows what kind of record to go and look for", "indirectly: a proposal only clears an exception if the verifier re-proves it"},
 	{"plan", "chooses one action from a closed set of eight for a settlement that did not post, including whether this merchant's own proved history corroborates a tighter window", "indirectly: the entire stack re-runs and rejects anything that did not improve"},
@@ -402,6 +411,13 @@ func deriveDocs(sum bench.Summary, cases []bench.CaseOutcome, sweep []bench.Swee
 		d.Confusions = conf[0]
 	default:
 		d.Confusions = strings.Join(conf[:len(conf)-1], ", ") + " and " + conf[len(conf)-1]
+	}
+
+	if pc := sum.Close; pc != nil {
+		d.Close = pc
+		d.CloseRecallPct = pc.Recall * 100
+		d.CloseFound = len(pc.ConditionsFound)
+		d.CloseInjected = len(pc.ConditionsInjected)
 	}
 
 	d.TotalSweptConfigs = len(sweep)
@@ -758,6 +774,7 @@ func renderNarrativeDocs(ctx context.Context, sum bench.Summary, cases []bench.C
 			d.LiveRepairs, d.StubRepairs = ld.LiveRepairs, ld.StubRepairs
 			d.LiveDiagAcc, d.StubDiagAcc = ld.LiveDiagnosisAcc, ld.StubDiagnosisAcc
 			d.LiveINR, d.ModelledINR = ld.LiveINRPer1k, ld.ModelledPer1k
+			d.LiveCloseRecall, d.StubCloseRecall = ld.LiveCloseRecall, ld.StubCloseRecall
 		}
 	}
 	for _, sp := range sens {

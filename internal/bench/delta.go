@@ -40,6 +40,10 @@ type LiveDelta struct {
 	LiveNotes         int     `json:"live_notes_drafted"`
 	StubNotes         int     `json:"stub_notes_drafted"`
 	LiveNotesRejected int     `json:"live_notes_rejected"`
+	LiveCloseRecall   float64 `json:"live_close_condition_recall"`
+	StubCloseRecall   float64 `json:"stub_close_condition_recall"`
+	LiveCloseFindings int     `json:"live_close_findings"`
+	StubCloseFindings int     `json:"stub_close_findings"`
 
 	// Actually billed, which the offline path can only model.
 	LiveINRPer1k  float64 `json:"live_inr_per_1k_settlements"`
@@ -79,6 +83,15 @@ func Delta(live, stub Summary) LiveDelta {
 		LiveCacheHit:      live.Cost.CacheHitRate,
 		PriceIsReal:       live.PriceIsReal,
 	}
+	if live.Close != nil {
+		d.LiveCloseRecall = live.Close.Recall
+		d.LiveCloseFindings = len(live.Close.RootCauses)
+	}
+	if stub.Close != nil {
+		d.StubCloseRecall = stub.Close.Recall
+		d.StubCloseFindings = len(stub.Close.RootCauses)
+	}
+
 	// Wrong postings are the property that must hold. Verified counts may
 	// legitimately differ, because a better proposer clears more exceptions;
 	// what may never differ is whether anything posted was WRONG, or whether
@@ -110,6 +123,10 @@ func RenderDelta(d LiveDelta) string {
 		fmt.Sprintf("%.0f%%", d.LiveDiagnosisAcc*100),
 		fmt.Sprintf("%.0f%%", d.StubDiagnosisAcc*100))
 	row("analyst notes drafted", d.LiveNotes, d.StubNotes)
+	row("close condition recall",
+		fmt.Sprintf("%.0f%%", d.LiveCloseRecall*100),
+		fmt.Sprintf("%.0f%%", d.StubCloseRecall*100))
+	row("close root causes found", d.LiveCloseFindings, d.StubCloseFindings)
 	fmt.Fprintf(&b, "\n  COST\n")
 	row("INR per 1k settlements",
 		fmt.Sprintf("%.0f", d.LiveINRPer1k), fmt.Sprintf("%.0f", d.ModelledPer1k))

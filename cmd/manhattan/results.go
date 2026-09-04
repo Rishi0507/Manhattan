@@ -44,6 +44,78 @@ func renderResults(
 		fmt.Fprintf(&b, "sensitivity section.\n\n")
 	}
 
+	// ---- The period close ------------------------------------------------
+	if pc := sum.Close; pc != nil {
+		fmt.Fprintf(&b, "## The close\n\n")
+		fmt.Fprintf(&b, "Everything else in this system works one settlement at a time. A controller\n")
+		fmt.Fprintf(&b, "does not. This is the model reading the whole period and answering the\n")
+		fmt.Fprintf(&b, "questions that only exist above a single settlement: do these %d exceptions\n", sum.M1Held)
+		fmt.Fprintf(&b, "have %d causes or three, which change recovers the most held value, and what\n", sum.M1Held)
+		fmt.Fprintf(&b, "needs a human this week.\n\n")
+		fmt.Fprintf(&b, "> %s\n\n", pc.Narrative)
+
+		if len(pc.RootCauses) > 0 {
+			fmt.Fprintf(&b, "| scope | cause | held INR | evidence it cited | recommended action |\n")
+			fmt.Fprintf(&b, "|---|---|---:|---|---|\n")
+			for _, rc := range pc.RootCauses {
+				fmt.Fprintf(&b, "| %s | `%s` | %s | %s | %s |\n",
+					rc.Scope, rc.Class, commas(rc.ValueINR), cell(rc.Evidence, 90), cell(rc.Action, 70))
+			}
+			b.WriteString("\n")
+		}
+
+		// The grading, which is the point.
+		if len(pc.ConditionsInjected) > 0 {
+			fmt.Fprintf(&b, "### Graded\n\n")
+			fmt.Fprintf(&b, "This run injects operational misconfigurations and records exactly what\n")
+			fmt.Fprintf(&b, "they are. **None of that reaches the model.** It sees status mixes, pool\n")
+			fmt.Fprintf(&b, "sizes, twin masses, held values and remedy counts, and has to infer the\n")
+			fmt.Fprintf(&b, "cause the way a controller would. So the close is scored rather than\n")
+			fmt.Fprintf(&b, "admired.\n\n")
+			fmt.Fprintf(&b, "| | |\n|---|---:|\n")
+			fmt.Fprintf(&b, "| conditions injected | %d |\n", len(pc.ConditionsInjected))
+			fmt.Fprintf(&b, "| **identified, on the right merchant** | **%d** |\n", len(pc.ConditionsFound))
+			fmt.Fprintf(&b, "| missed | %d |\n", len(pc.ConditionsMissed))
+			fmt.Fprintf(&b, "| **recall** | **%.0f%%** |\n", pc.Recall*100)
+			fmt.Fprintf(&b, "| findings dropped for citing no evidence | %d |\n\n", pc.Dropped)
+
+			fmt.Fprintf(&b, "Injected, and what the close said about each:\n\n")
+			for _, c := range pc.ConditionsInjected {
+				mark := "**MISSED**"
+				for _, f := range pc.ConditionsFound {
+					if strings.HasPrefix(f, strings.SplitN(c, ":", 2)[0]+":") {
+						mark = "found"
+					}
+				}
+				fmt.Fprintf(&b, "- %s : %s\n", c, mark)
+			}
+			b.WriteString("\n")
+
+			if len(pc.Spurious) > 0 {
+				fmt.Fprintf(&b, "Findings that correspond to no injected condition: %s.\n",
+					strings.Join(pc.Spurious, ", "))
+				fmt.Fprintf(&b, "These are listed rather than counted against recall, and at least\n")
+				fmt.Fprintf(&b, "some of them are true: the flat-price archetypes genuinely cannot be\n")
+				fmt.Fprintf(&b, "reconstructed from amounts, and saying so is correct even though\n")
+				fmt.Fprintf(&b, "nobody injected it. Deciding which true findings count would be\n")
+				fmt.Fprintf(&b, "exactly the sort of scoring nobody should accept on assertion.\n\n")
+			}
+		}
+		if len(pc.Escalations) > 0 {
+			fmt.Fprintf(&b, "**Escalated to a human:**\n\n")
+			for _, e := range pc.Escalations {
+				fmt.Fprintf(&b, "- %s\n", e)
+			}
+			b.WriteString("\n")
+		}
+		if pc.Unknowns != "" {
+			fmt.Fprintf(&b, "**What it says it cannot tell:** %s\n\n", pc.Unknowns)
+		}
+		fmt.Fprintf(&b, "The close cannot act. It posts nothing, narrows nothing, amends no input\n")
+		fmt.Fprintf(&b, "and alters no receipt. That is why it is the one model output here not\n")
+		fmt.Fprintf(&b, "bounded by a closed action vocabulary: a person reads it and then decides.\n\n")
+	}
+
 	// ---- The composite ---------------------------------------------------
 	if sum.M1Posted > 0 {
 		fmt.Fprintf(&b, "## The composite, which is the product\n\n")
