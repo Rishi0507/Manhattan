@@ -91,11 +91,11 @@ That is why the headline number is not "we matched 90%". It is:
 
 | | Manhattan | Typical LLM-only approach |
 | --- | ---: | ---: |
-| Posted automatically | 161 of 498 | 384 of 498 |
-| Of those, **wrong** | **0** | **226** |
+| Posted automatically | 731 of 996 | 671 of 996 |
+| Of those, **wrong** | **0** | **561** |
 
-The second column looks better until you read the second row. 226 wrong
-postings is 226 corrections a finance team has to find and unwind later, and
+The second column looks comparable until you read the second row. 561 wrong
+postings is 561 corrections a finance team has to find and unwind later, and
 they will not know which 226.
 
 ---
@@ -162,8 +162,8 @@ once.
 The sums are packed into 12 bytes each (an 8-byte number plus a 4-byte label
 saying which subset produced it) and sorted with a **radix sort**, which sorts by
 looking at the digits rather than by comparing pairs. On a batch of a few hundred
-transactions this all runs in about 14 milliseconds, and the whole 498-settlement
-benchmark finishes in 19 seconds, on one laptop, using 27 MB of memory.
+transactions this all runs in about 26 milliseconds at the median, and the whole
+996-settlement benchmark finishes in 114 seconds on one laptop.
 
 ---
 
@@ -412,7 +412,7 @@ flowchart TB
 
 ## 10. The measured result
 
-498 settlements, six merchant types, one fixed seed, reproducible from a clean
+996 settlements, six merchant types, one fixed seed, reproducible from a clean
 checkout.
 
 | | Manhattan | Baseline |
