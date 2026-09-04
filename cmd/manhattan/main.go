@@ -18,6 +18,9 @@ import (
 )
 
 func main() {
+	// The key, if there is one, lives in .env next to the repository.
+	loadDotEnv(".env")
+
 	if len(os.Args) < 2 {
 		usage()
 		os.Exit(2)
@@ -71,6 +74,7 @@ func usage() {
 Every command takes --help.
 
 The language model provider is selected automatically:
+  GEMINI_API_KEY set           the live Gemini API, recording to a cassette
   ANTHROPIC_API_KEY set        the live Anthropic API, recording to a cassette
   a cassette on disk           replay, with no network and byte-identical results
   neither                      a deterministic offline stub
@@ -86,6 +90,7 @@ type providerFlags struct {
 	cassette string
 	offline  bool
 	live     bool
+	provider string
 }
 
 func (p *providerFlags) register(fs *flag.FlagSet) {
@@ -93,6 +98,8 @@ func (p *providerFlags) register(fs *flag.FlagSet) {
 		"recorded model answers, for reproducible runs without a network")
 	fs.BoolVar(&p.offline, "offline", false,
 		"force the deterministic offline stub even if an API key is present")
+	fs.StringVar(&p.provider, "provider", "",
+		"force a live provider: gemini or anthropic. Default picks whichever key is set")
 	fs.BoolVar(&p.live, "live", false,
 		"require the live API and fail rather than falling back")
 }

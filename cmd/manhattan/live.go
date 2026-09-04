@@ -43,15 +43,21 @@ func runLive(ctx context.Context, args []string) error {
 	n := fs.Int("n", 60, "settlements to run on each provider")
 	seed := fs.Int64("seed", 20260826, "replay seed, identical for both runs")
 	out := fs.String("out", "out", "output directory")
+	provider := fs.String("provider", "",
+		"which live provider to measure: gemini or anthropic. Default picks whichever key is set")
 	if err := fs.Parse(args); err != nil {
 		return err
 	}
 
-	if os.Getenv("ANTHROPIC_API_KEY") == "" {
+	live, err := liveProvider(providerFlags{provider: *provider})
+	if err != nil {
+		return err
+	}
+	if live == nil {
 		return fmt.Errorf(
-			"ANTHROPIC_API_KEY is not set, and this command exists to measure the live path\n" +
+			"no API key is set, and this command exists to measure the live path\n" +
 				"  against the offline one, so there is nothing honest for it to do without a key.\n\n" +
-				"  export ANTHROPIC_API_KEY=sk-ant-...\n" +
+				"  export GEMINI_API_KEY=...        (or ANTHROPIC_API_KEY=sk-ant-...)\n" +
 				"  ./bin/manhattan live -n 60\n\n" +
 				"  It writes out/live.json, and `manhattan docs` renders the delta into README.md\n" +
 				"  and LIMITATIONS.md automatically once that file exists")
@@ -61,10 +67,8 @@ func runLive(ctx context.Context, args []string) error {
 	spec.Settlements = *n
 	spec.Seed = *seed
 
-	live := llm.NewAnthropic(llm.DefaultAnthropicConfig())
-
-	fmt.Fprintf(os.Stderr, "running %d settlements on the live API (%s)\n",
-		*n, live.Model(llm.RoleParse))
+	fmt.Fprintf(os.Stderr, "running %d settlements on the live %s API (%s)\n",
+		*n, live.Name(), live.Model(llm.RoleParse))
 	_, liveSum, err := bench.RunBatch(ctx, spec, live)
 	if err != nil {
 		return fmt.Errorf("live run: %w", err)

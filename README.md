@@ -47,7 +47,7 @@ git clone <this repo> && cd manhattan
 ./run.sh demo          # or:  .\run.ps1 demo    or:  make demo
 ```
 
-No API key required. **Every number in this file, in [RESULTS.md](RESULTS.md) and in [LIMITATIONS.md](LIMITATIONS.md) is emitted by that command**, rendered from one run in one pass so the three cannot drift. Generated from run `run_20260904_1218`, seed `20260826`, on windows/amd64, 4 logical cores, go1.27.0.
+No API key required. **Every number in this file, in [RESULTS.md](RESULTS.md) and in [LIMITATIONS.md](LIMITATIONS.md) is emitted by that command**, rendered from one run in one pass so the three cannot drift. Generated from run `run_20260904_1236`, seed `20260826`, on windows/amd64, 4 logical cores, go1.27.0.
 
 ---
 
@@ -284,9 +284,13 @@ settlements" is a sentence a finance team can agree to.
 Those are two different claims and this repository owes both. **`manhattan live` measures the difference:**
 
 ```
-export ANTHROPIC_API_KEY=sk-ant-...
+echo 'GEMINI_API_KEY=...' > .env      # or ANTHROPIC_API_KEY=sk-ant-...
 ./bin/manhattan live -n 60
 ```
+
+The key goes in `.env` next to the repository, which is in `.gitignore`, or in
+the environment if you prefer. Either key works and `--provider` picks between
+them when both are set.
 
 It runs the same batch on the live API and on the stub, and asserts that wrong postings are **identical** while diagnosis accuracy, repairs and note quality are **free to improve**. If the wrong-posting column moves, the trust boundary has leaked and the command exits non-zero rather than publishing.
 
@@ -357,7 +361,7 @@ The rule was learned, not designed. The first version let narrowing post if the 
 
 > Removing candidates cannot make the survivor unique. It makes it **unexamined**.
 
-That figure is hand-recorded from a build that no longer exists, and it is the only number in this file not emitted by run `run_20260904_1218`. The failure is rebuilt as a committed test in [`internal/agent/corroboration_test.go`](internal/agent/corroboration_test.go), which fails if `TIGHTEN_WINDOW` is ever made postable again.
+That figure is hand-recorded from a build that no longer exists, and it is the only number in this file not emitted by run `run_20260904_1236`. The failure is rebuilt as a committed test in [`internal/agent/corroboration_test.go`](internal/agent/corroboration_test.go), which fails if `TIGHTEN_WINDOW` is ever made postable again.
 
 **Prohibition was the right default and the wrong permanent answer.** `NARROW_TO_HISTORY` closes the gap: a merchant's prior `VERIFIED` settlements are a second source, and a strong one, since each was proved by exhaustive enumeration without reference to any window hypothesis. The profile is built only from proofs, needs at least twelve, and the bound may never be tighter than the widest offset those proofs show. The verifier still decides. Corroboration buys the right to be tested, not the right to be believed.
 
@@ -671,10 +675,10 @@ it arrives with the residual attached.
 | one loop, closed | bank credit to posted ledger entry, or to a named and priced exception |
 | match rate reported | **358 of 498**, 72%, with **0 wrong** |
 | exceptions it could not resolve | **140**, each with a cause, a computed remedy, a price and a drafted note |
-| throughput | **44,761 settlements per hour** end to end, 20.3 ms median pipeline time, on windows/amd64, 4 logical cores, go1.27.0 |
+| throughput | **39,271 settlements per hour** end to end, 24.5 ms median pipeline time, on windows/amd64, 4 logical cores, go1.27.0 |
 | agentic design | a closed 8-action controller loop, a period-close investigation over the receipt store, cross-settlement merchant memory, and three graded jobs. 1,498 model calls across 5 roles, all served by the deterministic offline provider on this run; `manhattan live` runs the same code against the API |
 
-Throughput is end to end: 498 settlements in 40.1 s of wall clock including the agent loop, both baselines and receipt serialisation. That divides to 80.4 ms against a 20.3 ms median pipeline time, and both are printed rather than the flattering one. Memory: **114 MB** deterministic solver peak; **747 MB** sampled process heap, which moves between runs and should never be quoted as a bound.
+Throughput is end to end: 498 settlements in 45.7 s of wall clock including the agent loop, both baselines and receipt serialisation. That divides to 91.7 ms against a 24.5 ms median pipeline time, and both are printed rather than the flattering one. Memory: **114 MB** deterministic solver peak; **747 MB** sampled process heap, which moves between runs and should never be quoted as a bound.
 
 **Determinism is per commit.** Same seed and same commit gives the same decisions on every settlement. Timings are measurements and move, so receipts are not byte-identical.
 
@@ -745,7 +749,7 @@ internal/
   pipeline/        the stages, the decision, and CheckClaim
   agent/           parser, action space, controller, memory, diagnosis,
                    note drafting, Q and A
-  llm/             the model boundary: Anthropic, cassette, offline stub
+  llm/             the model boundary: Gemini, Anthropic, cassette, offline stub
   baseline/        B0 and B1, both built honestly
   bench/           the benchmark, calibration sweep, sensitivity, envelope
 web/               the dashboard: Vite, React, TypeScript, Tailwind

@@ -1,5 +1,5 @@
 {
-  "run_id": "run_20260904_1218",
+  "run_id": "run_20260904_1236",
   "settlements": 498,
   "seed": 20260826,
   "status_counts": {
@@ -39,12 +39,12 @@
   "m1_clean_reports_checked": 408,
   "settlements_with_no_report_mapping": 70,
   "settlements_with_no_mapping_posted_by_reconstruction": 6,
-  "median_latency_ms": 20.333,
-  "p95_latency_ms": 191.386,
-  "b0_median_latency_ms": 8.314,
-  "wall_clock_s": 40.0530723,
-  "settlements_per_hour": 44760.61128524216,
-  "peak_memory_mb_sampled": 747.1194305419922,
+  "median_latency_ms": 24.527,
+  "p95_latency_ms": 242.797,
+  "b0_median_latency_ms": 8.511,
+  "wall_clock_s": 45.6520225,
+  "settlements_per_hour": 39270.98739163199,
+  "peak_memory_mb_sampled": 747.1198654174805,
   "peak_solver_mb_deterministic": 113.9494743347168,
   "peak_solver_settlement": "bank_credit_marketplace_2026_08_25_1022",
   "parse_calls": 498,
@@ -55,7 +55,7 @@
   "agent_skipped": 166,
   "agent_proven_cures": 65,
   "model_calls": 1498,
-  "input_tokens": 1060218,
+  "input_tokens": 1060246,
   "output_tokens": 99018,
   "exception_rate": 0.8493975903614458,
   "inr_per_1k_settlements": 1356.5933333333335,
@@ -190,7 +190,7 @@
         "step": 3,
         "looked_at": "INSPECT_REMEDIES",
         "why": "the system has already computed and re-verified remedies, and ranking them by held value says which single change recovers the most",
-        "found": "Remedies already computed and re-verified, by held value:      74 settlements,  ₹27,46,846.74 held : supply the settlement reference, or the settlement_id to payment_id mapping"
+        "found": "Remedies already computed and re-verified, by held value:      74 settlements,  ₹27,46,846.74 held : split the settlement by instrument, where the payout is instrument-segregated"
       },
       {
         "step": 4,

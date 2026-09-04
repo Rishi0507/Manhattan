@@ -234,7 +234,7 @@ What does not depend on these conditions is the safety property. Wrong postings 
 
 ## No live model run at batch scale
 
-Every published figure comes from the deterministic offline path (`{{ .S.Provider }}`, {{ .S.ProviderModels }}). The live Anthropic path is implemented, schema-forced and cassette-recording, and it runs. What has not been done is a batch against the live API.
+Every published figure comes from the deterministic offline path (`{{ .S.Provider }}`, {{ .S.ProviderModels }}). The live path is implemented for two vendors, Gemini and Anthropic, both schema-forced and cassette-recording, and it runs. What has not been done is a batch against the live API.
 
 `manhattan live -n 60` exists precisely to close this. It runs the same batch on both providers and asserts the property that matters, that wrong postings are **identical**, while reporting the figures that are free to move: diagnosis accuracy, agent repairs, note quality and actual billed cost. It exits non-zero if the wrong-posting column moves, because that would be a leak in the trust boundary rather than an interesting result.
 

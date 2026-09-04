@@ -5,7 +5,10 @@
 // here that returns free text into a decision path, because there is no
 // point in the pipeline where free text could be acted on.
 //
-// The package ships two providers. The Anthropic provider is the real thing.
+// The package ships two live providers, Gemini and Anthropic. Neither is
+// privileged: they implement one interface, they are both forced into
+// structured output by the vendor's own mechanism, and nothing downstream can
+// tell which one answered. That is the point of putting the boundary here.
 // The replay provider answers from a recorded fixture, which is what makes
 // `make demo` work with no API key, makes the benchmark reproducible to the
 // paise, and makes it possible to assert in tests that a specific model
@@ -180,12 +183,18 @@ type Pricing struct {
 	CacheWritePerMTok float64
 }
 
-// Rates are the published Anthropic API prices, in USD per million tokens.
+// Rates are the vendors' published prices, in USD per million tokens.
 var Rates = map[string]Pricing{
 	"claude-opus-5":    {InputPerMTok: 5.00, OutputPerMTok: 25.00, CacheReadPerMTok: 0.50, CacheWritePerMTok: 6.25},
 	"claude-sonnet-5":  {InputPerMTok: 2.00, OutputPerMTok: 10.00, CacheReadPerMTok: 0.20, CacheWritePerMTok: 2.50},
 	"claude-haiku-4-5": {InputPerMTok: 1.00, OutputPerMTok: 5.00, CacheReadPerMTok: 0.10, CacheWritePerMTok: 1.25},
 	"claude-fable-5":   {InputPerMTok: 10.00, OutputPerMTok: 50.00, CacheReadPerMTok: 1.00, CacheWritePerMTok: 12.50},
+	// Google's published rates, USD per million tokens. Gemini bills cached
+	// input at a quarter of the input rate rather than a tenth, which is why
+	// the cache figure on a Gemini run is less dramatic than on an Anthropic
+	// one and is reported separately rather than blended.
+	"gemini-2.5-pro":   {InputPerMTok: 1.25, OutputPerMTok: 10.00, CacheReadPerMTok: 0.31, CacheWritePerMTok: 1.25},
+	"gemini-2.5-flash": {InputPerMTok: 0.30, OutputPerMTok: 2.50, CacheReadPerMTok: 0.075, CacheWritePerMTok: 0.30},
 	"replay":           {},
 }
 

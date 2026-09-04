@@ -275,9 +275,13 @@ settlements" is a sentence a finance team can agree to.
 Those are two different claims and this repository owes both. **`manhattan live` measures the difference:**
 
 ```
-export ANTHROPIC_API_KEY=sk-ant-...
+echo 'GEMINI_API_KEY=...' > .env      # or ANTHROPIC_API_KEY=sk-ant-...
 ./bin/manhattan live -n 60
 ```
+
+The key goes in `.env` next to the repository, which is in `.gitignore`, or in
+the environment if you prefer. Either key works and `--provider` picks between
+them when both are set.
 
 It runs the same batch on the live API and on the stub, and asserts that wrong postings are **identical** while diagnosis accuracy, repairs and note quality are **free to improve**. If the wrong-posting column moves, the trust boundary has leaked and the command exits non-zero rather than publishing.
 {{ if .D.HasLive }}
@@ -691,7 +695,7 @@ internal/
   pipeline/        the stages, the decision, and CheckClaim
   agent/           parser, action space, controller, memory, diagnosis,
                    note drafting, Q and A
-  llm/             the model boundary: Anthropic, cassette, offline stub
+  llm/             the model boundary: Gemini, Anthropic, cassette, offline stub
   baseline/        B0 and B1, both built honestly
   bench/           the benchmark, calibration sweep, sensitivity, envelope
 web/               the dashboard: Vite, React, TypeScript, Tailwind

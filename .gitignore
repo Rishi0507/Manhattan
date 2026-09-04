@@ -42,8 +42,16 @@
 /web/node_modules/
 
 # Local secrets.
+#
+# Everything .env* is excluded and the committed template is then re-admitted,
+# so a new variant (.env.production, .env.gemini) is ignored by default rather
+# than by somebody remembering to add it. .env.example carries names with no
+# values and is the only one in version control.
 .env
-.env.local
+.env.*
+!.env.example
+*.key
+*.pem
 
 # Tooling.
 .DS_Store
