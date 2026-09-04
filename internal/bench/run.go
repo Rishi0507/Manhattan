@@ -188,6 +188,20 @@ type Summary struct {
 	// does not have to accept one aggregate figure for "the AI".
 	CallsByRole map[string]int `json:"model_calls_by_role"`
 
+	// ModelFailures and ModelReliability say how much of the agent's work the
+	// provider actually completed.
+	//
+	// The pipeline records a failed call as an exception it could not clear,
+	// which is correct for the run and useless for judging the model: a
+	// provider that refused every request and a model that answered badly leave
+	// identical receipts. A submission whose claim is measured accuracy has to
+	// separate the two, so the ledger is drained into the summary.
+	ModelFailures       int            `json:"model_call_failures"`
+	ModelRetries        int            `json:"model_call_retries"`
+	ModelReliability    float64        `json:"model_call_reliability"`
+	ModelSchemaViolated int            `json:"model_schema_violations"`
+	FailuresByRole      map[string]int `json:"model_call_failures_by_role,omitempty"`
+
 	// DefectRateConfigured is the generator knob. DefectRateRealised is how
 	// many settlements actually received a defect.
 	//
@@ -1000,6 +1014,23 @@ func RunBatch(ctx context.Context, spec BatchSpec, provider llm.Provider) (*evid
 		sum.DefectRateRealised = float64(sum.B1DefectiveRpts) / float64(sum.Settlements)
 	}
 
+	if f := llm.DrainFailures(); f.Failures > 0 || f.Retries > 0 {
+		sum.ModelFailures = f.Failures
+		sum.ModelRetries = f.Retries
+		sum.ModelSchemaViolated = f.SchemaViolations
+		attempted := usage.Calls + f.Failures
+		if attempted > 0 {
+			sum.ModelReliability = float64(usage.Calls) / float64(attempted)
+		}
+		if len(f.FailuresByRole) > 0 {
+			sum.FailuresByRole = map[string]int{}
+			for r, n := range f.FailuresByRole {
+				sum.FailuresByRole[string(r)] = n
+			}
+		}
+	} else {
+		sum.ModelReliability = 1
+	}
 	sum.ModelCalls = usage.Calls
 	if len(usage.ByRole) > 0 {
 		sum.CallsByRole = map[string]int{}
@@ -1141,6 +1172,23 @@ func RunBatch(ctx context.Context, spec BatchSpec, provider llm.Provider) (*evid
 	if pc, u := runClose(ctx, agent.NewCloser(provider), store, sum, archOf); pc != nil {
 		usage.Add(u)
 		sum.Close = pc
+		if f := llm.DrainFailures(); f.Failures > 0 || f.Retries > 0 {
+			sum.ModelFailures = f.Failures
+			sum.ModelRetries = f.Retries
+			sum.ModelSchemaViolated = f.SchemaViolations
+			attempted := usage.Calls + f.Failures
+			if attempted > 0 {
+				sum.ModelReliability = float64(usage.Calls) / float64(attempted)
+			}
+			if len(f.FailuresByRole) > 0 {
+				sum.FailuresByRole = map[string]int{}
+				for r, n := range f.FailuresByRole {
+					sum.FailuresByRole[string(r)] = n
+				}
+			}
+		} else {
+			sum.ModelReliability = 1
+		}
 		sum.ModelCalls = usage.Calls
 		if len(usage.ByRole) > 0 {
 			sum.CallsByRole = map[string]int{}

@@ -61,6 +61,7 @@ func selectProvider(pf providerFlags) (llm.Provider, error) {
 	if pf.live {
 		return nil, fmt.Errorf(
 			"--live was requested but no API key is set.\n" +
+				"  export GROQ_API_KEY=...        for Groq (best free tier)\n" +
 				"  export GEMINI_API_KEY=...      for the Gemini path\n" +
 				"  export ANTHROPIC_API_KEY=...   for the Anthropic path\n" +
 				"  or drop --live to use the recorded cassette")
@@ -91,13 +92,20 @@ func offlineOrReplay(pf providerFlags) (llm.Provider, error) {
 
 // liveProvider returns the configured live provider, or nil when no key is set.
 //
-// Gemini is preferred when both keys are present because it is the one the
-// submission is configured for; --provider overrides that in either direction.
+// Groq is preferred when its key is present because it has the best free tier
+// without quota issues. Gemini and Anthropic are also supported.
 func liveProvider(pf providerFlags) (llm.Provider, error) {
+	groq := llm.DefaultGroqConfig()
 	gem := llm.DefaultGeminiConfig()
 	ant := llm.DefaultAnthropicConfig()
 
 	switch strings.ToLower(pf.provider) {
+	case "groq":
+		if groq.APIKey == "" {
+			return nil, fmt.Errorf(
+				"--provider groq was requested but GROQ_API_KEY is not set")
+		}
+		return llm.NewGroq(groq), nil
 	case "gemini", "google":
 		if gem.APIKey == "" {
 			return nil, fmt.Errorf(
@@ -114,9 +122,13 @@ func liveProvider(pf providerFlags) (llm.Provider, error) {
 	case "":
 	default:
 		return nil, fmt.Errorf(
-			"unknown --provider %q; it is one of gemini, anthropic", pf.provider)
+			"unknown --provider %q; it is one of groq, gemini, anthropic", pf.provider)
 	}
 
+	// Auto-select: prefer Groq (best free tier), then Gemini, then Anthropic
+	if groq.APIKey != "" {
+		return llm.NewGroq(groq), nil
+	}
 	if gem.APIKey != "" {
 		return llm.NewGemini(gem), nil
 	}

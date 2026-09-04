@@ -169,6 +169,21 @@ type Derived struct {
 	// because one merchant carries two.
 	ConditionMerchants int
 
+	// ModelReliabilityPct is the share of attempted model calls the provider
+	// completed. It is 100 on the deterministic path by construction and is
+	// worth printing anyway, because it is the number that separates a model
+	// that answered badly from one that did not answer.
+	ModelReliabilityPct   float64
+	ModelFailures         int
+	ModelSchemaViolations int
+	ModelRoles            int
+
+	// ActionCount is the size of the controller's action vocabulary, read
+	// from the vocabulary itself so the documented number cannot drift from
+	// the enum the model is actually constrained to.
+	ActionCount     int
+	DiagAccuracyPct float64
+
 	IsStub       bool
 	GradedBy     string
 	B1Wrong1k    float64
@@ -551,6 +566,13 @@ func deriveDocs(sum bench.Summary, cases []bench.CaseOutcome, sweep []bench.Swee
 
 	d.TotalSweptConfigs = len(sweep)
 	d.PeakSampledMB, d.PeakSolverMB, d.Host = sum.PeakMemoryMB, sum.PeakSolverMB, sum.Host
+	d.ModelReliabilityPct = 100 * sum.ModelReliability
+	d.ModelFailures = sum.ModelFailures
+	d.ModelSchemaViolations = sum.ModelSchemaViolated
+	d.ModelRoles = len(sum.CallsByRole)
+	d.ActionCount = len(agent.AllActions)
+	d.DiagAccuracyPct = 100 * sum.DiagnosisAccuracy
+
 	d.Conditions = sum.Conditions
 	merchants := map[string]bool{}
 	for _, c := range sum.Conditions {

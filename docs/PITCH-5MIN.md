@@ -1,157 +1,182 @@
-# Manhattan: a five minute pitch
+# Manhattan: five minute demo script
 
-A script for the demo video. Roughly 700 words of speech at a normal pace, plus
-the pauses where something is happening on screen. Six beats, timed.
+Shot list with timings, what is on screen, and what to say. Total 5:00.
 
-Numbers below are the ones this repository generates. Regenerate the run and
-they change together; do not retype them from memory.
-
----
-
-## 0:00 to 0:35, the problem, stated as a number
-
-> Every finance team reconciling a payment gateway does the same thing every
-> morning. A settlement lands in the bank. A report says which orders it paid
-> for. Somebody checks that the report is telling the truth, and then posts it
-> to the ledger.
->
-> The check is the whole job, and almost nobody does it. They trust the report,
-> because checking four hundred settlements by hand is not a thing a person does
-> before lunch.
->
-> So here is the number that this project is about. If you trust the report on
-> this batch, you post 428 settlements and 20 of them are wrong. Not
-> approximately wrong. Wrong: money attributed to orders that did not produce
-> it, sitting in a ledger, waiting for somebody to find it at quarter end.
-
-**On screen:** the landing page, then the Run tab with the batch loaded.
+All figures are from run seed 20260826, 996 settlements. Regenerate the run and
+they move together. Do not retype them from memory.
 
 ---
 
-## 0:35 to 1:30, what Manhattan does instead
+## 0:00 to 0:15 | On camera | Introduction
 
-> Manhattan is an agent that closes the settlement reconciliation loop and
-> refuses to post anything it cannot prove.
->
-> Give it a settlement of eighteen lakh rupees and a feed of candidate orders.
-> It does not score a match and give you a confidence number. It searches for
-> the subset of orders whose amounts, minus fees, sum to that settlement exactly,
-> to the paise, and then it proves that no other subset produces the same total.
-> Unique subset, one answer, post it.
->
-> If two different sets of orders both sum to the settlement, it does not pick
-> one. It says AMBIGUOUS and shows you both. That is the entire design: the
-> system is allowed to say "I do not know" and it is not allowed to guess.
+**On screen:** you, facing camera.
 
-**On screen:** open one settlement. Expand the feasibility panel. Show the
-witness set, then the uniqueness proof.
+> Hi, I am Rishi. This is Manhattan, my submission for Track 04, the AI Finance
+> Controller. It is an agent that closes the settlement reconciliation loop
+> across a thousand records, and the one thing it will not do is guess.
+
+Then cut to the screen. Do not stay on camera past fifteen seconds.
 
 ---
 
-## 1:30 to 2:40, the result, against baselines
+## 0:15 to 0:50 | Landing page | The problem, as a number
 
-> Measured on 498 synthetic settlements.
->
-> Reconstruction alone proves 75 of them with zero wrong. That is a small
-> number and it is an honest one: on a subscription merchant billing two
-> hundred identical charges, no method that reads amounts can tell one group
-> from another, and none ever will.
->
-> So reconstruction is not the product. The product is the composite: prove it
-> if you can, and if you cannot, check the claim the report already made. That
-> posts 358 settlements, 75 from proof and 283 from a checked claim, and it
-> posts zero of them wrong.
->
-> Against the baselines. Trusting the report posts 428 and gets 20 wrong.
-> Fuzzy confidence matching, the thing most tools ship, posts 345 and gets 290
-> wrong, and its correct count does not move as you sweep the threshold from
-> 0.10 to 0.90, which tells you the threshold was never the problem.
->
-> And it does not cry wolf. Across 408 clean reports it raised zero false
-> alarms.
+**On screen:** `localhost:8080`, top of the landing page.
 
-**On screen:** the results table, three rows, posted and wrong side by side.
+> Every finance team reconciling a payment gateway does the same thing each
+> morning. Money lands in the bank. A report says which orders it paid for.
+> Somebody has to decide whether to believe that report before posting it to
+> the ledger.
+>
+> Almost nobody checks. Checking hundreds of settlements by hand is not
+> something a person does before lunch.
+>
+> So here is the number this project is about. On this batch of 996
+> settlements, if you trust the report you post 848 of them and 39 are wrong.
+> Not approximately wrong. Money attributed to orders that did not produce it,
+> sitting in a ledger, waiting to be found at quarter end.
 
 ---
 
-## 2:40 to 3:40, where the agent actually is
+## 0:50 to 1:40 | Settlement view, feasibility panel | What it does instead
 
-> Now, where is the model in this, because it is not where people expect.
+**On screen:** click into one settlement. Expand the feasibility panel. Show
+the witness set, then the uniqueness proof.
+
+> Manhattan does not score a match and hand you a confidence number.
 >
-> The model never decides whether a posting is correct. It cannot. The
-> arithmetic decides that, and the arithmetic is integer paise with no
-> tolerance. What the model does is the open-ended work around it.
+> Given a settlement of two and a half lakh rupees and a feed of candidate
+> orders, it searches for the subset whose amounts, minus fees, sum to that
+> credit exactly, to the paise. Then it proves no other subset produces the
+> same total. Unique answer, post it.
 >
-> It runs a controller loop over a closed set of eight actions: widen the
-> window, search the feed, narrow to this merchant's payout history, check the
-> claim. Only two of those can ever result in a posting, and that is enforced by
-> a test, not by a prompt.
+> If two different sets both sum to the settlement, it does not pick one. It
+> returns AMBIGUOUS and shows you both. The system is allowed to say it does
+> not know, and it is not allowed to guess.
+
+---
+
+## 1:40 to 2:30 | The archetype chart | The result
+
+**On screen:** scroll to "Every merchant type, posted and correct".
+
+> Across 996 settlements Manhattan posts 731 automatically, and gets zero of
+> them wrong.
 >
-> It diagnoses defective reports and drafts the counterparty note.
+> Two routes get there. 212 carry an independent proof. The other 519 are
+> settlements where the report made a claim and Manhattan verified that claim
+> against the ledger before accepting it.
 >
-> And at the end of the period it investigates. Four inspection turns over the
+> That second route is why this works on the hard merchants. Subscription
+> billing settles two hundred identical charges at a time, so no method that
+> reads amounts can separate the batches. Proof rate there is zero and always
+> will be. Manhattan still posts 84 per cent of them, correctly.
+>
+> Against the baselines: trusting the report posts 848 and gets 39 wrong.
+> Fuzzy confidence matching, which is what most tools ship, posts 671 and gets
+> 561 wrong.
+>
+> And it does not cry wolf. Zero false alarms on clean reports.
+
+---
+
+## 2:30 to 3:30 | Agent trace, then period close | Where the AI is
+
+**On screen:** the agent trace with actions scrolling, then the period close
+with root causes listed.
+
+> Now the agent, and it is not where people expect.
+>
+> The model never decides whether a posting is correct. It cannot. Integer
+> arithmetic decides that, with no tolerance.
+>
+> What the model does is everything else. It runs a controller loop over a
+> closed vocabulary of eight actions: widen the window, search the feed, narrow
+> to this merchant's payout history, check the claim. 1,233 planning turns on
+> this run. Only two of those eight actions can ever result in a posting, and
+> that is enforced by a test rather than by a prompt.
+>
+> It diagnoses defective reports at 76 per cent accuracy against labels it
+> never sees.
+>
+> And at the end of the period it investigates: four inspection passes over the
 > receipt store, reading exceptions by merchant, by status, by residual, and
-> then it writes the close: these are the root causes of everything that did not
-> reconcile this period. It found four of the five operational conditions we
-> planted without ever being told they existed.
+> then it writes the close. It found four of the five operational
+> misconfigurations we planted without being told they existed.
 >
-> 1,498 model calls across eight roles, every one schema-forced, none of them
-> on the path that decides whether money moves.
-
-**On screen:** the agent trace, actions scrolling. Then the period close, root
-causes listed.
+> Nearly three thousand model calls across five jobs, every one forced into a
+> declared schema by the provider's own mechanism. Free text cannot reach a
+> decision path.
 
 ---
 
-## 3:40 to 4:25, why a finance team can actually run this
+## 3:30 to 4:15 | Ask tab, then a receipt | Why a finance team can run it
 
+**On screen:** the Ask tab, type a question, show the grounded answer with its
+citations. Then open one receipt, expanded.
+
+> You can ask it questions in plain language and every answer is grounded in
+> receipts it cites.
+>
 > Three things make this deployable rather than a demo.
 >
-> One: every posting carries a receipt. The witness set, the uniqueness proof,
-> the guards that ran, the model calls that were made and what they cost. You
-> can hand it to an auditor.
+> Every posting carries a receipt: the witness set, the uniqueness proof, the
+> guards that ran, the model calls made and what they cost. You can hand it to
+> an auditor.
 >
-> Two: it is reproducible. Same seed, byte-identical output, no network
-> required. A reconciliation you cannot re-run is not one you can defend.
+> It is reproducible. Same seed, byte identical output, no network needed. A
+> reconciliation you cannot re-run is not one you can defend.
 >
-> Three: we published the break-even. Checking costs analyst time, and if your
-> reports are almost never wrong it is not worth it. Below roughly a 2.3 per
-> cent report defect rate, do not buy this. Above it, you should. We are telling
-> you the condition under which our own product is the wrong purchase, because
-> a finance team is going to work that out anyway and would rather we said it
-> first.
-
-**On screen:** a receipt, expanded. Then the break-even chart.
+> And it runs at thirty one thousand settlements an hour, median twenty six
+> milliseconds each.
 
 ---
 
-## 4:25 to 5:00, close
+## 4:15 to 4:45 | Live run terminal | The trust boundary, proven
 
-> The track asked for one finance-ops loop closed across a fifty record batch,
+**On screen:** terminal showing the `manhattan live` output table, MUST NOT
+MOVE block visible.
+
+> One last thing, and it is the claim I care most about.
+>
+> `manhattan live` runs the same batch twice, once on a real model and once on
+> a deterministic stub, and asserts that the wrong posting count is identical
+> while everything else is free to move.
+>
+> Live against stub: zero wrong, zero wrong. The model changes how much gets
+> cleared. It cannot change whether what cleared was correct. If that column
+> ever moves, the command exits non zero rather than publishing.
+
+---
+
+## 4:45 to 5:00 | Exception list, then repo | Close
+
+**On screen:** the exception queue, then `./run.sh demo` and the repository URL.
+
+> The track asked for one finance ops loop closed across a fifty record batch,
 > with a match rate and an honest exception list.
 >
-> This is 498 settlements. 358 posted, zero wrong. 140 exceptions, every one
-> with a stated reason, a residual, and what it would take to clear it. The
-> whole thing regenerates from one command, and every number in the README is
-> rendered from the run rather than typed into it, so it cannot go stale.
+> This is 996 settlements. 731 posted, zero wrong. Every exception carries a
+> named cause, a computed remedy and a price. The whole thing regenerates from
+> one command, and every number in the README is rendered from the run rather
+> than typed into it.
 >
 > One agent, one loop, closed. Thank you.
-
-**On screen:** the exception list, then the command `./run.sh demo` and the
-repository URL.
 
 ---
 
 ## Delivery notes
 
-- **Do not read the architecture.** Nobody watching a demo video absorbs a
-  package layout. The uniqueness proof and the baseline table are what land.
-- **The 20 wrong postings are the hook.** Say the number in the first thirty
-  seconds and everything after it has somewhere to sit.
+- **Lead with 39 wrong.** Say it inside the first minute and everything after
+  it has somewhere to sit.
 - **Say "zero wrong" three times.** It is the only claim that matters and
-  repetition is how a viewer retains a figure.
-- **Do not apologise for 75.** The composite is the product. Reconstruction
-  is the floor under it, and framing the floor as a shortfall invites a
-  question that the composite already answers.
-- **Screen recording beats slides** for beats 2, 4 and 5. Record the UI at
-  1440p and crop, so text is legible after compression.
+  repetition is how a viewer retains a number.
+- **Do not apologise for the 212 proof count.** The composite is the product.
+  Framing the proof rate as a shortfall invites a question the composite
+  already answers.
+- **Do not read the architecture.** Nobody absorbs a package layout from video.
+  The uniqueness proof, the baseline comparison and the live parity table are
+  what land.
+- Record at 1440p and crop, so the terminal text survives compression.
+- Rehearse the 2:30 to 3:30 minute once. It is the densest and it is the one
+  scoring "use of AI".

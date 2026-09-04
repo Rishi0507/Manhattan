@@ -1,3 +1,5 @@
+<img src="web/public/logo.png" alt="Manhattan" width="72" height="72" />
+
 # Manhattan
 
 **Settlement reconciliation that proves its answers, and refuses when it cannot.**
@@ -35,7 +37,7 @@ would whatever the solver did. The claim check posts
 {{ range .S.ByArchetype }}{{ if eq .Archetype "subscription_saas" }}**{{ rate .M1PostRate }}**{{ end }}{{ end }}
 and {{ range .S.ByArchetype }}{{ if eq .Archetype "utility_billpay" }}**{{ rate .M1PostRate }}**{{ end }}{{ end }},
 because checking a batch somebody named costs nothing that deriving one costs.
-That is why the composite exists, rather than a weakness discovered later.
+That is the reason the composite exists, and it was a design premise rather than a later discovery.
 
 **A gateway hardening its own reconciliation.** Manhattan sits on top of Single
 View Recon rather than replacing it, checking the mapping the report already
@@ -59,7 +61,23 @@ No API key required. **Every number in this file, in [RESULTS.md](RESULTS.md) an
 4. **[RESULTS.md](RESULTS.md), the calibration section.** Whether the system knows *in advance* when it is about to be wrong.
 5. **`./run.sh demo`**, which opens on adversarial case 10: narrowing drops a real record, a coincidental subset closes the identity exactly, and the guard catches it.
 
-Longer: [docs/EXPLAIN.md](docs/EXPLAIN.md) builds the system from first principles in plain language, [docs/DESIGN.md](docs/DESIGN.md) has every derivation, and [LIMITATIONS.md](LIMITATIONS.md) is the full account of what it cannot do.
+Longer: [docs/EXPLAIN.md](docs/EXPLAIN.md) builds the system from first principles in plain language, [docs/DESIGN.md](docs/DESIGN.md) has every derivation, and [LIMITATIONS.md](LIMITATIONS.md) is the full account of its operating limits.
+
+### The agent, at a glance
+
+| | |
+|---|---|
+| **Model calls this run** | {{ n .S.ModelCalls }} across {{ .D.ModelRoles }} distinct jobs |
+| **Agent loop** | a closed {{ .D.ActionCount }}-action controller, {{ n .S.PlanTurns }} turns graded |
+| **Structured output** | every call schema-forced by the vendor's own mechanism: strict tool use on Anthropic, a strict response schema on Groq and Gemini. Free text cannot reach a decision path |
+| **Provider reliability** | {{ if .D.IsStub }}not applicable on the deterministic path, which cannot fail. Measured and reported on every live run{{ else }}{{ pct1 .D.ModelReliabilityPct }} of attempted calls completed{{ if .D.ModelFailures }}, with {{ .D.ModelFailures }} failures reported rather than absorbed into the exception count{{ end }}{{ end }} |
+| **Jobs scored against ground truth** | root-cause diagnosis ({{ pct .D.DiagAccuracyPct }}) and period close ({{ pct .D.CloseRecallPct }}) |
+| **Wrong postings attributable to the model** | **0, structurally.** The verifier re-derives every posting from integer arithmetic and never asks the model whether it was right |
+
+The last row is the design. The model is given every open-ended judgement in this
+system and none of the arithmetic, which is why a weaker model changes how much
+gets cleared and cannot change whether what cleared was correct. `manhattan live`
+asserts that across providers on every run.
 
 ---
 
@@ -80,7 +98,7 @@ So the mechanism's rate is roughly {{ pct .D.CleanReconPct }}, and the headline 
 
 ### Against the system that already exists
 
-The honest comparison is not a fuzzy matcher. It is **B1: read the settlement report's stated mapping and post it.** Instant, free, and right almost always.
+The comparison that matters is not a fuzzy matcher. It is **B1: read the settlement report's stated mapping and post it.** Instant, free, and right almost always.
 
 | {{ .S.Settlements }} settlements | B1, trust the report | **M1, verify then post** |
 |---|---:|---:|
@@ -203,7 +221,7 @@ This run injects operational misconfigurations and records exactly what they are
 | **recall** | **{{ pct .D.CloseRecallPct }}** |
 | findings dropped for citing no evidence | {{ .D.Close.Dropped }} |
 {{ if .D.Close.Spurious }}
-Findings corresponding to no injected condition: {{ range $i, $s := .D.Close.Spurious }}{{ if $i }}, {{ end }}`{{ $s }}`{{ end }}. Listed rather than counted against recall, because at least some are true: the flat-price archetypes genuinely cannot be reconstructed from amounts and saying so is correct even though nobody injected it. Deciding which true findings count would be exactly the sort of scoring nobody should accept on assertion.
+Findings corresponding to no injected condition: {{ range $i, $s := .D.Close.Spurious }}{{ if $i }}, {{ end }}`{{ $s }}`{{ end }}. These are listed rather than counted against recall, because several are correct: the flat-price archetypes genuinely cannot be reconstructed from amounts, and reporting that is accurate even though it was not an injected condition. Deciding which true findings should count is a scoring judgement that belongs with the reader rather than with the system being scored.
 {{ end }}
 **The close cannot act.** It posts nothing, narrows nothing, amends no input and alters no receipt. That is precisely why it is the one model output not bounded by a closed action vocabulary: a person reads it and then decides. Everywhere the model *can* influence a posting it is fenced; here it cannot, so it is given the whole period and asked to think.
 {{ end }}
@@ -272,16 +290,18 @@ That is why the model is handed the open-ended work and the arithmetic is not
 negotiable. It is the only division under which "let an agent reconcile
 settlements" is a sentence a finance team can agree to.
 
-Those are two different claims and this repository owes both. **`manhattan live` measures the difference:**
+These are two distinct claims, and Manhattan measures both. **`manhattan live` quantifies the difference:**
 
 ```
-echo 'GEMINI_API_KEY=...' > .env      # or ANTHROPIC_API_KEY=sk-ant-...
+echo 'GROQ_API_KEY=...' > .env     # or GEMINI_API_KEY, or ANTHROPIC_API_KEY
 ./bin/manhattan live -n 60
 ```
 
 The key goes in `.env` next to the repository, which is in `.gitignore`, or in
-the environment if you prefer. Either key works and `--provider` picks between
-them when both are set.
+the environment if you prefer. Any of the three works, and `--provider groq |
+gemini | anthropic` picks between them when more than one is set. Model routing
+is per role: the high-volume extraction jobs and the low-volume judgement jobs
+go to different models, which spends two token allowances rather than one.
 
 It runs the same batch on the live API and on the stub, and asserts that wrong postings are **identical** while diagnosis accuracy, repairs and note quality are **free to improve**. If the wrong-posting column moves, the trust boundary has leaked and the command exits non-zero rather than publishing.
 {{ if .D.HasLive }}
@@ -452,18 +472,9 @@ flowchart TB
 
 ### The dashboard
 
-`./run.sh demo` builds the frontend, runs the batch and serves it on `localhost:8080`. **Nobody should have to run it to judge this**, so the views carrying the argument are below and every figure in them is also in [RESULTS.md](RESULTS.md).
+`./run.sh demo` builds the frontend, runs the batch and serves it on `localhost:8080`. Every figure the dashboard shows is also in [RESULTS.md](RESULTS.md), so nothing in the argument depends on running it.
 
-| | |
-|---|---|
-| ![the close](docs/screenshots/00-the-close.jpg) | **The close, and its grade.** The landing tab, because it answers the question an operations lead arrives with. The model read the period, named the root causes, and was scored on whether it found conditions it was never told about. |
-| ![root causes](docs/screenshots/08-root-causes.jpg) | **Root causes, ranked by held value**, each citing the figures it was read from, each with the action it implies. Plus what needs a human, and what the close says it cannot tell. |
-| ![head to head](docs/screenshots/02-head-to-head.jpg) | **Head to head.** One credit, identical inputs. B0 proposes six records at 0.95 confidence and posts, and is wrong. Manhattan closes the identity to zero, then widens the pool, finds a rival, and holds. |
-| ![diagnosis](docs/screenshots/07-diagnosis-and-note.jpg) | **The model at work.** The gateway's claim fails its arithmetic check with an exact residual. The model names the defect class, the system owns the remedy for that class, and a drafted note tells an analyst what to do and what it will not fix. |
-| ![receipt](docs/screenshots/04-receipt.jpg) | **A consistent claim.** `consistent` is not `verified` and the panel says so: the named batch does produce this credit, others may too, and none was searched for. |
-| ![calibration](docs/screenshots/03-calibration.jpg) | **Calibration.** Outcome mix against the collision index predicted *before* any search ran, in bands of equal population. Wrong-posting rate stays at zero across every band. |
-| ![exceptions](docs/screenshots/06-exceptions.jpg) | **The queue**, grouped by cause and ordered by value cleared per analyst hour. |
-| ![mobile](docs/screenshots/05-mobile.png) | **At 390px.** Every view is usable on a phone; wide tables scroll inside their own panel. |
+The views that carry the argument are the period close and its grade, the head to head against the confidence matcher on one identical credit, the diagnosis panel where a gateway claim fails its arithmetic check with an exact residual, and the exception queue ordered by value cleared per analyst hour.
 
 **The gate runs before the solver, not after it.** Its output `k*` is the parameter the solver is dispatched on, so triage is not a pre-check bolted onto the front of the search. It is what configures the search. Derivations in [docs/DESIGN.md](docs/DESIGN.md).
 
@@ -546,7 +557,7 @@ handling cost and unwind cost and the break-even moves with them.
 
 ## The baseline, published so it can be attacked
 
-{{ .S.B0PostedWrong }} wrong of {{ .S.B0Posted }} posted is a number my own code produced about my own code, so here is everything B0's confidence score is computed from:
+{{ .S.B0PostedWrong }} wrong of {{ .S.B0Posted }} posted is a figure produced by this benchmark about a baseline it also implements, so the full scoring function is published for independent checking:
 
 {{ range .S.B0Features }}- {{ . }}
 {{ end }}
@@ -627,7 +638,7 @@ it arrives with the residual attached.
 | throughput | **{{ ni .S.PerHour }} settlements per hour** end to end, {{ f1 .S.MedianLatencyMS }} ms median pipeline time, on {{ .D.Host }} |
 | agentic design | a closed 8-action controller loop, a period-close investigation over the receipt store, cross-settlement merchant memory, and three graded jobs. {{ n .S.ModelCalls }} model calls across {{ len .S.CallsByRole }} roles{{ if .D.IsStub }}, all served by the deterministic offline provider on this run; `manhattan live` runs the same code against the API{{ end }} |
 
-Throughput is end to end: {{ .S.Settlements }} settlements in {{ f1 .S.WallClockS }} s of wall clock including the agent loop, both baselines and receipt serialisation. That divides to {{ f1 .D.MsPerSettlement }} ms against a {{ f1 .S.MedianLatencyMS }} ms median pipeline time, and both are printed rather than the flattering one. Memory: **{{ i .D.PeakSolverMB }} MB** deterministic solver peak; **{{ i .D.PeakSampledMB }} MB** sampled process heap, which moves between runs and should never be quoted as a bound.
+Throughput is end to end: {{ .S.Settlements }} settlements in {{ f1 .S.WallClockS }} s of wall clock including the agent loop, both baselines and receipt serialisation. That divides to {{ f1 .D.MsPerSettlement }} ms against a {{ f1 .S.MedianLatencyMS }} ms median pipeline time, and both are published. Memory: **{{ i .D.PeakSolverMB }} MB** deterministic solver peak; **{{ i .D.PeakSampledMB }} MB** sampled process heap, which moves between runs and should never be quoted as a bound.
 
 **Determinism is per commit.** Same seed and same commit gives the same decisions on every settlement. Timings are measurements and move, so receipts are not byte-identical.
 
@@ -647,9 +658,9 @@ Cost tracks cardinality, not pool size: a 164-record pool at k=5 costs what a 1,
 
 ---
 
-## Known weaknesses
+## Scope and operating limits
 
-Stated once, in proportion. The full treatment is [LIMITATIONS.md](LIMITATIONS.md).
+Stated once, in proportion. The full treatment is in [LIMITATIONS.md](LIMITATIONS.md).
 
 **Synthetic data.** The pathology mix follows documented Razorpay mechanics
 (paise amounts, T+2 cycles, MDR with 18% GST, netted refunds, chargeback debits,
@@ -696,7 +707,7 @@ internal/
   agent/           parser, action space, controller, memory, diagnosis,
                    note drafting, Q and A
   llm/             the model boundary: Gemini, Anthropic, cassette, offline stub
-  baseline/        B0 and B1, both built honestly
+  baseline/        B0 and B1, implemented to the same standard as the system
   bench/           the benchmark, calibration sweep, sensitivity, envelope
 web/               the dashboard: Vite, React, TypeScript, Tailwind
 docs/              DESIGN, EXPLAIN, DEMO-SCRIPT, templates, diagrams

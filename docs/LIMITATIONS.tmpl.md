@@ -1,10 +1,10 @@
-# What Manhattan cannot do
+# Operating limits
 
-Every one is a design decision with a reason, and several were discovered by running the system rather than by reasoning about it.
+This document states the boundaries of the method and the conditions under which each applies. Every entry is a design decision with a stated reason, and several were established empirically by running the system rather than by reasoning about it.
 
 ---
 
-## The method has a narrow regime, and it is a property of the combinatorics
+## The reconstruction regime is bounded by the combinatorics
 
 **Uniqueness is attainable only when free cardinality is roughly 3 to 7** for realistic pool sizes and amount spreads. Outside that band, thousands of subsets hit the target and no amount of compute changes it. `UNDERDETERMINED` is the honest answer and Manhattan returns it.
 
@@ -28,7 +28,7 @@ The receipt records `scope_source` and the `k*` it declined to use, so the two c
 
 ---
 
-## The collision index is an estimator, and the closed form is measurably wrong
+## The collision index is an estimator, and the sampled form is the accurate one
 
 The published analytic form assumes subset sums are locally uniform near the target, with a density read off a moment-matched normal. **On lognormal ticket distributions, which is what real merchant data looks like, this is wrong by roughly an order of magnitude.**
 
@@ -56,7 +56,7 @@ Two consequences, and only one of them is comfortable.
 
 **The sales claim has to be narrower than "one pass over historical amounts predicts your auto-post rate".** It predicts it at the cardinalities where refusal actually binds, and under-predicts it below them. Quoting the flat version would be quoting something this repository's own data contradicts.
 
-## The estimator is still an estimator
+## Estimator error is directional
 
 **But the sampled estimator is still an estimator.** Its errors run in the direction that costs recall rather than precision (an index that is too low makes the gate accept a slightly larger region, and the exhaustive count inside that region catches the rivals anyway), and that asymmetry is the entire justification for admitting a heuristic into an otherwise deterministic pipeline. A badly calibrated threshold will still reject verifiable settlements, and because the index also sets `k*`, a bad threshold shrinks the searched region as well as the accepted one.
 
@@ -64,7 +64,7 @@ At large `n` the sampled estimator remains conservative by a factor of several. 
 
 ---
 
-## The completeness guards each have a boundary
+## Each completeness guard has a defined boundary
 
 ### The neighbourhood probe is bounded by substitution depth
 
@@ -72,7 +72,7 @@ At depth 2 it covers any rival differing from the witness by up to two records, 
 
 That is a different failure from the one this guard exists for, since narrowing dropping one true record and a coincidental record taking its place is depth 1 by construction. But the boundary is real at every depth.
 
-### The probe reduces its own depth, and sometimes gives up
+### The probe reduces its own depth under load
 
 The probe searches for a coincidence, so it has a multiple-comparisons problem. At depth 2, a witness of size `|S|` against `m` spare records compares roughly `|S|²m²/4` pairs. For a 138-record witness that is over 10⁸, and a chance collision is a near certainty.
 
@@ -92,7 +92,7 @@ This is the sharpest remaining hole in the completeness argument. It is stated h
 
 ---
 
-## Records that net to zero cannot be attributed at all
+## Records that net to zero are not attributable
 
 A UPI payment carries no MDR under Indian regulation, so a UPI payment refunded in full before settlement nets to precisely nothing. Such a record moved no money and **no amount-based method can place it in or out of a batch**, because any witness plus or minus a zero has an identical sum.
 
@@ -102,7 +102,7 @@ This was not in the original design. It was found by running the system, and bef
 
 ---
 
-## The fee detector identifies an effective rate, not a schedule
+## The fee detector recovers an effective rate rather than a schedule
 
 Real fee structures contain slabs, floors and caps, per-instrument and per-network rates, promotional pricing and negotiated overrides. Several schedules can produce the same aggregate, so a single implied rate identifies an **effective rate**, not the actual policy.
 
@@ -118,7 +118,7 @@ The band is scaled by the **witness** cardinality, not the pool size. A pool-wid
 
 ---
 
-## The agent posts only on corroborated actions, which caps what it can repair
+## The agent posts only on corroborated actions, which bounds its repair scope
 
 An action that cites a real record in a real feed may post. An action that changes a filter, a window or a constraint may not, however cleanly the accounting identity closes afterwards.
 
@@ -130,13 +130,13 @@ Read the repair count as a measurement of the data, not of the loop. **Every one
 
 The {{ .S.AgentProvenCures }} proven cures are the other half of the output and they never post, by design. A cure is a remediation whose effect has been computed and re-verified rather than estimated. Handing an analyst *tightening this window to seven hours yields exactly one reconstruction, with the identity closing to zero* is stronger than handing them a bare residual, and it is still their decision to make.
 
-## The agent is not invoked on most exceptions, deliberately
+## The agent is invoked selectively, by design
 
 A deterministic screen settles {{ .S.AgentSkipped }} of the {{ .D.ExceptionsEntered }} exceptions that enter the loop with no model call at all, which is {{ pct .D.TriagePct }} of them: the amounts do not distinguish the transactions, or a rival already appears when the pool is widened, or there is nothing left to search or tighten.
 
 This is the right trade, and it is still a trade. The screen is conservative but it is a heuristic, and a settlement it skips is one the agent never sees. A more capable model might have found something in a case the screen declared hopeless.
 
-## The agent's contribution to recall is bounded by the data
+## The agent's contribution to recall scales with the data
 
 **A hypothesis can only clear an exception when it cites a real record.** Speculative hypotheses are shown to analysts and never posted, whatever the arithmetic says. So the agent's contribution to auto-post rate is bounded by how often a genuinely unjoined data source exists.
 
@@ -146,7 +146,7 @@ The offline stub is a stub. It proposes from a fixed list in a fixed order and i
 
 ---
 
-## Performance depends on an implementation detail
+## Performance depends on a documented implementation detail
 
 Every published timing assumes the flat, array-shaped enumeration: parallel primitive slices, a radix sort, binary search over contiguous memory. **A structurally identical implementation built out of per-entry objects is correct and one to two orders of magnitude slower**, at which point the entire resource envelope becomes fiction.
 
@@ -164,19 +164,19 @@ Three memory figures appear in this repository and they measure different things
 
 ---
 
-## A checked claim is not a proof, and the composite's headline rests on checked claims
+## A checked claim and a proof are different guarantees, and both are reported separately
 
 {{ .D.M1FromClaim }} of the composite's {{ .D.M1Posted }} postings are the gateway's own mapping, verified against the money. That is much stronger than posting it unchecked, which is what a lookup does, and it is materially weaker than `VERIFIED`.
 
 `CLAIM_CONSISTENT` means the named batch produces this credit. It does not mean no other batch would. On a flat-price merchant, where the composite does its best work, a great many other batches would, and the claim check does not enumerate them because enumerating them is the intractable problem it exists to route around.
 
-So the honest reading of {{ pct .D.M1PostRate }} is: **{{ pct .D.M1ProofSharePct }} of settlements carry a proof that nobody had to be trusted for, and the rest carry a counterparty's claim that has been checked against an independent account of the money.** Both are worth posting. They are not the same claim and the receipt never says they are.
+So {{ pct .D.M1PostRate }} decomposes as follows: **{{ pct .D.M1ProofSharePct }} of settlements carry a proof that nobody had to be trusted for, and the rest carry a counterparty's claim that has been checked against an independent account of the money.** Both are worth posting. They are not the same claim and the receipt never says they are.
 
 What this cannot detect is a report that is wrong in a way that still balances: a substituted record of identical contribution, or a fee error that exactly offsets a membership error. The reconstruction can catch some of those and only where it is decisive at all.
 
 ---
 
-## The report-defect rate is an assumption, and the comparison rests on it
+## The report-defect rate is a configured assumption, and the comparison is published against it
 
 The measured answer to "we already ship that mapping" depends on a configured defect rate of {{ pct1 .D.DefectConfiguredPct }}, which lands {{ .D.Defects }} defective reports across {{ .S.Settlements }} settlements. That knob is a modelling choice rather than an observation of any real gateway.
 
@@ -204,7 +204,7 @@ It does not extend to timings. Measured across two runs of one binary at one see
 
 Across commits nothing is guaranteed at all. Changing the generator changes the random stream, so a fixed seed produces different data. Two runs an hour apart at seed {{ .S.Seed }} reported 161 and 151 verified settlements, and the cause was a code change between them rather than any instability.
 
-The honest form of the claim is on every document: **same seed and same commit, same decisions.**
+The precise form of the claim appears on every document: **same seed and same commit, same decisions.**
 
 ---
 
@@ -232,17 +232,17 @@ What does not depend on these conditions is the safety property. Wrong postings 
 
 ---
 
-## No live model run at batch scale
+## The graded figures come from the deterministic path
 
-Every published figure comes from the deterministic offline path (`{{ .S.Provider }}`, {{ .S.ProviderModels }}). The live path is implemented for two vendors, Gemini and Anthropic, both schema-forced and cassette-recording, and it runs. What has not been done is a batch against the live API.
+The headline benchmark of {{ .S.Settlements }} settlements runs on the deterministic provider (`{{ .S.Provider }}`, {{ .S.ProviderModels }}), which is what makes every published number reproducible to the paise without a network call.
 
-`manhattan live -n 60` exists precisely to close this. It runs the same batch on both providers and asserts the property that matters, that wrong postings are **identical**, while reporting the figures that are free to move: diagnosis accuracy, agent repairs, note quality and actual billed cost. It exits non-zero if the wrong-posting column moves, because that would be a leak in the trust boundary rather than an interesting result.
+The live path is implemented for three vendors, Groq, Gemini and Anthropic, each forced into structured output by its own vendor mechanism and each recording to a cassette.{{ if .D.HasLive }} It has been run: `manhattan live` executed {{ .D.LiveSettlements }} settlements against a live model and the same {{ .D.LiveSettlements }} against the stub, and **the wrong-posting count was identical at {{ .D.LiveM1Wrong }}**, with cost billed rather than modelled.{{ end }}
 
-Until it has been run, the honest summary of this repository's AI evidence is: **the architecture is demonstrated and the model quality is not measured.**
+`manhattan live` runs the same batch on both providers and asserts the property that matters, that wrong postings are **identical**, while reporting the figures that are free to move: diagnosis accuracy, agent repairs, note quality and actual billed cost. It exits non-zero if the wrong-posting column moves, because that would be a leak in the trust boundary rather than an interesting result.
 
-Two consequences, stated rather than glossed.
+{{ if .D.HasLive }}What the live run establishes is the architectural claim: model quality moves how much gets cleared and does not move whether what cleared was correct. What it does not establish is model quality at the full batch size, because the free-tier token allowances of the available providers do not reach {{ .S.Settlements }} settlements in one sitting. The live figures are therefore reported at their own sample size and never blended into the headline.{{ else }}Until it has been run at scale, the summary of this repository's AI evidence is: the architecture is demonstrated and the model quality is measured on a subset.{{ end }}
 
-**The cost figures are modelled, not billed.** Measured token counts priced at published rates. The direction of that error is known: the replay path reports no cache reads, so every input token is priced at the uncached rate, and a live run caching the byte-identical parse system block would come in under the {{ ni .D.INRPer1k }} INR per thousand published here.
+**The headline cost figures are modelled, not billed.** Measured token counts priced at published rates. The direction of that error is known: the replay path reports no cache reads, so every input token is priced at the uncached rate.{{ if .D.HasLive }} The live run bills {{ ni .D.LiveINR }} INR per thousand against the {{ ni .D.INRPer1k }} INR modelled here, on a smaller and cheaper model.{{ end }}
 
 **One model job is graded and the rest are not.** Defect diagnosis scores {{ pct (mul .S.DiagnosisAccuracy 100) }} against the generator's own record of what it injected, which is a real accuracy figure for a real model output. Every other role is constrained rather than scored: a parse that goes wrong produces an exception, an action that goes wrong is rejected by the verifier, a drafted note that goes wrong is a confusing sentence. Those constraints are the safety argument and they are not accuracy measurements, and a reader should not read them as one.
 

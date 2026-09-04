@@ -303,6 +303,9 @@ export interface ArchetypeResult {
   entropy_gate_refusals: number;
   b0_post_rate: number;
   b0_wrong_post_rate: number;
+  m1_post_rate: number;
+  m1_posted: number;
+  m1_posted_wrong: number;
 }
 
 export interface Summary {

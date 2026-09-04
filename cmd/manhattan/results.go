@@ -115,7 +115,7 @@ func renderResults(
 				fmt.Fprintf(&b, "some of them are true: the flat-price archetypes genuinely cannot be\n")
 				fmt.Fprintf(&b, "reconstructed from amounts, and saying so is correct even though\n")
 				fmt.Fprintf(&b, "nobody injected it. Deciding which true findings count would be\n")
-				fmt.Fprintf(&b, "exactly the sort of scoring nobody should accept on assertion.\n\n")
+				fmt.Fprintf(&b, "a scoring judgement that belongs with the reader rather than the system.\n\n")
 			}
 		}
 		if len(pc.Escalations) > 0 {
@@ -317,7 +317,7 @@ func renderResults(
 	// ---- The exception queue ---------------------------------------------
 	if len(sum.TopExceptions) > 0 {
 		fmt.Fprintf(&b, "## The exception queue\n\n")
-		fmt.Fprintf(&b, "The track's third bar is an honest exception list, and a count of exceptions is\n")
+		fmt.Fprintf(&b, "The track's third bar is a complete exception list, and a count of exceptions is\n")
 		fmt.Fprintf(&b, "not one. The %d most expensive of %d, in the order an operations lead would\n",
 			len(sum.TopExceptions), sum.Exceptions)
 		fmt.Fprintf(&b, "work them. All %d are in `out/receipts.ndjson`, one JSON object per line.\n\n",
@@ -575,7 +575,7 @@ func renderResults(
 		fmt.Fprintf(&b, "the top two bands, because a handful of points near an index of 1e-4 stretch\n")
 		fmt.Fprintf(&b, "the range; the curve then had its coarsest resolution exactly where it was\n")
 		fmt.Fprintf(&b, "being asked to say something. Band edges are therefore quantiles of the\n")
-		fmt.Fprintf(&b, "observed index, which is less tidy and considerably more honest.\n\n")
+		fmt.Fprintf(&b, "observed index, which is less tidy and materially more accurate.\n\n")
 		fmt.Fprintf(&b, "| collision index band | configs | mean pool | verified | ambiguous | underdetermined | Manhattan wrong | B0 wrong |\n")
 		fmt.Fprintf(&b, "|---|---:|---:|---:|---:|---:|---:|---:|\n")
 		for _, bk := range bench.LogSpaced(sweep, 8) {

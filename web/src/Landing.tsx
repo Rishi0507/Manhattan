@@ -32,6 +32,7 @@ export function Landing({
     <div className="mx-auto max-w-[1080px] px-4 sm:px-6">
       {/* ---- Hero ---------------------------------------------------- */}
       <section className="pt-12 pb-12 sm:pt-20 sm:pb-16">
+        <img src="/logo.png" alt="Manhattan" className="mb-7 h-11 w-auto" />
         <p className="lbl">Razorpay AI Buildathon · Track 04 · AI Finance Controller</p>
 
         <h1 className="display mt-5 max-w-[19ch] text-[34px] leading-[1.08] font-medium tracking-[-0.015em] text-ink sm:text-[44px] lg:text-[54px]">
@@ -164,35 +165,58 @@ export function Landing({
       {/* ---- Segmentation --------------------------------------------- */}
       {summary && summary.by_archetype?.length > 0 && (
         <section className="border-t border-line py-14">
-          <h2 className="display text-[23px] leading-tight font-medium sm:text-[28px]">Predicting suitability before integration</h2>
+          <h2 className="display text-[23px] leading-tight font-medium sm:text-[28px]">Every merchant type, posted and correct</h2>
           <p className="mt-4 max-w-[68ch] text-[15px] leading-relaxed text-ink-dim">
-            A single pass over historical settlement amounts yields the spread and the proportion
-            that repeats, which determine the expected outcome.
+            The solid bar is what Manhattan posts automatically. The notch inside it is the share
+            carried by an independent proof rather than a verified claim. The right column is what
+            the confidence matcher gets wrong on the same settlements.
           </p>
+
+          <div className="mt-6 flex flex-wrap items-center gap-x-6 gap-y-2 text-[12.5px] text-ink-faint">
+            <span className="flex items-center gap-2">
+              <span className="h-2 w-6 rounded-[2px]" style={{ background: "var(--color-verified)" }} />
+              posted by Manhattan
+            </span>
+            <span className="flex items-center gap-2">
+              <span className="h-2 w-2 rounded-[1px] bg-ground ring-1 ring-[var(--color-line-strong)]" />
+              of which independently proved
+            </span>
+            <span className="tnum">
+              wrong postings across all {summary.by_archetype.length} types:{" "}
+              <strong className="font-semibold text-ink">
+                {num(summary.by_archetype.reduce((t, a) => t + (a.m1_posted_wrong ?? 0), 0))}
+              </strong>
+            </span>
+          </div>
 
           <div className="mt-8 space-y-2.5">
             {summary.by_archetype
               .slice()
-              .sort((a, b) => b.auto_post_rate - a.auto_post_rate)
+              .sort((a, b) => b.m1_post_rate - a.m1_post_rate)
               .map((a) => (
                 <div key={a.archetype} className="flex items-center gap-4">
                   <span className="w-24 shrink-0 text-[13px] text-ink-dim sm:w-40 sm:text-[14px]">
                     {a.archetype.replace(/_/g, " ")}
                   </span>
-                  <span className="h-2 flex-1 overflow-hidden rounded-[2px] bg-sunken">
+                  <span className="relative h-2 flex-1 overflow-hidden rounded-[2px] bg-sunken">
                     <span
-                      className="block h-full"
+                      className="absolute inset-y-0 left-0 block"
                       style={{
-                        width: `${Math.max(a.auto_post_rate * 100, 0.6)}%`,
-                        background:
-                          a.auto_post_rate > 0 ? "var(--color-verified)" : "var(--color-line-strong)",
+                        width: `${Math.max(a.m1_post_rate * 100, 0.6)}%`,
+                        background: "var(--color-verified)",
                       }}
                     />
+                    {a.auto_post_rate > 0 && (
+                      <span
+                        className="absolute inset-y-0 block w-[2px] bg-ground"
+                        style={{ left: `${a.auto_post_rate * 100}%` }}
+                      />
+                    )}
                   </span>
-                  <span className="tnum w-12 shrink-0 text-right text-[14px]">
-                    {pct(a.auto_post_rate)}
+                  <span className="tnum w-12 shrink-0 text-right text-[14px] font-medium">
+                    {pct(a.m1_post_rate)}
                   </span>
-                  <span className="tnum hidden w-24 shrink-0 text-right text-[12.5px] text-ink-faint sm:block">
+                  <span className="tnum hidden w-28 shrink-0 text-right text-[12.5px] text-ink-faint sm:block">
                     B0 {pct(a.b0_wrong_post_rate)} wrong
                   </span>
                 </div>
@@ -200,9 +224,11 @@ export function Landing({
           </div>
 
           <p className="mt-6 max-w-[68ch] text-[14px] leading-relaxed text-ink-faint">
-            The merchants at the bottom bill three repeated subscription prices. Their settlements
-            are not reconstructable from amounts by any method. The system reports this in
-            milliseconds and states the remediation.
+            The merchants at the bottom bill three repeated subscription prices, so no method that
+            reads amounts can separate their batches. Manhattan still posts most of them, because
+            where a proof is unavailable it verifies the settlement report against the ledger
+            instead. That is the difference between refusing the hard cases and clearing them by
+            a second route.
           </p>
         </section>
       )}

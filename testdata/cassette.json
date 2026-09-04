@@ -1,0 +1,969 @@
+{
+  "entries": {
+    "parse_026f48a521c8f9f6": {
+      "role": "parse",
+      "model": "groq/compound-mini",
+      "prompt_excerpt": "STATEMENT LINE: IMPS/P2A/554656/RAZORPAY SOFTWARE/SETTLEMENT",
+      "answer": {
+        "reference": "554656",
+        "provenance_span": "25:31",
+        "counterparty": "RAZORPAY SOFTWARE",
+        "confident": true
+      },
+      "usage": {
+        "input_tokens": 1084,
+        "output_tokens": 1147,
+        "cache_read_input_tokens": 0,
+        "cache_creation_input_tokens": 0,
+        "calls": 1,
+        "calls_by_role": {
+          "parse": 1
+        },
+        "inr_micros": 49359
+      }
+    },
+    "parse_0e64a8432488e5ae": {
+      "role": "parse",
+      "model": "groq/compound-mini",
+      "prompt_excerpt": "STATEMENT LINE: UPI/CREDIT/243322/RAZORPAY/SETTLE/NA",
+      "answer": {
+        "reference": "243322",
+        "counterparty": "RAZORPAY",
+        "confident": true,
+        "provenance_span": "27:33"
+      },
+      "usage": {
+        "input_tokens": 1084,
+        "output_tokens": 996,
+        "cache_read_input_tokens": 0,
+        "cache_creation_input_tokens": 0,
+        "calls": 1,
+        "calls_by_role": {
+          "parse": 1
+        },
+        "inr_micros": 45372
+      }
+    },
+    "parse_13a9a4c278e47bc2": {
+      "role": "parse",
+      "model": "groq/compound-mini",
+      "prompt_excerpt": "STATEMENT LINE: RTGS CR RAZORPAYSOFTWAREPVTLTD REF 438377 NET STLMNT",
+      "answer": {
+        "counterparty": "RAZORPAYSOFTWAREPVTLTD",
+        "reference": "438377",
+        "provenance_span": "35:40",
+        "confident": true
+      },
+      "usage": {
+        "input_tokens": 1087,
+        "output_tokens": 1272,
+        "cache_read_input_tokens": 0,
+        "cache_creation_input_tokens": 0,
+        "calls": 1,
+        "calls_by_role": {
+          "parse": 1
+        },
+        "inr_micros": 52711
+      }
+    },
+    "parse_16206913da54b33f": {
+      "role": "parse",
+      "model": "groq/compound-mini",
+      "prompt_excerpt": "STATEMENT LINE: IMPS/P2A/607752/RAZORPAY SOFTWARE/SETTLEMENT",
+      "answer": {
+        "reference": "607752",
+        "counterpart": "RAZORPAY SOFTWARE",
+        "transaction_type": "IMPS",
+        "is_settlement": true,
+        "confident": true,
+        "provenance_span": "9:15"
+      },
+      "usage": {
+        "input_tokens": 1084,
+        "output_tokens": 952,
+        "cache_read_input_tokens": 0,
+        "cache_creation_input_tokens": 0,
+        "calls": 1,
+        "calls_by_role": {
+          "parse": 1
+        },
+        "inr_micros": 44211
+      }
+    },
+    "parse_19d3319cd858e49e": {
+      "role": "parse",
+      "model": "groq/compound-mini",
+      "prompt_excerpt": "STATEMENT LINE: UPI/CREDIT/123239/RAZORPAY/SETTLE/NA",
+      "answer": {
+        "reference": "123239",
+        "counterparty": "RAZORPAY",
+        "type": "credit",
+        "confident": true,
+        "provenance_span": "11:17"
+      },
+      "usage": {
+        "input_tokens": 1084,
+        "output_tokens": 838,
+        "cache_read_input_tokens": 0,
+        "cache_creation_input_tokens": 0,
+        "calls": 1,
+        "calls_by_role": {
+          "parse": 1
+        },
+        "inr_micros": 41201
+      }
+    },
+    "parse_1ae2c56dcb51ec80": {
+      "role": "parse",
+      "model": "groq/compound-mini",
+      "prompt_excerpt": "STATEMENT LINE: NEFT-RAZORPAY SOFTWARE PVT LTD-UTR692154-CR",
+      "answer": {
+        "channel": "NEFT",
+        "counterparty": "RAZORPAY SOFTWARE PVT LTD",
+        "reference": "UTR692154",
+        "provenance_span": "31:40",
+        "confident": true
+      },
+      "usage": {
+        "input_tokens": 1084,
+        "output_tokens": 1158,
+        "cache_read_input_tokens": 0,
+        "cache_creation_input_tokens": 0,
+        "calls": 1,
+        "calls_by_role": {
+          "parse": 1
+        },
+        "inr_micros": 49649
+      }
+    },
+    "parse_279255a317558e17": {
+      "role": "parse",
+      "model": "groq/compound-mini",
+      "prompt_excerpt": "STATEMENT LINE: UPI/CREDIT/399043/RAZORPAY/SETTLE/NA",
+      "answer": {
+        "reference": "399043",
+        "counterparty": "RAZORPAY",
+        "confident": true,
+        "provenance_span": "11:17"
+      },
+      "usage": {
+        "input_tokens": 1084,
+        "output_tokens": 1122,
+        "cache_read_input_tokens": 0,
+        "cache_creation_input_tokens": 0,
+        "calls": 1,
+        "calls_by_role": {
+          "parse": 1
+        },
+        "inr_micros": 48699
+      }
+    },
+    "parse_2cd112f91df9ac7b": {
+      "role": "parse",
+      "model": "groq/compound-mini",
+      "prompt_excerpt": "STATEMENT LINE: NEFT-RAZORPAY SOFTWARE PVT LTD-UTR439621-CR",
+      "answer": {
+        "counterparty": "RAZORPAY SOFTWARE PVT LTD",
+        "reference": "439621",
+        "provenance_span": "31:40",
+        "confident": true
+      },
+      "usage": {
+        "input_tokens": 1267,
+        "output_tokens": 1085,
+        "cache_read_input_tokens": 0,
+        "cache_creation_input_tokens": 0,
+        "calls": 1,
+        "calls_by_role": {
+          "parse": 1
+        },
+        "inr_micros": 50943
+      }
+    },
+    "parse_2f099147bee4340a": {
+      "role": "parse",
+      "model": "groq/compound-mini",
+      "prompt_excerpt": "STATEMENT LINE: UPI/CREDIT/644134/RAZORPAY/SETTLE/NA",
+      "answer": {
+        "reference": "644134",
+        "counterparty": "RAZORPAY",
+        "provenance_span": "27:33",
+        "confidence": true
+      },
+      "usage": {
+        "input_tokens": 1216,
+        "output_tokens": 1751,
+        "cache_read_input_tokens": 0,
+        "cache_creation_input_tokens": 0,
+        "calls": 1,
+        "calls_by_role": {
+          "parse": 1
+        },
+        "inr_micros": 67628
+      }
+    },
+    "parse_377d86a3a42b26e1": {
+      "role": "parse",
+      "model": "groq/compound-mini",
+      "prompt_excerpt": "STATEMENT LINE: NEFT-RAZORPAY SOFTWARE PVT LTD-UTR456790-CR",
+      "answer": {
+        "transaction_type": "NEFT",
+        "counterparty": "RAZORPAY SOFTWARE PVT LTD",
+        "reference": "456790",
+        "reference_type": "UTR",
+        "provenance_span": "34:39",
+        "confident": true
+      },
+      "usage": {
+        "input_tokens": 1084,
+        "output_tokens": 1154,
+        "cache_read_input_tokens": 0,
+        "cache_creation_input_tokens": 0,
+        "calls": 1,
+        "calls_by_role": {
+          "parse": 1
+        },
+        "inr_micros": 49544
+      }
+    },
+    "parse_44179b2900e9a57c": {
+      "role": "parse",
+      "model": "groq/compound-mini",
+      "prompt_excerpt": "STATEMENT LINE: UPI/CREDIT/848676/RAZORPAY/SETTLE/NA",
+      "answer": {
+        "reference": "848676",
+        "counterparty": "RAZORPAY",
+        "confident": true,
+        "provenance_span": "27:33"
+      },
+      "usage": {
+        "input_tokens": 1084,
+        "output_tokens": 1166,
+        "cache_read_input_tokens": 0,
+        "cache_creation_input_tokens": 0,
+        "calls": 1,
+        "calls_by_role": {
+          "parse": 1
+        },
+        "inr_micros": 49860
+      }
+    },
+    "parse_50fe14a105c1ded3": {
+      "role": "parse",
+      "model": "groq/compound-mini",
+      "prompt_excerpt": "STATEMENT LINE: UPI/CREDIT/555890/RAZORPAY/SETTLE/NA",
+      "answer": {
+        "reference": "555890",
+        "counterparty": "RAZORPAY",
+        "type": "UPI",
+        "provenance_span": "11:16",
+        "confident": true
+      },
+      "usage": {
+        "input_tokens": 1084,
+        "output_tokens": 931,
+        "cache_read_input_tokens": 0,
+        "cache_creation_input_tokens": 0,
+        "calls": 1,
+        "calls_by_role": {
+          "parse": 1
+        },
+        "inr_micros": 43656
+      }
+    },
+    "parse_54d0d5881fed716c": {
+      "role": "parse",
+      "model": "groq/compound-mini",
+      "prompt_excerpt": "STATEMENT LINE: RTGS CR RAZORPAYSOFTWAREPVTLTD REF 287778 NET STLMNT",
+      "answer": {
+        "counterparty": "RAZORPAYSOFTWAREPVTLTD",
+        "reference": "287778",
+        "confident": true,
+        "provenance_span": "35:41"
+      },
+      "usage": {
+        "input_tokens": 1317,
+        "output_tokens": 325,
+        "cache_read_input_tokens": 0,
+        "cache_creation_input_tokens": 0,
+        "calls": 1,
+        "calls_by_role": {
+          "parse": 1
+        },
+        "inr_micros": 31759
+      }
+    },
+    "parse_55aef2af9d87b341": {
+      "role": "parse",
+      "model": "groq/compound-mini",
+      "prompt_excerpt": "STATEMENT LINE: IMPS/P2A/830982/RAZORPAY SOFTWARE/SETTLEMENT",
+      "answer": {
+        "reference": "830982",
+        "counterparty": "RAZORPAY SOFTWARE",
+        "provenance_span": "9:17",
+        "confident": true
+      },
+      "usage": {
+        "input_tokens": 1183,
+        "output_tokens": 1156,
+        "cache_read_input_tokens": 0,
+        "cache_creation_input_tokens": 0,
+        "calls": 1,
+        "calls_by_role": {
+          "parse": 1
+        },
+        "inr_micros": 51339
+      }
+    },
+    "parse_5ec55f00f01c7ec7": {
+      "role": "parse",
+      "model": "groq/compound-mini",
+      "prompt_excerpt": "STATEMENT LINE: IMPS/P2A/655896/RAZORPAY SOFTWARE/SETTLEMENT",
+      "answer": {
+        "reference": "655896",
+        "counterparty": "RAZORPAY SOFTWARE",
+        "reference_provenance_span": "9:15",
+        "confident": true
+      },
+      "usage": {
+        "input_tokens": 1084,
+        "output_tokens": 988,
+        "cache_read_input_tokens": 0,
+        "cache_creation_input_tokens": 0,
+        "calls": 1,
+        "calls_by_role": {
+          "parse": 1
+        },
+        "inr_micros": 45161
+      }
+    },
+    "parse_61cee0f7bbf4b354": {
+      "role": "parse",
+      "model": "groq/compound-mini",
+      "prompt_excerpt": "STATEMENT LINE: UPI/CREDIT/661899/RAZORPAY/SETTLE/NA",
+      "answer": {
+        "reference": "661899",
+        "counterparty": "RAZORPAY",
+        "provenance_span": "11:16",
+        "confident": true
+      },
+      "usage": {
+        "input_tokens": 1084,
+        "output_tokens": 899,
+        "cache_read_input_tokens": 0,
+        "cache_creation_input_tokens": 0,
+        "calls": 1,
+        "calls_by_role": {
+          "parse": 1
+        },
+        "inr_micros": 42812
+      }
+    },
+    "parse_6c28688266f2cd21": {
+      "role": "parse",
+      "model": "groq/compound-mini",
+      "prompt_excerpt": "STATEMENT LINE: UPI/CREDIT/630373/RAZORPAY/SETTLE/NA",
+      "answer": {
+        "reference": "630373",
+        "counterparty": "RAZORPAY",
+        "provenance_span": "11:17",
+        "confident": true
+      },
+      "usage": {
+        "input_tokens": 1084,
+        "output_tokens": 938,
+        "cache_read_input_tokens": 0,
+        "cache_creation_input_tokens": 0,
+        "calls": 1,
+        "calls_by_role": {
+          "parse": 1
+        },
+        "inr_micros": 43841
+      }
+    },
+    "parse_99c7d64c8bbbf1d7": {
+      "role": "parse",
+      "model": "groq/compound-mini",
+      "prompt_excerpt": "STATEMENT LINE: IMPS/P2A/488832/RAZORPAY SOFTWARE/SETTLEMENT",
+      "answer": {
+        "reference": "488832",
+        "counterparty": "RAZORPAY SOFTWARE",
+        "provenance_span": "9:14",
+        "confidence": true
+      },
+      "usage": {
+        "input_tokens": 1218,
+        "output_tokens": 1299,
+        "cache_read_input_tokens": 0,
+        "cache_creation_input_tokens": 0,
+        "calls": 1,
+        "calls_by_role": {
+          "parse": 1
+        },
+        "inr_micros": 55730
+      }
+    },
+    "parse_9a95a1a77950fb0c": {
+      "role": "parse",
+      "model": "groq/compound-mini",
+      "prompt_excerpt": "STATEMENT LINE: UPI/CREDIT/815993/RAZORPAY/SETTLE/NA",
+      "answer": {
+        "reference": "815993",
+        "counterpart": "RAZORPAY",
+        "confident": true,
+        "provenance_span": "27:33"
+      },
+      "usage": {
+        "input_tokens": 1084,
+        "output_tokens": 1015,
+        "cache_read_input_tokens": 0,
+        "cache_creation_input_tokens": 0,
+        "calls": 1,
+        "calls_by_role": {
+          "parse": 1
+        },
+        "inr_micros": 45874
+      }
+    },
+    "parse_9c267d88830886e3": {
+      "role": "parse",
+      "model": "groq/compound-mini",
+      "prompt_excerpt": "STATEMENT LINE: NEFT-RAZORPAY SOFTWARE PVT LTD-UTR190425-CR",
+      "answer": {
+        "counterparty": "RAZORPAY SOFTWARE PVT LTD",
+        "reference": "UTR190425",
+        "provenance_span": "47:56",
+        "confident": true
+      },
+      "usage": {
+        "input_tokens": 1084,
+        "output_tokens": 1322,
+        "cache_read_input_tokens": 0,
+        "cache_creation_input_tokens": 0,
+        "calls": 1,
+        "calls_by_role": {
+          "parse": 1
+        },
+        "inr_micros": 53979
+      }
+    },
+    "parse_a0a41abe940c8305": {
+      "role": "parse",
+      "model": "groq/compound-mini",
+      "prompt_excerpt": "STATEMENT LINE: RTGS CR RAZORPAYSOFTWAREPVTLTD REF 464619 NET STLMNT",
+      "answer": {
+        "counterparty": "RAZORPAYSOFTWAREPVTLTD",
+        "reference": "464619",
+        "provenance_span": "35:41",
+        "confident": true
+      },
+      "usage": {
+        "input_tokens": 1194,
+        "output_tokens": 1826,
+        "cache_read_input_tokens": 0,
+        "cache_creation_input_tokens": 0,
+        "calls": 1,
+        "calls_by_role": {
+          "parse": 1
+        },
+        "inr_micros": 69220
+      }
+    },
+    "parse_a769298088bb32d9": {
+      "role": "parse",
+      "model": "groq/compound-mini",
+      "prompt_excerpt": "STATEMENT LINE: UPI/CREDIT/781477/RAZORPAY/SETTLE/NA",
+      "answer": {
+        "reference": "781477",
+        "counterparty": "RAZORPAY",
+        "confident": true,
+        "provenance_span": "11:17"
+      },
+      "usage": {
+        "input_tokens": 1084,
+        "output_tokens": 1026,
+        "cache_read_input_tokens": 0,
+        "cache_creation_input_tokens": 0,
+        "calls": 1,
+        "calls_by_role": {
+          "parse": 1
+        },
+        "inr_micros": 46164
+      }
+    },
+    "parse_a79d8f0f0c7c96d9": {
+      "role": "parse",
+      "model": "groq/compound-mini",
+      "prompt_excerpt": "STATEMENT LINE: IMPS/P2A/664571/RAZORPAY SOFTWARE/SETTLEMENT",
+      "answer": {
+        "counterparty": "RAZORPAY SOFTWARE",
+        "reference": "664571",
+        "provenance_span": "9:15",
+        "confident": true
+      },
+      "usage": {
+        "input_tokens": 1339,
+        "output_tokens": 502,
+        "cache_read_input_tokens": 0,
+        "cache_creation_input_tokens": 0,
+        "calls": 1,
+        "calls_by_role": {
+          "parse": 1
+        },
+        "inr_micros": 36819
+      }
+    },
+    "parse_a9c22d5dc4c726d1": {
+      "role": "parse",
+      "model": "groq/compound-mini",
+      "prompt_excerpt": "STATEMENT LINE: RTGS CR RAZORPAYSOFTWAREPVTLTD REF 651658 NET STLMNT",
+      "answer": {
+        "counterparty": "RAZORPAYSOFTWAREPVTLTD",
+        "reference": "651658",
+        "provenance_span": "35:41",
+        "confident": true
+      },
+      "usage": {
+        "input_tokens": 1209,
+        "output_tokens": 1113,
+        "cache_read_input_tokens": 0,
+        "cache_creation_input_tokens": 0,
+        "calls": 1,
+        "calls_by_role": {
+          "parse": 1
+        },
+        "inr_micros": 50661
+      }
+    },
+    "parse_c53348cf150dbe51": {
+      "role": "parse",
+      "model": "groq/compound-mini",
+      "prompt_excerpt": "STATEMENT LINE: NEFT-RAZORPAY SOFTWARE PVT LTD-UTR432703-CR",
+      "answer": {
+        "reference": "432703",
+        "counterparty": "RAZORPAY SOFTWARE PVT LTD",
+        "transaction_type": "NEFT",
+        "provenance_span": "31:40",
+        "confident": true
+      },
+      "usage": {
+        "input_tokens": 1084,
+        "output_tokens": 1273,
+        "cache_read_input_tokens": 0,
+        "cache_creation_input_tokens": 0,
+        "calls": 1,
+        "calls_by_role": {
+          "parse": 1
+        },
+        "inr_micros": 52685
+      }
+    },
+    "parse_c61c071ff20eb882": {
+      "role": "parse",
+      "model": "groq/compound-mini",
+      "prompt_excerpt": "STATEMENT LINE: IMPS/P2A/258987/RAZORPAY SOFTWARE/SETTLEMENT",
+      "answer": {
+        "reference": "258987",
+        "counterparty": "RAZORPAY SOFTWARE",
+        "provenance_span": "25:31",
+        "confident": true
+      },
+      "usage": {
+        "input_tokens": 1084,
+        "output_tokens": 1201,
+        "cache_read_input_tokens": 0,
+        "cache_creation_input_tokens": 0,
+        "calls": 1,
+        "calls_by_role": {
+          "parse": 1
+        },
+        "inr_micros": 50784
+      }
+    },
+    "parse_cf99fe434d95a93f": {
+      "role": "parse",
+      "model": "groq/compound-mini",
+      "prompt_excerpt": "STATEMENT LINE: RTGS CR RAZORPAYSOFTWAREPVTLTD REF 449839 NET STLMNT",
+      "answer": {
+        "reference": "449839",
+        "reference_provenance_span": "35:40",
+        "counterparty": "RAZORPAYSOFTWAREPVTLTD",
+        "confident": true
+      },
+      "usage": {
+        "input_tokens": 1087,
+        "output_tokens": 1080,
+        "cache_read_input_tokens": 0,
+        "cache_creation_input_tokens": 0,
+        "calls": 1,
+        "calls_by_role": {
+          "parse": 1
+        },
+        "inr_micros": 47643
+      }
+    },
+    "parse_d7fbd862714a4cd8": {
+      "role": "parse",
+      "model": "groq/compound-mini",
+      "prompt_excerpt": "STATEMENT LINE: RTGS CR RAZORPAYSOFTWAREPVTLTD REF 425483 NET STLMNT",
+      "answer": {
+        "reference": "425483",
+        "reference_provenance_span": "35:41",
+        "counterparty": "RAZORPAYSOFTWAREPVTLTD",
+        "confident": true
+      },
+      "usage": {
+        "input_tokens": 1087,
+        "output_tokens": 1362,
+        "cache_read_input_tokens": 0,
+        "cache_creation_input_tokens": 0,
+        "calls": 1,
+        "calls_by_role": {
+          "parse": 1
+        },
+        "inr_micros": 55087
+      }
+    },
+    "parse_d8a706458f555a62": {
+      "role": "parse",
+      "model": "groq/compound-mini",
+      "prompt_excerpt": "STATEMENT LINE: RTGS CR RAZORPAYSOFTWAREPVTLTD REF 467432 NET STLMNT",
+      "answer": {
+        "counterparty": "RAZORPAYSOFTWAREPVTLTD",
+        "reference": "467432",
+        "provenance_span": "35:41",
+        "confident": true
+      },
+      "usage": {
+        "input_tokens": 1087,
+        "output_tokens": 1063,
+        "cache_read_input_tokens": 0,
+        "cache_creation_input_tokens": 0,
+        "calls": 1,
+        "calls_by_role": {
+          "parse": 1
+        },
+        "inr_micros": 47194
+      }
+    },
+    "parse_d92fa5cbe2ca5651": {
+      "role": "parse",
+      "model": "groq/compound-mini",
+      "prompt_excerpt": "STATEMENT LINE: RTGS CR RAZORPAYSOFTWAREPVTLTD REF 696989 NET STLMNT",
+      "answer": {
+        "reference": "696989",
+        "reference_provenance_span": "35:41",
+        "counterparty": "RAZORPAYSOFTWAREPVTLTD",
+        "transaction_type": "RTGS",
+        "confident": true
+      },
+      "usage": {
+        "input_tokens": 1087,
+        "output_tokens": 1020,
+        "cache_read_input_tokens": 0,
+        "cache_creation_input_tokens": 0,
+        "calls": 1,
+        "calls_by_role": {
+          "parse": 1
+        },
+        "inr_micros": 46059
+      }
+    },
+    "parse_e200e938bcbe4b41": {
+      "role": "parse",
+      "model": "groq/compound-mini",
+      "prompt_excerpt": "STATEMENT LINE: UPI/CREDIT/834119/RAZORPAY/SETTLE/NA",
+      "answer": {
+        "reference": "834119",
+        "counterparty": "RAZORPAY",
+        "gateway_settlement": true,
+        "provenance_span": "11:16",
+        "confident": true
+      },
+      "usage": {
+        "input_tokens": 1084,
+        "output_tokens": 930,
+        "cache_read_input_tokens": 0,
+        "cache_creation_input_tokens": 0,
+        "calls": 1,
+        "calls_by_role": {
+          "parse": 1
+        },
+        "inr_micros": 43630
+      }
+    },
+    "parse_e896638da5e96531": {
+      "role": "parse",
+      "model": "groq/compound-mini",
+      "prompt_excerpt": "STATEMENT LINE: UPI/CREDIT/322838/RAZORPAY/SETTLE/NA",
+      "answer": {
+        "reference": "322838",
+        "counterparty": "RAZORPAY",
+        "confident": true,
+        "provenance_span": "11:17"
+      },
+      "usage": {
+        "input_tokens": 1084,
+        "output_tokens": 1257,
+        "cache_read_input_tokens": 0,
+        "cache_creation_input_tokens": 0,
+        "calls": 1,
+        "calls_by_role": {
+          "parse": 1
+        },
+        "inr_micros": 52263
+      }
+    },
+    "parse_f59d097f324e795e": {
+      "role": "parse",
+      "model": "groq/compound-mini",
+      "prompt_excerpt": "STATEMENT LINE: NEFT-RAZORPAY SOFTWARE PVT LTD-UTR661465-CR",
+      "answer": {
+        "counterparty": "RAZORPAY SOFTWARE PVT LTD",
+        "reference": "661465",
+        "provenance_span": "50:55",
+        "confident": true
+      },
+      "usage": {
+        "input_tokens": 1084,
+        "output_tokens": 1268,
+        "cache_read_input_tokens": 0,
+        "cache_creation_input_tokens": 0,
+        "calls": 1,
+        "calls_by_role": {
+          "parse": 1
+        },
+        "inr_micros": 52553
+      }
+    },
+    "plan_3a25c13d26fcd054": {
+      "role": "plan",
+      "model": "groq/compound-mini",
+      "prompt_excerpt": "SETTLEMENT bank_credit_travel_2026_08_04_1001\nmerchant archetype: travel, settles on a T+2 cycle\ncredit to reconstruct: ₹1,05,594.79\nvalue date: 2026-08-04\n\nVERIFIER CONCLUDED: UNDERDETERMINED\n  thi...",
+      "answer": {
+        "action": "TIGHTEN_WINDOW"
+      },
+      "usage": {
+        "input_tokens": 2526,
+        "output_tokens": 428,
+        "cache_read_input_tokens": 0,
+        "cache_creation_input_tokens": 0,
+        "calls": 1,
+        "calls_by_role": {
+          "plan": 1
+        },
+        "inr_micros": 55756
+      }
+    },
+    "plan_c49d1f8dbf3c57a4": {
+      "role": "plan",
+      "model": "groq/compound-mini",
+      "prompt_excerpt": "SETTLEMENT bank_credit_travel_2026_08_04_1001\nmerchant archetype: travel, settles on a T+2 cycle\ncredit to reconstruct: ₹1,05,594.79\nvalue date: 2026-08-04\n\nVERIFIER CONCLUDED: UNDERDETERMINED\n  thi...",
+      "answer": {
+        "action": "TIGHTEN_WINDOW"
+      },
+      "usage": {
+        "input_tokens": 2458,
+        "output_tokens": 291,
+        "cache_read_input_tokens": 0,
+        "cache_creation_input_tokens": 0,
+        "calls": 1,
+        "calls_by_role": {
+          "plan": 1
+        },
+        "inr_micros": 50943
+      }
+    },
+    "plan_dd07c7a4c960b4f2": {
+      "role": "plan",
+      "model": "groq/compound-mini",
+      "prompt_excerpt": "SETTLEMENT bank_credit_travel_2026_08_04_1001\nmerchant archetype: travel, settles on a T+2 cycle\ncredit to reconstruct: ₹1,05,594.79\nvalue date: 2026-08-04\n\nVERIFIER CONCLUDED: UNDERDETERMINED\n  thi...",
+      "answer": {
+        "action": "TIGHTEN_WINDOW",
+        "window_hours": 12
+      },
+      "usage": {
+        "input_tokens": 2348,
+        "output_tokens": 271,
+        "cache_read_input_tokens": 0,
+        "cache_creation_input_tokens": 0,
+        "calls": 1,
+        "calls_by_role": {
+          "plan": 1
+        },
+        "inr_micros": 48479
+      }
+    },
+    "remediate_1c5b7b3d566741b8": {
+      "role": "remediate",
+      "model": "groq/compound-mini",
+      "prompt_excerpt": "SETTLEMENT bank_credit_travel_2026_09_10_1038, held as UNDERDETERMINED\nmerchant type: travel\nwhy it is held: this batch is claimed to be 8 records of a 62-record pool, a free cardinality of 8, at whic...",
+      "answer": {
+        "note": "Supply the settlement reference, tighten the value‑date window, and split the settlement by instrument. These steps collapse the reconciliation leg from a search to a lookup, shrink the candidate pool to roughly half and drive the collision index down to a low sub‑unit value, as measured in the verification. It will not correct any missing or inaccurate transaction details outside the pool, nor will it affect other settlements that remain underdetermined for different reasons."
+      },
+      "usage": {
+        "input_tokens": 1626,
+        "output_tokens": 626,
+        "cache_read_input_tokens": 0,
+        "cache_creation_input_tokens": 0,
+        "calls": 1,
+        "calls_by_role": {
+          "remediate": 1
+        },
+        "inr_micros": 45144
+      }
+    },
+    "remediate_5fdd1bf8f2f77790": {
+      "role": "remediate",
+      "model": "groq/compound-mini",
+      "prompt_excerpt": "SETTLEMENT bank_credit_travel_2026_09_15_1043, held as UNDERDETERMINED\nmerchant type: travel\nwhy it is held: this batch is claimed to be 9 records of a 69-record pool, a free cardinality of 9, at whic...",
+      "answer": {
+        "note": "Provide the settlement reference (or settlement_id to payment_id mapping), tighten the value‑date window, and split the settlement by instrument. This will collapse the reconciliation leg from a search to a lookup, shrink the candidate pool to roughly a few dozen and drive the collision index down to around two, as measured by the verified reductions. It will not fix any underlying mismatches in the raw transaction data or address missing instrument‑level details."
+      },
+      "usage": {
+        "input_tokens": 1622,
+        "output_tokens": 438,
+        "cache_read_input_tokens": 0,
+        "cache_creation_input_tokens": 0,
+        "calls": 1,
+        "calls_by_role": {
+          "remediate": 1
+        },
+        "inr_micros": 40110
+      }
+    },
+    "remediate_8ec784484aa7892f": {
+      "role": "remediate",
+      "model": "groq/compound-mini",
+      "prompt_excerpt": "SETTLEMENT bank_credit_travel_2026_08_17_1014, held as UNDERDETERMINED\nmerchant type: travel\nwhy it is held: this batch is claimed to be 8 records of a 66-record pool, a free cardinality of 8, at whic...",
+      "answer": {
+        "note": "Tighten the value‑date window for this settlement. This was verified to collapse the reconciliation leg from a broad search to a direct lookup, cutting the candidate pool roughly in half and driving the collision index down to a low level. It will not address missing settlement‑to‑payment identifier mappings or any remaining instrument‑segregation conflicts."
+      },
+      "usage": {
+        "input_tokens": 1630,
+        "output_tokens": 596,
+        "cache_read_input_tokens": 0,
+        "cache_creation_input_tokens": 0,
+        "calls": 1,
+        "calls_by_role": {
+          "remediate": 1
+        },
+        "inr_micros": 44422
+      }
+    },
+    "remediate_c06afa71f7fd2129": {
+      "role": "remediate",
+      "model": "groq/compound-mini",
+      "prompt_excerpt": "SETTLEMENT bank_credit_travel_2026_08_04_1001, held as UNDERDETERMINED\nmerchant type: travel\nwhy it is held: this batch is claimed to be 9 records of a 66-record pool, a free cardinality of 9, at whic...",
+      "answer": {
+        "note": "Supply the settlement reference or settlement_id to payment_id mapping to convert the reconciliation leg from a search to a direct lookup. This will work because the verified effect shows it collapses the pool and drives the collision index down to near unity. It will not fix mismatches caused by an overly broad value‑date window or by instrument‑mix ambiguities, which require separate adjustments."
+      },
+      "usage": {
+        "input_tokens": 1642,
+        "output_tokens": 527,
+        "cache_read_input_tokens": 0,
+        "cache_creation_input_tokens": 0,
+        "calls": 1,
+        "calls_by_role": {
+          "remediate": 1
+        },
+        "inr_micros": 42812
+      }
+    },
+    "remediate_ecdb7d89a2733c1e": {
+      "role": "remediate",
+      "model": "groq/compound-mini",
+      "prompt_excerpt": "SETTLEMENT bank_credit_travel_2026_09_13_1041, held as UNDERDETERMINED\nmerchant type: travel\nwhy it is held: this batch is claimed to be 7 records of a 71-record pool, a free cardinality of 7, at whic...",
+      "answer": {
+        "note": "Tighten the value‑date window to reduce the candidate pool to roughly half. This works because verification showed that narrowing the window collapses the search space and drives the collision index down to just above the threshold. It will not resolve the free‑cardinality ambiguity or eliminate any remaining unmatched records."
+      },
+      "usage": {
+        "input_tokens": 1630,
+        "output_tokens": 656,
+        "cache_read_input_tokens": 0,
+        "cache_creation_input_tokens": 0,
+        "calls": 1,
+        "calls_by_role": {
+          "remediate": 1
+        },
+        "inr_micros": 46006
+      }
+    },
+    "remediate_ef2b6786a3e89ec4": {
+      "role": "remediate",
+      "model": "groq/compound-mini",
+      "prompt_excerpt": "SETTLEMENT bank_credit_travel_2026_09_28_1056, held as UNDERDETERMINED\nmerchant type: travel\nwhy it is held: this batch is claimed to be 8 records of a 67-record pool, a free cardinality of 8, at whic...",
+      "answer": {
+        "note": "Tighten the value‑date window for this settlement. This reduction halves the candidate pool and drives the collision index to well below one, as verified by the recomputed index. It will not fix mismatches that stem from missing settlement‑to‑payment mappings or from lack of instrument‑level segregation."
+      },
+      "usage": {
+        "input_tokens": 1622,
+        "output_tokens": 558,
+        "cache_read_input_tokens": 0,
+        "cache_creation_input_tokens": 0,
+        "calls": 1,
+        "calls_by_role": {
+          "remediate": 1
+        },
+        "inr_micros": 43278
+      }
+    },
+    "remediate_f9341a616d19d7c2": {
+      "role": "remediate",
+      "model": "groq/compound-mini",
+      "prompt_excerpt": "SETTLEMENT bank_credit_travel_2026_08_18_1015, held as UNDERDETERMINED\nmerchant type: travel\nwhy it is held: this batch is claimed to be 9 records of a 60-record pool, a free cardinality of 9, at whic...",
+      "answer": {
+        "note": "Tighten the value‑date window to shrink the candidate pool to roughly thirty records. This was verified to collapse the collision index from the high hundreds to about half a point by reducing the pool size. It will not address the missing settlement‑to‑payment reference, which must still be supplied manually."
+      },
+      "usage": {
+        "input_tokens": 1622,
+        "output_tokens": 530,
+        "cache_read_input_tokens": 0,
+        "cache_creation_input_tokens": 0,
+        "calls": 1,
+        "calls_by_role": {
+          "remediate": 1
+        },
+        "inr_micros": 42539
+      }
+    },
+    "remediate_fd915a761e57ca60": {
+      "role": "remediate",
+      "model": "groq/compound-mini",
+      "prompt_excerpt": "SETTLEMENT bank_credit_travel_2026_09_22_1050, held as UNDERDETERMINED\nmerchant type: travel\nwhy it is held: this batch is claimed to be 8 records of a 63-record pool, a free cardinality of 8, at whic...",
+      "answer": {
+        "note": "Tighten the value‑date window to shrink the candidate pool to a much smaller set. This works because the verified collision index falls to just above the threshold, confirming the pool contraction. It will not fix missing settlement‑to‑payment mappings or instrument‑segregated payout mismatches."
+      },
+      "usage": {
+        "input_tokens": 1622,
+        "output_tokens": 594,
+        "cache_read_input_tokens": 0,
+        "cache_creation_input_tokens": 0,
+        "calls": 1,
+        "calls_by_role": {
+          "remediate": 1
+        },
+        "inr_micros": 44228
+      }
+    },
+    "triage_ecc85c3a92a6c7ba": {
+      "role": "triage",
+      "model": "groq/compound-mini",
+      "prompt_excerpt": "SETTLEMENT bank_credit_travel_2026_09_27_1055 (travel, mid_travel)\ncredit: ₹1,52,288.80\nthe report names 7 records summing to ₹1,97,684.85\nRESIDUAL_PAISE=4539605 (₹45,396.05)\nthe report separate...",
+      "answer": {
+        "defect_class": "TRUNCATED_MAPPING"
+      },
+      "usage": {
+        "input_tokens": 1443,
+        "output_tokens": 303,
+        "cache_read_input_tokens": 0,
+        "cache_creation_input_tokens": 0,
+        "calls": 1,
+        "calls_by_role": {
+          "triage": 1
+        },
+        "inr_micros": 33396
+      }
+    }
+  }
+}

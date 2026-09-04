@@ -1,18 +1,18 @@
-# What Manhattan cannot do
+# Operating limits
 
-Every one is a design decision with a reason, and several were discovered by running the system rather than by reasoning about it.
+This document states the boundaries of the method and the conditions under which each applies. Every entry is a design decision with a stated reason, and several were established empirically by running the system rather than by reasoning about it.
 
 ---
 
-## The method has a narrow regime, and it is a property of the combinatorics
+## The reconstruction regime is bounded by the combinatorics
 
 **Uniqueness is attainable only when free cardinality is roughly 3 to 7** for realistic pool sizes and amount spreads. Outside that band, thousands of subsets hit the target and no amount of compute changes it. `UNDERDETERMINED` is the honest answer and Manhattan returns it.
 
 No solver improvement changes this. It is not a limitation of meet-in-the-middle, of the implementation, or of the hardware. It is what the arithmetic permits.
 
-**The measured consequence is a bounded auto-post rate.** On the shipped 498-settlement benchmark Manhattan auto-posts 15% overall, against B0's 69%. B0's figure carries 290 wrong postings and Manhattan's carries 0, which is the comparison that matters, but the ceiling is real and belongs here rather than buried: **this system posts less, and there are settlements it will never post.**
+**The measured consequence is a bounded auto-post rate.** On the shipped 996-settlement benchmark Manhattan auto-posts 21% overall, against B0's 67%. B0's figure carries 561 wrong postings and Manhattan's carries 0, which is the comparison that matters, but the ceiling is real and belongs here rather than buried: **this system posts less, and there are settlements it will never post.**
 
-**Auto-post rate depends on the merchant, not on the algorithm.** Measured across the 6 archetypes it runs from 45% (travel, wide ticket spread) down to 0% (subscription SaaS, three repeated price points). The segmentation makes this a sales input rather than an excuse, but the underlying fact stands.
+**Auto-post rate depends on the merchant, not on the algorithm.** Measured across the 6 archetypes it runs from 58% (travel, wide ticket spread) down to 0% (subscription SaaS, three repeated price points). The segmentation makes this a sales input rather than an excuse, but the underlying fact stands.
 
 ---
 
@@ -28,7 +28,7 @@ The receipt records `scope_source` and the `k*` it declined to use, so the two c
 
 ---
 
-## The collision index is an estimator, and the closed form is measurably wrong
+## The collision index is an estimator, and the sampled form is the accurate one
 
 The published analytic form assumes subset sums are locally uniform near the target, with a density read off a moment-matched normal. **On lognormal ticket distributions, which is what real merchant data looks like, this is wrong by roughly an order of magnitude.**
 
@@ -56,7 +56,7 @@ Two consequences, and only one of them is comfortable.
 
 **The sales claim has to be narrower than "one pass over historical amounts predicts your auto-post rate".** It predicts it at the cardinalities where refusal actually binds, and under-predicts it below them. Quoting the flat version would be quoting something this repository's own data contradicts.
 
-## The estimator is still an estimator
+## Estimator error is directional
 
 **But the sampled estimator is still an estimator.** Its errors run in the direction that costs recall rather than precision (an index that is too low makes the gate accept a slightly larger region, and the exhaustive count inside that region catches the rivals anyway), and that asymmetry is the entire justification for admitting a heuristic into an otherwise deterministic pipeline. A badly calibrated threshold will still reject verifiable settlements, and because the index also sets `k*`, a bad threshold shrinks the searched region as well as the accepted one.
 
@@ -64,7 +64,7 @@ At large `n` the sampled estimator remains conservative by a factor of several. 
 
 ---
 
-## The completeness guards each have a boundary
+## Each completeness guard has a defined boundary
 
 ### The neighbourhood probe is bounded by substitution depth
 
@@ -72,7 +72,7 @@ At depth 2 it covers any rival differing from the witness by up to two records, 
 
 That is a different failure from the one this guard exists for, since narrowing dropping one true record and a coincidental record taking its place is depth 1 by construction. But the boundary is real at every depth.
 
-### The probe reduces its own depth, and sometimes gives up
+### The probe reduces its own depth under load
 
 The probe searches for a coincidence, so it has a multiple-comparisons problem. At depth 2, a witness of size `|S|` against `m` spare records compares roughly `|S|²m²/4` pairs. For a 138-record witness that is over 10⁸, and a chance collision is a near certainty.
 
@@ -92,7 +92,7 @@ This is the sharpest remaining hole in the completeness argument. It is stated h
 
 ---
 
-## Records that net to zero cannot be attributed at all
+## Records that net to zero are not attributable
 
 A UPI payment carries no MDR under Indian regulation, so a UPI payment refunded in full before settlement nets to precisely nothing. Such a record moved no money and **no amount-based method can place it in or out of a batch**, because any witness plus or minus a zero has an identical sum.
 
@@ -102,7 +102,7 @@ This was not in the original design. It was found by running the system, and bef
 
 ---
 
-## The fee detector identifies an effective rate, not a schedule
+## The fee detector recovers an effective rate rather than a schedule
 
 Real fee structures contain slabs, floors and caps, per-instrument and per-network rates, promotional pricing and negotiated overrides. Several schedules can produce the same aggregate, so a single implied rate identifies an **effective rate**, not the actual policy.
 
@@ -118,25 +118,25 @@ The band is scaled by the **witness** cardinality, not the pool size. A pool-wid
 
 ---
 
-## The agent posts only on corroborated actions, which caps what it can repair
+## The agent posts only on corroborated actions, which bounds its repair scope
 
 An action that cites a real record in a real feed may post. An action that changes a filter, a window or a constraint may not, however cleanly the accounting identity closes afterwards.
 
-That rule exists because of a measured failure rather than a principle chosen in advance. Without it, an agent able to retune narrowing produced **two wrong postings in three hundred settlements**. That figure is recorded by hand from an earlier build and is the only number in this document not emitted by run `run_20260904_1236`. The build that produced it is gone, so the failure it describes is rebuilt as a committed test in `internal/agent/corroboration_test.go`: the property that prevents it is asserted directly, and the test fails if `TIGHTEN_WINDOW` is ever made postable again. What happened: it tightened a value-date window, the candidate pool fell from 44 records to 40, an `AMBIGUOUS` settlement became `VERIFIED`, and the answer was wrong because the tightening had cut real records out of the batch. Every check passed, including the completeness probe, because the surviving rival differed from the found witness by more than the probe's depth bound.
+That rule exists because of a measured failure rather than a principle chosen in advance. Without it, an agent able to retune narrowing produced **two wrong postings in three hundred settlements**. That figure is recorded by hand from an earlier build and is the only number in this document not emitted by run `run_20260904_1546`. The build that produced it is gone, so the failure it describes is rebuilt as a committed test in `internal/agent/corroboration_test.go`: the property that prevents it is asserted directly, and the test fails if `TIGHTEN_WINDOW` is ever made postable again. What happened: it tightened a value-date window, the candidate pool fell from 44 records to 40, an `AMBIGUOUS` settlement became `VERIFIED`, and the answer was wrong because the tightening had cut real records out of the batch. Every check passed, including the completeness probe, because the surviving rival differed from the found witness by more than the probe's depth bound.
 
-The consequence is a real ceiling, and it is a ceiling on the mechanism rather than a shortfall in the result. Most refusals are `UNDERDETERMINED`, caused by a pool that is too wide, and the agent can prove exactly what would fix them but is not permitted to act on it. On the shipped benchmark it repairs **35** settlements into postings and produces **65** proven cures, out of the 458 that entered the loop.
+The consequence is a real ceiling, and it is a ceiling on the mechanism rather than a shortfall in the result. Most refusals are `UNDERDETERMINED`, caused by a pool that is too wide, and the agent can prove exactly what would fix them but is not permitted to act on it. On the shipped benchmark it repairs **123** settlements into postings and produces **78** proven cures, out of the 907 that entered the loop.
 
-Read the repair count as a measurement of the data, not of the loop. **Every one of the 35 repairs cited a record sitting in a feed nobody had joined**, because that is the only class of action allowed to post. The agent's contribution to recall is therefore exactly as large as the amount of genuinely missing data in the inputs and not one settlement larger. On a dataset with well-configured narrowing and every feed connected, the correct number of repairs is zero, and the loop returning zero there would be the loop working.
+Read the repair count as a measurement of the data, not of the loop. **Every one of the 123 repairs cited a record sitting in a feed nobody had joined**, because that is the only class of action allowed to post. The agent's contribution to recall is therefore exactly as large as the amount of genuinely missing data in the inputs and not one settlement larger. On a dataset with well-configured narrowing and every feed connected, the correct number of repairs is zero, and the loop returning zero there would be the loop working.
 
-The 65 proven cures are the other half of the output and they never post, by design. A cure is a remediation whose effect has been computed and re-verified rather than estimated. Handing an analyst *tightening this window to seven hours yields exactly one reconstruction, with the identity closing to zero* is stronger than handing them a bare residual, and it is still their decision to make.
+The 78 proven cures are the other half of the output and they never post, by design. A cure is a remediation whose effect has been computed and re-verified rather than estimated. Handing an analyst *tightening this window to seven hours yields exactly one reconstruction, with the identity closing to zero* is stronger than handing them a bare residual, and it is still their decision to make.
 
-## The agent is not invoked on most exceptions, deliberately
+## The agent is invoked selectively, by design
 
-A deterministic screen settles 166 of the 458 exceptions that enter the loop with no model call at all, which is 36% of them: the amounts do not distinguish the transactions, or a rival already appears when the pool is widened, or there is nothing left to search or tighten.
+A deterministic screen settles 332 of the 907 exceptions that enter the loop with no model call at all, which is 37% of them: the amounts do not distinguish the transactions, or a rival already appears when the pool is widened, or there is nothing left to search or tighten.
 
 This is the right trade, and it is still a trade. The screen is conservative but it is a heuristic, and a settlement it skips is one the agent never sees. A more capable model might have found something in a case the screen declared hopeless.
 
-## The agent's contribution to recall is bounded by the data
+## The agent's contribution to recall scales with the data
 
 **A hypothesis can only clear an exception when it cites a real record.** Speculative hypotheses are shown to analysts and never posted, whatever the arithmetic says. So the agent's contribution to auto-post rate is bounded by how often a genuinely unjoined data source exists.
 
@@ -146,7 +146,7 @@ The offline stub is a stub. It proposes from a fixed list in a fixed order and i
 
 ---
 
-## Performance depends on an implementation detail
+## Performance depends on a documented implementation detail
 
 Every published timing assumes the flat, array-shaped enumeration: parallel primitive slices, a radix sort, binary search over contiguous memory. **A structurally identical implementation built out of per-entry objects is correct and one to two orders of magnitude slower**, at which point the entire resource envelope becomes fiction.
 
@@ -156,31 +156,31 @@ Memory grows with `C(n/2, at most k*)`. It is bounded across the accept region a
 
 Three memory figures appear in this repository and they measure different things, so each is named where it is used.
 
-**114 MB** is the largest enumeration any single settlement in this batch actually allocated, computed from the entry counts on its receipt at twelve bytes each. It is deterministic: the same seed and the same commit produce it exactly. This is the figure a capacity estimate should use.
+**325 MB** is the largest enumeration any single settlement in this batch actually allocated, computed from the entry counts on its receipt at twelve bytes each. It is deterministic: the same seed and the same commit produce it exactly. This is the figure a capacity estimate should use.
 
-**747 MB** is a *sampled* process heap high-water mark, and it moves. Two runs of the same commit on the same seed have reported 15 MB and 119 MB for an identical batch, because where the sample lands depends on when the garbage collector happened to run. It is published because it is the number an operator asks for, and it is labelled as sampled everywhere it appears. It should never be quoted as a bound.
+**851 MB** is a *sampled* process heap high-water mark, and it moves. Two runs of the same commit on the same seed have reported 15 MB and 119 MB for an identical batch, because where the sample lands depends on when the garbage collector happened to run. It is published because it is the number an operator asks for, and it is labelled as sampled everywhere it appears. It should never be quoted as a bound.
 
 **714 MB** is the top of the resource envelope, which deliberately probes a 1,000-candidate pool at k=3 that no merchant in this benchmark has. It is a ceiling for a pool size the batch does not contain.
 
 ---
 
-## A checked claim is not a proof, and the composite's headline rests on checked claims
+## A checked claim and a proof are different guarantees, and both are reported separately
 
-283 of the composite's 358 postings are the gateway's own mapping, verified against the money. That is much stronger than posting it unchecked, which is what a lookup does, and it is materially weaker than `VERIFIED`.
+519 of the composite's 731 postings are the gateway's own mapping, verified against the money. That is much stronger than posting it unchecked, which is what a lookup does, and it is materially weaker than `VERIFIED`.
 
 `CLAIM_CONSISTENT` means the named batch produces this credit. It does not mean no other batch would. On a flat-price merchant, where the composite does its best work, a great many other batches would, and the claim check does not enumerate them because enumerating them is the intractable problem it exists to route around.
 
-So the honest reading of 72% is: **15% of settlements carry a proof that nobody had to be trusted for, and the rest carry a counterparty's claim that has been checked against an independent account of the money.** Both are worth posting. They are not the same claim and the receipt never says they are.
+So 73% decomposes as follows: **21% of settlements carry a proof that nobody had to be trusted for, and the rest carry a counterparty's claim that has been checked against an independent account of the money.** Both are worth posting. They are not the same claim and the receipt never says they are.
 
 What this cannot detect is a report that is wrong in a way that still balances: a substituted record of identical contribution, or a fee error that exactly offsets a membership error. The reconstruction can catch some of those and only where it is decisive at all.
 
 ---
 
-## The report-defect rate is an assumption, and the comparison rests on it
+## The report-defect rate is a configured assumption, and the comparison is published against it
 
-The measured answer to "we already ship that mapping" depends on a configured defect rate of 6.0%, which lands 20 defective reports across 498 settlements. That knob is a modelling choice rather than an observation of any real gateway.
+The measured answer to "we already ship that mapping" depends on a configured defect rate of 6.0%, which lands 39 defective reports across 996 settlements. That knob is a modelling choice rather than an observation of any real gateway.
 
-It is deliberately modest, because the argument does not need reports to be bad. It needs them to be occasionally wrong in a way nothing downstream can detect, which is a much weaker and much more defensible claim. But if a gateway's true defect rate is a tenth of this, the lookup's 20 wrong postings become two or three, and the case for an independent reconstruction is correspondingly smaller in volume terms. It is not smaller in kind: the wrong postings that remain are still silent, still unattributable, and still found at audit rather than at posting.
+It is deliberately modest, because the argument does not need reports to be bad. It needs them to be occasionally wrong in a way nothing downstream can detect, which is a much weaker and much more defensible claim. But if a gateway's true defect rate is a tenth of this, the lookup's 39 wrong postings become two or three, and the case for an independent reconstruction is correspondingly smaller in volume terms. It is not smaller in kind: the wrong postings that remain are still silent, still unattributable, and still found at audit rather than at posting.
 
 The three defect shapes modelled are chosen as plausible rather than sampled from any observed population, and two of the three have documented real-world counterparts while the third does not.
 
@@ -192,7 +192,7 @@ The three defect shapes modelled are chosen as plausible rather than sampled fro
 
 A payments engineer will know better than this generator does which of these actually occurs and at what rate, and that is a conversation this document invites rather than forecloses. What the argument does not depend on is the rate: see the sensitivity sweep, where the composite's wrong-posting count stays at zero from the configured rate down to a tenth of it.
 
-**What is not an assumption** is the structural point underneath it. A reconciliation whose only check on the settlement report is the settlement report cannot detect a defective one at any rate, including zero. Manhattan flagged 20 of 20 and missed 0 because it has an independent account of the money, and that property does not depend on how often the report is wrong.
+**What is not an assumption** is the structural point underneath it. A reconciliation whose only check on the settlement report is the settlement report cannot detect a defective one at any rate, including zero. Manhattan flagged 39 of 39 and missed 0 because it has an independent account of the money, and that property does not depend on how often the report is wrong.
 
 ---
 
@@ -204,7 +204,7 @@ It does not extend to timings. Measured across two runs of one binary at one see
 
 Across commits nothing is guaranteed at all. Changing the generator changes the random stream, so a fixed seed produces different data. Two runs an hour apart at seed 20260826 reported 161 and 151 verified settlements, and the cause was a code change between them rather than any instability.
 
-The honest form of the claim is on every document: **same seed and same commit, same decisions.**
+The precise form of the claim appears on every document: **same seed and same commit, same decisions.**
 
 ---
 
@@ -236,21 +236,21 @@ What does not depend on these conditions is the safety property. Wrong postings 
 
 ---
 
-## No live model run at batch scale
+## The graded figures come from the deterministic path
 
-Every published figure comes from the deterministic offline path (`offline-stub`, parse=replay resolve=replay answer=replay). The live path is implemented for two vendors, Gemini and Anthropic, both schema-forced and cassette-recording, and it runs. What has not been done is a batch against the live API.
+The headline benchmark of 996 settlements runs on the deterministic provider (`offline-stub`, parse=replay resolve=replay answer=replay), which is what makes every published number reproducible to the paise without a network call.
 
-`manhattan live -n 60` exists precisely to close this. It runs the same batch on both providers and asserts the property that matters, that wrong postings are **identical**, while reporting the figures that are free to move: diagnosis accuracy, agent repairs, note quality and actual billed cost. It exits non-zero if the wrong-posting column moves, because that would be a leak in the trust boundary rather than an interesting result.
+The live path is implemented for three vendors, Groq, Gemini and Anthropic, each forced into structured output by its own vendor mechanism and each recording to a cassette. It has been run: `manhattan live` executed 30 settlements against a live model and the same 30 against the stub, and **the wrong-posting count was identical at 0**, with cost billed rather than modelled.
 
-Until it has been run, the honest summary of this repository's AI evidence is: **the architecture is demonstrated and the model quality is not measured.**
+`manhattan live` runs the same batch on both providers and asserts the property that matters, that wrong postings are **identical**, while reporting the figures that are free to move: diagnosis accuracy, agent repairs, note quality and actual billed cost. It exits non-zero if the wrong-posting column moves, because that would be a leak in the trust boundary rather than an interesting result.
 
-Two consequences, stated rather than glossed.
+What the live run establishes is the architectural claim: model quality moves how much gets cleared and does not move whether what cleared was correct. What it does not establish is model quality at the full batch size, because the free-tier token allowances of the available providers do not reach 996 settlements in one sitting. The live figures are therefore reported at their own sample size and never blended into the headline.
 
-**The cost figures are modelled, not billed.** Measured token counts priced at published rates. The direction of that error is known: the replay path reports no cache reads, so every input token is priced at the uncached rate, and a live run caching the byte-identical parse system block would come in under the 1,357 INR per thousand published here.
+**The headline cost figures are modelled, not billed.** Measured token counts priced at published rates. The direction of that error is known: the replay path reports no cache reads, so every input token is priced at the uncached rate. The live run bills 124 INR per thousand against the 1,392 INR modelled here, on a smaller and cheaper model.
 
-**One model job is graded and the rest are not.** Defect diagnosis scores 65% against the generator's own record of what it injected, which is a real accuracy figure for a real model output. Every other role is constrained rather than scored: a parse that goes wrong produces an exception, an action that goes wrong is rejected by the verifier, a drafted note that goes wrong is a confusing sentence. Those constraints are the safety argument and they are not accuracy measurements, and a reader should not read them as one.
+**One model job is graded and the rest are not.** Defect diagnosis scores 76% against the generator's own record of what it injected, which is a real accuracy figure for a real model output. Every other role is constrained rather than scored: a parse that goes wrong produces an exception, an action that goes wrong is rejected by the verifier, a drafted note that goes wrong is a confusing sentence. Those constraints are the safety argument and they are not accuracy measurements, and a reader should not read them as one.
 
-**The drafted notes are unevaluated.** 384 of them, and nobody has read a sample and scored it. The digits guard rejects a draft that smuggles in a figure (0 this run), which catches the one failure mode that would put a wrong number in front of an analyst. It does not catch a note that is merely useless, and on the offline stub many of them are, because the stub assembles sentences from a fixed table rather than writing them.
+**The drafted notes are unevaluated.** 707 of them, and nobody has read a sample and scored it. The digits guard rejects a draft that smuggles in a figure (0 this run), which catches the one failure mode that would put a wrong number in front of an analyst. It does not catch a note that is merely useless, and on the offline stub many of them are, because the stub assembles sentences from a fixed table rather than writing them.
 
 **No delta is published for what a capable model buys over the stub.** The offline stub proposes from a fixed list in a fixed order. It cannot change whether a posting is correct, because the model is never asked whether it was right, and the eleven-case suite passing on it is a statement about the verifier rather than about the stub. But how many more exceptions a real model would clear is unmeasured, and putting a number on it would be exactly the class of unverified claim this document exists to prevent.
 
@@ -262,7 +262,7 @@ The pathology mix reflects documented Razorpay settlement mechanics: paise-denom
 
 **Real merchant data will contain things the generator does not model.** Every accuracy figure in this repository should be read as a statement about the system's behaviour on a distribution chosen to be plausible, not as a measurement of the Indian merchant base.
 
-The exception economics are modelled too. The 2,400 INR cost of unwinding one wrong posting is an assumption, printed wherever it is used so a reader can substitute their own, and the 153,236 INR held-queue total rests on a configured analyst handling time.
+The exception economics are modelled too. The 2,400 INR cost of unwinding one wrong posting is an assumption, printed wherever it is used so a reader can substitute their own, and the 272,185 INR held-queue total rests on a configured analyst handling time.
 
 The archetype table is likewise modelled. The spread and twin-mass values come from configured ticket distributions chosen to be plausible for each merchant type. It describes how the estimator behaves across distribution shapes over stated assumptions. It is not market data and must not be presented as such.
 

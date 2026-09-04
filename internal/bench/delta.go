@@ -2,6 +2,7 @@ package bench
 
 import (
 	"fmt"
+	"sort"
 	"strings"
 )
 
@@ -51,30 +52,44 @@ type LiveDelta struct {
 	LiveCalls     int     `json:"live_model_calls"`
 	LiveCacheHit  float64 `json:"live_cache_hit_rate"`
 	PriceIsReal   bool    `json:"live_price_is_real_spend"`
+
+	// What the provider did not do.
+	//
+	// A quality column that moves can mean the model answered worse or that it
+	// did not answer, and those call for opposite responses: one is a model
+	// choice, the other is an integration to fix. The batch records a failed
+	// call as an exception it could not clear, so without these the two are
+	// indistinguishable in the delta table.
+	LiveFailures       int            `json:"live_model_call_failures"`
+	LiveReliability    float64        `json:"live_model_call_reliability"`
+	LiveFailuresByRole map[string]int `json:"live_model_call_failures_by_role,omitempty"`
 }
 
 // Delta compares a live run against an identical stub run.
 func Delta(live, stub Summary) LiveDelta {
 	d := LiveDelta{
-		Settlements:      live.Settlements,
-		LiveModel:        live.ProviderModels,
-		StubModel:        stub.ProviderModels,
-		LiveVerified:     live.AutoPosted,
-		StubVerified:     stub.AutoPosted,
-		LiveWrong:        live.AutoPostedWrong,
-		StubWrong:        stub.AutoPostedWrong,
-		LiveM1:           live.M1Posted,
-		StubM1:           stub.M1Posted,
-		LiveM1Wrong:      live.M1PostedWrong,
-		StubM1Wrong:      stub.M1PostedWrong,
-		LiveDiagnosisAcc: live.DiagnosisAccuracy,
-		StubDiagnosisAcc: stub.DiagnosisAccuracy,
-		LiveRepairs:      live.AgentRepaired,
-		StubRepairs:      stub.AgentRepaired,
-		LiveCures:        live.AgentProvenCures,
-		StubCures:        stub.AgentProvenCures,
-		LiveNotes:        live.NotesDrafted,
-		StubNotes:        stub.NotesDrafted,
+		LiveFailures:       live.ModelFailures,
+		LiveReliability:    live.ModelReliability,
+		LiveFailuresByRole: live.FailuresByRole,
+		Settlements:        live.Settlements,
+		LiveModel:          live.ProviderModels,
+		StubModel:          stub.ProviderModels,
+		LiveVerified:       live.AutoPosted,
+		StubVerified:       stub.AutoPosted,
+		LiveWrong:          live.AutoPostedWrong,
+		StubWrong:          stub.AutoPostedWrong,
+		LiveM1:             live.M1Posted,
+		StubM1:             stub.M1Posted,
+		LiveM1Wrong:        live.M1PostedWrong,
+		StubM1Wrong:        stub.M1PostedWrong,
+		LiveDiagnosisAcc:   live.DiagnosisAccuracy,
+		StubDiagnosisAcc:   stub.DiagnosisAccuracy,
+		LiveRepairs:        live.AgentRepaired,
+		StubRepairs:        stub.AgentRepaired,
+		LiveCures:          live.AgentProvenCures,
+		StubCures:          stub.AgentProvenCures,
+		LiveNotes:          live.NotesDrafted,
+		StubNotes:          stub.NotesDrafted,
 
 		LiveNotesRejected: live.NotesRejected,
 		LiveINRPer1k:      live.INRPer1k,
@@ -132,6 +147,24 @@ func RenderDelta(d LiveDelta) string {
 		fmt.Sprintf("%.0f", d.LiveINRPer1k), fmt.Sprintf("%.0f", d.ModelledPer1k))
 	row("cache hit rate", fmt.Sprintf("%.0f%%", d.LiveCacheHit*100), "n/a")
 	row("actually billed", d.PriceIsReal, false)
+
+	fmt.Fprintf(&b, "\n  PROVIDER RELIABILITY\n")
+	row("calls completed",
+		fmt.Sprintf("%.0f%%", d.LiveReliability*100), "100%")
+	row("calls that failed", d.LiveFailures, 0)
+	if len(d.LiveFailuresByRole) > 0 {
+		roles := make([]string, 0, len(d.LiveFailuresByRole))
+		for r := range d.LiveFailuresByRole {
+			roles = append(roles, r)
+		}
+		sort.Strings(roles)
+		for _, r := range roles {
+			row("  failed: "+r, d.LiveFailuresByRole[r], 0)
+		}
+		fmt.Fprintf(&b, "\n  A failed call is recorded as an exception the agent could not clear,\n")
+		fmt.Fprintf(&b, "  so a role failing here depresses the quality column above without\n")
+		fmt.Fprintf(&b, "  the model having answered anything badly. Read the two together.\n")
+	}
 
 	if d.PostingsMoved {
 		fmt.Fprintf(&b, "\n  wrong-posting counts differ between providers, which they must not.\n")

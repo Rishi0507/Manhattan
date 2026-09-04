@@ -1,46 +1,46 @@
 {
-  "run_id": "run_20260904_1236",
-  "settlements": 498,
+  "run_id": "run_20260904_1546",
+  "settlements": 996,
   "flags": null,
   "status_counts": {
-    "AMBIGUOUS": 149,
-    "NARROWING_SENSITIVE": 1,
-    "UNDERDETERMINED": 248,
-    "UNRESOLVED": 25,
-    "VERIFIED": 75
+    "AMBIGUOUS": 250,
+    "NARROWING_SENSITIVE": 3,
+    "UNDERDETERMINED": 476,
+    "UNRESOLVED": 55,
+    "VERIFIED": 212
   },
   "flag_counts": {
-    "AMOUNT_ENTROPY_INSUFFICIENT": 166,
-    "FEE_ANOMALY": 119,
-    "LATTICE_CORRECTED": 65,
-    "RESOLVED_BY_HYPOTHESIS": 35,
-    "SIGNED_ITEMS_PRESENT": 233
+    "AMOUNT_ENTROPY_INSUFFICIENT": 332,
+    "FEE_ANOMALY": 251,
+    "LATTICE_CORRECTED": 136,
+    "RESOLVED_BY_HYPOTHESIS": 123,
+    "SIGNED_ITEMS_PRESENT": 454
   },
-  "auto_posted": 75,
+  "auto_posted": 212,
   "auto_posted_wrong": 0,
-  "exceptions": 423,
+  "exceptions": 784,
   "throughput": {
-    "wall_clock_s": 45.6520225,
-    "settlements_per_hour": 39270.98739163199,
-    "median_latency_ms": 24.527,
-    "p95_latency_ms": 242.797,
-    "peak_memory_mb": 747.1198654174805
+    "wall_clock_s": 113.7757466,
+    "settlements_per_hour": 31514.625103765302,
+    "median_latency_ms": 26.454,
+    "p95_latency_ms": 247.786,
+    "peak_memory_mb": 851.0673675537109
   },
   "cost": {
-    "model_calls": 1498,
-    "parse_calls": 498,
-    "agent_calls": 591,
-    "exception_rate": 0.8493975903614458,
-    "input_tokens": 1060246,
-    "output_tokens": 99018,
+    "model_calls": 2975,
+    "parse_calls": 996,
+    "agent_calls": 1233,
+    "exception_rate": 0.7871485943775101,
+    "input_tokens": 2167082,
+    "output_tokens": 200653,
     "inr": 0,
-    "inr_per_1k_settlements": 1356.5933333333335
+    "inr_per_1k_settlements": 1391.5198795180725
   },
   "aggregate_drop_rates": {
-    "already_reconciled": 0.08583144109617148,
-    "mid_mismatch": 0.13624325847877775,
-    "outside_settlement_window": 0.7659868801252069,
-    "zero_net_contribution": 0.000038199452438134624
+    "already_reconciled": 0.08694940091253393,
+    "mid_mismatch": 0.13768693368031842,
+    "outside_settlement_window": 0.769688640487678,
+    "zero_net_contribution": 0.000019582273140392713
   },
   "replay_seed": 20260826,
   "policy_version": "fees_2026_08"

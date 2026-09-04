@@ -532,3 +532,11 @@ func retryAfter(err error) time.Duration {
 }
 
 var retryDelayRe = regexp.MustCompile(`retryDelay"?:\s*"?([0-9.]+m?s)`)
+
+// GeminiSchemaForTest exposes the conversion so other packages can check that
+// the schemas they actually send survive it.
+//
+// The alternative is duplicating every schema into this package's tests, where
+// the copy drifts from the original and the test then guards a schema nobody
+// sends.
+func GeminiSchemaForTest(in map[string]any) map[string]any { return geminiSchema(in) }

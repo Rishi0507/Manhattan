@@ -19,7 +19,7 @@
     "b0_post_rate": 1,
     "mean_reconstructions_counted": 1,
     "entropy_gate_refusal_rate": 0,
-    "mean_latency_ms": 8.77275
+    "mean_latency_ms": 9.449625
   },
   {
     "archetype": "travel",
@@ -41,7 +41,7 @@
     "b0_post_rate": 1,
     "mean_reconstructions_counted": 1,
     "entropy_gate_refusal_rate": 0,
-    "mean_latency_ms": 9.354000000000001
+    "mean_latency_ms": 7.022875
   },
   {
     "archetype": "d2c_ecommerce",
@@ -63,7 +63,7 @@
     "b0_post_rate": 1,
     "mean_reconstructions_counted": 1,
     "entropy_gate_refusal_rate": 0,
-    "mean_latency_ms": 6.226875
+    "mean_latency_ms": 7.334375
   },
   {
     "archetype": "travel",
@@ -85,7 +85,7 @@
     "b0_post_rate": 1,
     "mean_reconstructions_counted": 0.75,
     "entropy_gate_refusal_rate": 0,
-    "mean_latency_ms": 9.0665
+    "mean_latency_ms": 8.7485
   },
   {
     "archetype": "marketplace",
@@ -107,7 +107,7 @@
     "b0_post_rate": 1,
     "mean_reconstructions_counted": 1,
     "entropy_gate_refusal_rate": 0,
-    "mean_latency_ms": 9.6705
+    "mean_latency_ms": 8.155375
   },
   {
     "archetype": "marketplace",
@@ -129,7 +129,7 @@
     "b0_post_rate": 1,
     "mean_reconstructions_counted": 1,
     "entropy_gate_refusal_rate": 0,
-    "mean_latency_ms": 8.56475
+    "mean_latency_ms": 8.571750000000002
   },
   {
     "archetype": "marketplace",
@@ -151,7 +151,7 @@
     "b0_post_rate": 1,
     "mean_reconstructions_counted": 0.875,
     "entropy_gate_refusal_rate": 0,
-    "mean_latency_ms": 10.69725
+    "mean_latency_ms": 7.568999999999999
   },
   {
     "archetype": "quick_commerce",
@@ -173,7 +173,7 @@
     "b0_post_rate": 1,
     "mean_reconstructions_counted": 1,
     "entropy_gate_refusal_rate": 0,
-    "mean_latency_ms": 7.6602500000000004
+    "mean_latency_ms": 6.28275
   },
   {
     "archetype": "d2c_ecommerce",
@@ -195,7 +195,7 @@
     "b0_post_rate": 1,
     "mean_reconstructions_counted": 1,
     "entropy_gate_refusal_rate": 0,
-    "mean_latency_ms": 7.01525
+    "mean_latency_ms": 7.763125
   },
   {
     "archetype": "travel",
@@ -217,7 +217,7 @@
     "b0_post_rate": 1,
     "mean_reconstructions_counted": 1,
     "entropy_gate_refusal_rate": 0,
-    "mean_latency_ms": 16.651999999999997
+    "mean_latency_ms": 12.345375
   },
   {
     "archetype": "d2c_ecommerce",
@@ -239,7 +239,7 @@
     "b0_post_rate": 1,
     "mean_reconstructions_counted": 0.625,
     "entropy_gate_refusal_rate": 0,
-    "mean_latency_ms": 5.731624999999999
+    "mean_latency_ms": 6.249625000000001
   },
   {
     "archetype": "travel",
@@ -261,7 +261,7 @@
     "b0_post_rate": 1,
     "mean_reconstructions_counted": 1,
     "entropy_gate_refusal_rate": 0,
-    "mean_latency_ms": 18.354375
+    "mean_latency_ms": 17.620625
   },
   {
     "archetype": "marketplace",
@@ -283,7 +283,7 @@
     "b0_post_rate": 1,
     "mean_reconstructions_counted": 1,
     "entropy_gate_refusal_rate": 0,
-    "mean_latency_ms": 16.714375
+    "mean_latency_ms": 10.22675
   },
   {
     "archetype": "quick_commerce",
@@ -305,7 +305,7 @@
     "b0_post_rate": 1,
     "mean_reconstructions_counted": 1.375,
     "entropy_gate_refusal_rate": 0,
-    "mean_latency_ms": 7.688124999999999
+    "mean_latency_ms": 4.685375
   },
   {
     "archetype": "travel",
@@ -327,7 +327,7 @@
     "b0_post_rate": 0.25,
     "mean_reconstructions_counted": 1.125,
     "entropy_gate_refusal_rate": 0,
-    "mean_latency_ms": 22.511875000000003
+    "mean_latency_ms": 24.698249999999998
   },
   {
     "archetype": "d2c_ecommerce",
@@ -349,7 +349,7 @@
     "b0_post_rate": 1,
     "mean_reconstructions_counted": 1,
     "entropy_gate_refusal_rate": 0,
-    "mean_latency_ms": 12.242375
+    "mean_latency_ms": 10.450375000000001
   },
   {
     "archetype": "quick_commerce",
@@ -371,7 +371,7 @@
     "b0_post_rate": 1,
     "mean_reconstructions_counted": 1,
     "entropy_gate_refusal_rate": 0,
-    "mean_latency_ms": 7.8027500000000005
+    "mean_latency_ms": 6.389374999999999
   },
   {
     "archetype": "marketplace",
@@ -393,7 +393,7 @@
     "b0_post_rate": 1,
     "mean_reconstructions_counted": 1.25,
     "entropy_gate_refusal_rate": 0,
-    "mean_latency_ms": 17.73175
+    "mean_latency_ms": 10.615499999999999
   },
   {
     "archetype": "d2c_ecommerce",
@@ -415,7 +415,7 @@
     "b0_post_rate": 1,
     "mean_reconstructions_counted": 1,
     "entropy_gate_refusal_rate": 0,
-    "mean_latency_ms": 10.3865
+    "mean_latency_ms": 12.642999999999999
   },
   {
     "archetype": "travel",
@@ -437,7 +437,7 @@
     "b0_post_rate": 0,
     "mean_reconstructions_counted": 0,
     "entropy_gate_refusal_rate": 0,
-    "mean_latency_ms": 8.831875
+    "mean_latency_ms": 10.744
   },
   {
     "archetype": "marketplace",
@@ -459,7 +459,7 @@
     "b0_post_rate": 1,
     "mean_reconstructions_counted": 0,
     "entropy_gate_refusal_rate": 0,
-    "mean_latency_ms": 6.408
+    "mean_latency_ms": 9.446375
   },
   {
     "archetype": "d2c_ecommerce",
@@ -481,7 +481,7 @@
     "b0_post_rate": 0.5,
     "mean_reconstructions_counted": 0,
     "entropy_gate_refusal_rate": 0,
-    "mean_latency_ms": 8.90925
+    "mean_latency_ms": 8.184125
   },
   {
     "archetype": "marketplace",
@@ -503,7 +503,7 @@
     "b0_post_rate": 0.875,
     "mean_reconstructions_counted": 1.75,
     "entropy_gate_refusal_rate": 0,
-    "mean_latency_ms": 19.83125
+    "mean_latency_ms": 13.957374999999999
   },
   {
     "archetype": "quick_commerce",
@@ -525,7 +525,7 @@
     "b0_post_rate": 0.75,
     "mean_reconstructions_counted": 0,
     "entropy_gate_refusal_rate": 0,
-    "mean_latency_ms": 11.516
+    "mean_latency_ms": 7.0794999999999995
   },
   {
     "archetype": "quick_commerce",
@@ -547,7 +547,7 @@
     "b0_post_rate": 1,
     "mean_reconstructions_counted": 2.125,
     "entropy_gate_refusal_rate": 0,
-    "mean_latency_ms": 13.693874999999998
+    "mean_latency_ms": 8.499875
   },
   {
     "archetype": "d2c_ecommerce",
@@ -569,7 +569,7 @@
     "b0_post_rate": 0.625,
     "mean_reconstructions_counted": 5.25,
     "entropy_gate_refusal_rate": 0,
-    "mean_latency_ms": 14.260250000000001
+    "mean_latency_ms": 14.90275
   },
   {
     "archetype": "marketplace",
@@ -591,7 +591,7 @@
     "b0_post_rate": 0.875,
     "mean_reconstructions_counted": 0,
     "entropy_gate_refusal_rate": 0,
-    "mean_latency_ms": 6.943875
+    "mean_latency_ms": 6.5657499999999995
   },
   {
     "archetype": "d2c_ecommerce",
@@ -613,7 +613,7 @@
     "b0_post_rate": 0.125,
     "mean_reconstructions_counted": 0,
     "entropy_gate_refusal_rate": 0,
-    "mean_latency_ms": 9.5695
+    "mean_latency_ms": 9.328249999999999
   },
   {
     "archetype": "quick_commerce",
@@ -635,7 +635,7 @@
     "b0_post_rate": 0.625,
     "mean_reconstructions_counted": 0,
     "entropy_gate_refusal_rate": 0,
-    "mean_latency_ms": 10.22375
+    "mean_latency_ms": 7.7955000000000005
   },
   {
     "archetype": "quick_commerce",
@@ -657,7 +657,7 @@
     "b0_post_rate": 0.875,
     "mean_reconstructions_counted": 0,
     "entropy_gate_refusal_rate": 0,
-    "mean_latency_ms": 9.819125
+    "mean_latency_ms": 10.467
   },
   {
     "archetype": "quick_commerce",
@@ -679,7 +679,7 @@
     "b0_post_rate": 0.875,
     "mean_reconstructions_counted": 0,
     "entropy_gate_refusal_rate": 0,
-    "mean_latency_ms": 10.40425
+    "mean_latency_ms": 7.373125
   },
   {
     "archetype": "quick_commerce",
@@ -701,7 +701,7 @@
     "b0_post_rate": 1,
     "mean_reconstructions_counted": 0,
     "entropy_gate_refusal_rate": 0,
-    "mean_latency_ms": 8.997125
+    "mean_latency_ms": 9.106625000000001
   },
   {
     "archetype": "travel",
@@ -723,7 +723,7 @@
     "b0_post_rate": 0.25,
     "mean_reconstructions_counted": 1.75,
     "entropy_gate_refusal_rate": 0,
-    "mean_latency_ms": 620.31025
+    "mean_latency_ms": 606.647125
   },
   {
     "archetype": "d2c_ecommerce",
@@ -745,7 +745,7 @@
     "b0_post_rate": 0.5,
     "mean_reconstructions_counted": 0,
     "entropy_gate_refusal_rate": 0,
-    "mean_latency_ms": 11.628
+    "mean_latency_ms": 8.600625
   },
   {
     "archetype": "d2c_ecommerce",
@@ -767,7 +767,7 @@
     "b0_post_rate": 0.75,
     "mean_reconstructions_counted": 1.125,
     "entropy_gate_refusal_rate": 0,
-    "mean_latency_ms": 34.755250000000004
+    "mean_latency_ms": 33.162749999999996
   },
   {
     "archetype": "d2c_ecommerce",
@@ -789,7 +789,7 @@
     "b0_post_rate": 0.5,
     "mean_reconstructions_counted": 0,
     "entropy_gate_refusal_rate": 0,
-    "mean_latency_ms": 10.295875
+    "mean_latency_ms": 6.759250000000001
   },
   {
     "archetype": "marketplace",
@@ -811,7 +811,7 @@
     "b0_post_rate": 0.875,
     "mean_reconstructions_counted": 0,
     "entropy_gate_refusal_rate": 0,
-    "mean_latency_ms": 9.059875
+    "mean_latency_ms": 8.939875
   },
   {
     "archetype": "quick_commerce",
@@ -833,7 +833,7 @@
     "b0_post_rate": 1,
     "mean_reconstructions_counted": 1.5,
     "entropy_gate_refusal_rate": 0,
-    "mean_latency_ms": 11.847375
+    "mean_latency_ms": 11.7465
   },
   {
     "archetype": "marketplace",
@@ -855,7 +855,7 @@
     "b0_post_rate": 0.75,
     "mean_reconstructions_counted": 0,
     "entropy_gate_refusal_rate": 0,
-    "mean_latency_ms": 8.57675
+    "mean_latency_ms": 9.440624999999999
   },
   {
     "archetype": "d2c_ecommerce",
@@ -877,7 +877,7 @@
     "b0_post_rate": 0.625,
     "mean_reconstructions_counted": 0,
     "entropy_gate_refusal_rate": 0,
-    "mean_latency_ms": 10.620875000000002
+    "mean_latency_ms": 6.25775
   },
   {
     "archetype": "travel",
@@ -899,7 +899,7 @@
     "b0_post_rate": 0,
     "mean_reconstructions_counted": 0,
     "entropy_gate_refusal_rate": 0,
-    "mean_latency_ms": 10.682125
+    "mean_latency_ms": 12.44075
   },
   {
     "archetype": "quick_commerce",
@@ -921,7 +921,7 @@
     "b0_post_rate": 1,
     "mean_reconstructions_counted": 0,
     "entropy_gate_refusal_rate": 0,
-    "mean_latency_ms": 11.162875
+    "mean_latency_ms": 8.53425
   },
   {
     "archetype": "quick_commerce",
@@ -943,7 +943,7 @@
     "b0_post_rate": 1,
     "mean_reconstructions_counted": 0,
     "entropy_gate_refusal_rate": 0,
-    "mean_latency_ms": 13.313875
+    "mean_latency_ms": 9.715375
   },
   {
     "archetype": "d2c_ecommerce",
@@ -965,7 +965,7 @@
     "b0_post_rate": 0.125,
     "mean_reconstructions_counted": 0.75,
     "entropy_gate_refusal_rate": 0,
-    "mean_latency_ms": 139.49749999999997
+    "mean_latency_ms": 135.031125
   },
   {
     "archetype": "marketplace",
@@ -987,7 +987,7 @@
     "b0_post_rate": 0.875,
     "mean_reconstructions_counted": 2,
     "entropy_gate_refusal_rate": 0,
-    "mean_latency_ms": 41.63625
+    "mean_latency_ms": 38.4915
   },
   {
     "archetype": "quick_commerce",
@@ -1009,7 +1009,7 @@
     "b0_post_rate": 0.75,
     "mean_reconstructions_counted": 0,
     "entropy_gate_refusal_rate": 0,
-    "mean_latency_ms": 11.068
+    "mean_latency_ms": 7.66625
   },
   {
     "archetype": "travel",
@@ -1031,7 +1031,7 @@
     "b0_post_rate": 0,
     "mean_reconstructions_counted": 0,
     "entropy_gate_refusal_rate": 0,
-    "mean_latency_ms": 6.769375
+    "mean_latency_ms": 10.103375
   },
   {
     "archetype": "quick_commerce",
@@ -1053,7 +1053,7 @@
     "b0_post_rate": 1,
     "mean_reconstructions_counted": 1.375,
     "entropy_gate_refusal_rate": 0,
-    "mean_latency_ms": 10.281250000000002
+    "mean_latency_ms": 9.208124999999999
   },
   {
     "archetype": "marketplace",
@@ -1075,7 +1075,7 @@
     "b0_post_rate": 0.875,
     "mean_reconstructions_counted": 2,
     "entropy_gate_refusal_rate": 0,
-    "mean_latency_ms": 219.092125
+    "mean_latency_ms": 244.130625
   },
   {
     "archetype": "travel",
@@ -1097,7 +1097,7 @@
     "b0_post_rate": 0,
     "mean_reconstructions_counted": 0,
     "entropy_gate_refusal_rate": 0,
-    "mean_latency_ms": 10.4855
+    "mean_latency_ms": 8.882375
   },
   {
     "archetype": "marketplace",
@@ -1119,7 +1119,7 @@
     "b0_post_rate": 0.75,
     "mean_reconstructions_counted": 1.375,
     "entropy_gate_refusal_rate": 0,
-    "mean_latency_ms": 83.453375
+    "mean_latency_ms": 89.927875
   },
   {
     "archetype": "marketplace",
@@ -1141,7 +1141,7 @@
     "b0_post_rate": 0.375,
     "mean_reconstructions_counted": 0.625,
     "entropy_gate_refusal_rate": 0,
-    "mean_latency_ms": 48.67825
+    "mean_latency_ms": 63.492125
   },
   {
     "archetype": "travel",
@@ -1163,7 +1163,7 @@
     "b0_post_rate": 0.25,
     "mean_reconstructions_counted": 0,
     "entropy_gate_refusal_rate": 0,
-    "mean_latency_ms": 8.128125
+    "mean_latency_ms": 7.670749999999999
   },
   {
     "archetype": "quick_commerce",
@@ -1185,7 +1185,7 @@
     "b0_post_rate": 0.875,
     "mean_reconstructions_counted": 4,
     "entropy_gate_refusal_rate": 0,
-    "mean_latency_ms": 11.460624999999999
+    "mean_latency_ms": 10.329125000000001
   },
   {
     "archetype": "d2c_ecommerce",
@@ -1207,7 +1207,7 @@
     "b0_post_rate": 0.25,
     "mean_reconstructions_counted": 0,
     "entropy_gate_refusal_rate": 0,
-    "mean_latency_ms": 6.215
+    "mean_latency_ms": 9.33125
   },
   {
     "archetype": "d2c_ecommerce",
@@ -1229,7 +1229,7 @@
     "b0_post_rate": 0.5,
     "mean_reconstructions_counted": 0,
     "entropy_gate_refusal_rate": 0,
-    "mean_latency_ms": 11.671875
+    "mean_latency_ms": 5.780125
   },
   {
     "archetype": "d2c_ecommerce",
@@ -1251,7 +1251,7 @@
     "b0_post_rate": 0.625,
     "mean_reconstructions_counted": 0.875,
     "entropy_gate_refusal_rate": 0,
-    "mean_latency_ms": 47.93299999999999
+    "mean_latency_ms": 24.8585
   },
   {
     "archetype": "quick_commerce",
@@ -1273,7 +1273,7 @@
     "b0_post_rate": 1,
     "mean_reconstructions_counted": 2.75,
     "entropy_gate_refusal_rate": 0,
-    "mean_latency_ms": 14.923125
+    "mean_latency_ms": 13.363125
   },
   {
     "archetype": "travel",
@@ -1295,7 +1295,7 @@
     "b0_post_rate": 1,
     "mean_reconstructions_counted": 1,
     "entropy_gate_refusal_rate": 0,
-    "mean_latency_ms": 15.53925
+    "mean_latency_ms": 13.317499999999999
   },
   {
     "archetype": "d2c_ecommerce",
@@ -1317,7 +1317,7 @@
     "b0_post_rate": 0.5,
     "mean_reconstructions_counted": 0,
     "entropy_gate_refusal_rate": 0,
-    "mean_latency_ms": 8.929375
+    "mean_latency_ms": 7.31075
   },
   {
     "archetype": "travel",
@@ -1339,7 +1339,7 @@
     "b0_post_rate": 0,
     "mean_reconstructions_counted": 3.625,
     "entropy_gate_refusal_rate": 0,
-    "mean_latency_ms": 1040.781125
+    "mean_latency_ms": 1017.0635
   },
   {
     "archetype": "marketplace",
@@ -1361,7 +1361,7 @@
     "b0_post_rate": 0.875,
     "mean_reconstructions_counted": 0,
     "entropy_gate_refusal_rate": 0,
-    "mean_latency_ms": 10.073375
+    "mean_latency_ms": 10.708625000000001
   },
   {
     "archetype": "quick_commerce",
@@ -1383,7 +1383,7 @@
     "b0_post_rate": 0.875,
     "mean_reconstructions_counted": 0,
     "entropy_gate_refusal_rate": 0,
-    "mean_latency_ms": 9.485125
+    "mean_latency_ms": 7.9645
   },
   {
     "archetype": "marketplace",
@@ -1405,7 +1405,7 @@
     "b0_post_rate": 0.875,
     "mean_reconstructions_counted": 0,
     "entropy_gate_refusal_rate": 0,
-    "mean_latency_ms": 9.241875
+    "mean_latency_ms": 7.966125
   },
   {
     "archetype": "d2c_ecommerce",
@@ -1427,7 +1427,7 @@
     "b0_post_rate": 0.625,
     "mean_reconstructions_counted": 0,
     "entropy_gate_refusal_rate": 0,
-    "mean_latency_ms": 10.942375
+    "mean_latency_ms": 7.947375000000001
   },
   {
     "archetype": "travel",
@@ -1449,7 +1449,7 @@
     "b0_post_rate": 0.375,
     "mean_reconstructions_counted": 2,
     "entropy_gate_refusal_rate": 0,
-    "mean_latency_ms": 212.09599999999998
+    "mean_latency_ms": 189.231625
   },
   {
     "archetype": "quick_commerce",
@@ -1471,7 +1471,7 @@
     "b0_post_rate": 1,
     "mean_reconstructions_counted": 0,
     "entropy_gate_refusal_rate": 0,
-    "mean_latency_ms": 11.129249999999999
+    "mean_latency_ms": 8.274625
   },
   {
     "archetype": "marketplace",
@@ -1493,7 +1493,7 @@
     "b0_post_rate": 0.75,
     "mean_reconstructions_counted": 0,
     "entropy_gate_refusal_rate": 0,
-    "mean_latency_ms": 8.800374999999999
+    "mean_latency_ms": 8.436874999999999
   },
   {
     "archetype": "quick_commerce",
@@ -1515,7 +1515,7 @@
     "b0_post_rate": 0.875,
     "mean_reconstructions_counted": 0,
     "entropy_gate_refusal_rate": 0,
-    "mean_latency_ms": 10.812500000000002
+    "mean_latency_ms": 7.816
   },
   {
     "archetype": "quick_commerce",
@@ -1537,7 +1537,7 @@
     "b0_post_rate": 0.875,
     "mean_reconstructions_counted": 0,
     "entropy_gate_refusal_rate": 0,
-    "mean_latency_ms": 8.799125
+    "mean_latency_ms": 8.524
   },
   {
     "archetype": "marketplace",
@@ -1559,7 +1559,7 @@
     "b0_post_rate": 1,
     "mean_reconstructions_counted": 1.125,
     "entropy_gate_refusal_rate": 0,
-    "mean_latency_ms": 21.090375
+    "mean_latency_ms": 18.006000000000004
   },
   {
     "archetype": "travel",
@@ -1581,7 +1581,7 @@
     "b0_post_rate": 0.125,
     "mean_reconstructions_counted": 0,
     "entropy_gate_refusal_rate": 0,
-    "mean_latency_ms": 11.368125
+    "mean_latency_ms": 8.853875
   },
   {
     "archetype": "travel",
@@ -1603,7 +1603,7 @@
     "b0_post_rate": 0,
     "mean_reconstructions_counted": 0,
     "entropy_gate_refusal_rate": 0,
-    "mean_latency_ms": 9.89
+    "mean_latency_ms": 11.199
   },
   {
     "archetype": "quick_commerce",
@@ -1625,7 +1625,7 @@
     "b0_post_rate": 1,
     "mean_reconstructions_counted": 2.25,
     "entropy_gate_refusal_rate": 0,
-    "mean_latency_ms": 11.552375000000001
+    "mean_latency_ms": 9.0515
   },
   {
     "archetype": "marketplace",
@@ -1647,7 +1647,7 @@
     "b0_post_rate": 0.625,
     "mean_reconstructions_counted": 3,
     "entropy_gate_refusal_rate": 0,
-    "mean_latency_ms": 110.366625
+    "mean_latency_ms": 122.18275000000001
   },
   {
     "archetype": "quick_commerce",
@@ -1669,7 +1669,7 @@
     "b0_post_rate": 1,
     "mean_reconstructions_counted": 0,
     "entropy_gate_refusal_rate": 0,
-    "mean_latency_ms": 9.860499999999998
+    "mean_latency_ms": 9.189250000000001
   },
   {
     "archetype": "travel",
@@ -1691,7 +1691,7 @@
     "b0_post_rate": 0,
     "mean_reconstructions_counted": 0,
     "entropy_gate_refusal_rate": 0,
-    "mean_latency_ms": 10.478
+    "mean_latency_ms": 10.04925
   },
   {
     "archetype": "d2c_ecommerce",
@@ -1713,7 +1713,7 @@
     "b0_post_rate": 0.875,
     "mean_reconstructions_counted": 3.625,
     "entropy_gate_refusal_rate": 0,
-    "mean_latency_ms": 173.267
+    "mean_latency_ms": 161.51
   },
   {
     "archetype": "marketplace",
@@ -1735,7 +1735,7 @@
     "b0_post_rate": 0.75,
     "mean_reconstructions_counted": 4.5,
     "entropy_gate_refusal_rate": 0,
-    "mean_latency_ms": 52.261624999999995
+    "mean_latency_ms": 51.265875
   },
   {
     "archetype": "d2c_ecommerce",
@@ -1757,7 +1757,7 @@
     "b0_post_rate": 1,
     "mean_reconstructions_counted": 1.625,
     "entropy_gate_refusal_rate": 0,
-    "mean_latency_ms": 15.870125
+    "mean_latency_ms": 13.68325
   },
   {
     "archetype": "travel",
@@ -1779,7 +1779,7 @@
     "b0_post_rate": 0,
     "mean_reconstructions_counted": 3.875,
     "entropy_gate_refusal_rate": 0,
-    "mean_latency_ms": 552.7113750000001
+    "mean_latency_ms": 449.43949999999995
   },
   {
     "archetype": "d2c_ecommerce",
@@ -1801,7 +1801,7 @@
     "b0_post_rate": 0.25,
     "mean_reconstructions_counted": 0,
     "entropy_gate_refusal_rate": 0,
-    "mean_latency_ms": 7.699874999999999
+    "mean_latency_ms": 7.073000000000001
   },
   {
     "archetype": "marketplace",
@@ -1823,7 +1823,7 @@
     "b0_post_rate": 0.75,
     "mean_reconstructions_counted": 2.125,
     "entropy_gate_refusal_rate": 0,
-    "mean_latency_ms": 14.879000000000001
+    "mean_latency_ms": 14.286875000000002
   },
   {
     "archetype": "travel",
@@ -1845,7 +1845,7 @@
     "b0_post_rate": 0,
     "mean_reconstructions_counted": 2.25,
     "entropy_gate_refusal_rate": 0,
-    "mean_latency_ms": 89.37449999999998
+    "mean_latency_ms": 72.74825
   },
   {
     "archetype": "d2c_ecommerce",
@@ -1867,7 +1867,7 @@
     "b0_post_rate": 0.75,
     "mean_reconstructions_counted": 3.625,
     "entropy_gate_refusal_rate": 0,
-    "mean_latency_ms": 36.071875
+    "mean_latency_ms": 29.368750000000002
   },
   {
     "archetype": "marketplace",
@@ -1889,7 +1889,7 @@
     "b0_post_rate": 1,
     "mean_reconstructions_counted": 1.125,
     "entropy_gate_refusal_rate": 0,
-    "mean_latency_ms": 16.579
+    "mean_latency_ms": 11.878875
   },
   {
     "archetype": "travel",
@@ -1911,7 +1911,7 @@
     "b0_post_rate": 0.625,
     "mean_reconstructions_counted": 1.25,
     "entropy_gate_refusal_rate": 0,
-    "mean_latency_ms": 26.137500000000003
+    "mean_latency_ms": 21.830625
   },
   {
     "archetype": "marketplace",
@@ -1933,7 +1933,7 @@
     "b0_post_rate": 1,
     "mean_reconstructions_counted": 0,
     "entropy_gate_refusal_rate": 0,
-    "mean_latency_ms": 10.411499999999998
+    "mean_latency_ms": 7.313
   },
   {
     "archetype": "d2c_ecommerce",
@@ -1955,7 +1955,7 @@
     "b0_post_rate": 1,
     "mean_reconstructions_counted": 1,
     "entropy_gate_refusal_rate": 0,
-    "mean_latency_ms": 9.6895
+    "mean_latency_ms": 11.243249999999998
   },
   {
     "archetype": "travel",
@@ -1977,7 +1977,7 @@
     "b0_post_rate": 0.75,
     "mean_reconstructions_counted": 1.375,
     "entropy_gate_refusal_rate": 0,
-    "mean_latency_ms": 61.31150000000001
+    "mean_latency_ms": 43.697125
   },
   {
     "archetype": "quick_commerce",
@@ -1999,7 +1999,7 @@
     "b0_post_rate": 1,
     "mean_reconstructions_counted": 2.125,
     "entropy_gate_refusal_rate": 0,
-    "mean_latency_ms": 12.872625000000001
+    "mean_latency_ms": 9.358625
   },
   {
     "archetype": "d2c_ecommerce",
@@ -2021,7 +2021,7 @@
     "b0_post_rate": 0.75,
     "mean_reconstructions_counted": 2.75,
     "entropy_gate_refusal_rate": 0,
-    "mean_latency_ms": 17.144250000000003
+    "mean_latency_ms": 15.098625000000002
   },
   {
     "archetype": "travel",
@@ -2043,7 +2043,7 @@
     "b0_post_rate": 0,
     "mean_reconstructions_counted": 6.25,
     "entropy_gate_refusal_rate": 0,
-    "mean_latency_ms": 51.055625000000006
+    "mean_latency_ms": 36.051125
   },
   {
     "archetype": "quick_commerce",
@@ -2065,7 +2065,7 @@
     "b0_post_rate": 1,
     "mean_reconstructions_counted": 6.125,
     "entropy_gate_refusal_rate": 0,
-    "mean_latency_ms": 28.400125
+    "mean_latency_ms": 22.13675
   },
   {
     "archetype": "travel",
@@ -2087,7 +2087,7 @@
     "b0_post_rate": 1,
     "mean_reconstructions_counted": 1,
     "entropy_gate_refusal_rate": 0,
-    "mean_latency_ms": 21.123625
+    "mean_latency_ms": 17.88475
   },
   {
     "archetype": "marketplace",
@@ -2109,6 +2109,6 @@
     "b0_post_rate": 0.75,
     "mean_reconstructions_counted": 1.75,
     "entropy_gate_refusal_rate": 0,
-    "mean_latency_ms": 21.421000000000003
+    "mean_latency_ms": 17.422875
   }
 ]

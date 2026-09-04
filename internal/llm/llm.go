@@ -5,9 +5,10 @@
 // here that returns free text into a decision path, because there is no
 // point in the pipeline where free text could be acted on.
 //
-// The package ships two live providers, Gemini and Anthropic. Neither is
-// privileged: they implement one interface, they are both forced into
-// structured output by the vendor's own mechanism, and nothing downstream can
+// The package ships three live providers: Groq, Gemini and Anthropic. None is
+// privileged. They implement one interface, they are each forced into
+// structured output by their own vendor's mechanism, strict tool use on one
+// and a strict response schema on the other two, and nothing downstream can
 // tell which one answered. That is the point of putting the boundary here.
 // The replay provider answers from a recorded fixture, which is what makes
 // `make demo` work with no API key, makes the benchmark reproducible to the
@@ -21,6 +22,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"sync"
 )
 
 // Role names what the model is being asked to do. Each role can be pointed
@@ -116,6 +118,22 @@ type Usage struct {
 	// is actually being used rather than quoting one aggregate.
 	ByRole    map[Role]int `json:"calls_by_role,omitempty"`
 	INRMicros int64        `json:"inr_micros"`
+
+	// Failures counts calls the provider could not complete, and Retries counts
+	// attempts spent getting the ones that did.
+	//
+	// These are reported rather than absorbed. The pipeline treats a provider
+	// failure as an exception the agent could not clear, which is the right
+	// behaviour for a run and hides the difference between a model that
+	// answered badly and one that did not answer at all. A submission claiming
+	// measured accuracy has to be able to say which.
+	Failures int `json:"provider_failures"`
+	Retries  int `json:"provider_retries"`
+	// SchemaViolations counts answers the model returned that did not satisfy
+	// the schema it was given. On a schema-forced provider this should be zero,
+	// and it is worth printing precisely because it should be zero.
+	SchemaViolations int          `json:"schema_violations"`
+	FailuresByRole   map[Role]int `json:"provider_failures_by_role,omitempty"`
 }
 
 // Add accumulates usage across calls.
@@ -133,7 +151,32 @@ func (u *Usage) Add(o Usage) {
 			u.ByRole[r] += n
 		}
 	}
+	u.Failures += o.Failures
+	u.Retries += o.Retries
+	u.SchemaViolations += o.SchemaViolations
+	if len(o.FailuresByRole) > 0 {
+		if u.FailuresByRole == nil {
+			u.FailuresByRole = map[Role]int{}
+		}
+		for r, n := range o.FailuresByRole {
+			u.FailuresByRole[r] += n
+		}
+	}
 	u.INRMicros += o.INRMicros
+}
+
+// Reliability is the share of attempted calls the provider completed.
+//
+// A live model that answers 92 per cent of the time is a different system from
+// one that answers every time, and the difference shows up as exceptions the
+// agent did not clear rather than as an error anybody sees. This makes it
+// visible.
+func (u Usage) Reliability() float64 {
+	attempted := u.Calls + u.Failures
+	if attempted == 0 {
+		return 0
+	}
+	return float64(u.Calls) / float64(attempted)
 }
 
 // Result is a structured answer plus what it cost.
@@ -199,7 +242,20 @@ var Rates = map[string]Pricing{
 	"gemini-3.1-pro-preview": {InputPerMTok: 1.25, OutputPerMTok: 10.00, CacheReadPerMTok: 0.31, CacheWritePerMTok: 1.25},
 	"gemini-2.5-pro":         {InputPerMTok: 1.25, OutputPerMTok: 10.00, CacheReadPerMTok: 0.31, CacheWritePerMTok: 1.25},
 	"gemini-2.5-flash":       {InputPerMTok: 0.30, OutputPerMTok: 2.50, CacheReadPerMTok: 0.075, CacheWritePerMTok: 0.30},
-	"replay":                 {},
+	// Groq pricing - models available in playground
+	"qwen/qwen3.8-27b":        {InputPerMTok: 0.20, OutputPerMTok: 0.30},
+	"qwen/qwen3.6-27b":        {InputPerMTok: 0.20, OutputPerMTok: 0.30},
+	"openai/gpt-oss-120b":     {InputPerMTok: 0.50, OutputPerMTok: 0.70},
+	"openai/gpt-oss-20b":      {InputPerMTok: 0.20, OutputPerMTok: 0.30},
+	"groq/compound":           {InputPerMTok: 0.50, OutputPerMTok: 0.70},
+	"groq/compound-mini":      {InputPerMTok: 0.20, OutputPerMTok: 0.30},
+	"llama3-8b-8192":          {InputPerMTok: 0.05, OutputPerMTok: 0.08},
+	"llama3-70b-8192":         {InputPerMTok: 0.59, OutputPerMTok: 0.79},
+	"gemma-7b-it":             {InputPerMTok: 0.07, OutputPerMTok: 0.07},
+	"llama-3.1-70b-versatile": {InputPerMTok: 0.59, OutputPerMTok: 0.79},
+	"llama-3.1-8b-instant":    {InputPerMTok: 0.05, OutputPerMTok: 0.08},
+	"llama-3.3-70b-versatile": {InputPerMTok: 0.59, OutputPerMTok: 0.79},
+	"replay":                  {},
 }
 
 // USDToINR is the conversion used when pricing a run in rupees. It is a
@@ -220,4 +276,65 @@ func CostMicrosINR(model string, u Usage) int64 {
 		float64(u.CacheReadTokens)*p.CacheReadPerMTok/1e6 +
 		float64(u.CacheWriteTokens)*p.CacheWritePerMTok/1e6
 	return int64(usd * USDToINR * 1e6)
+}
+
+// The provider failure ledger.
+//
+// A failed call returns an error and no Usage, so the batch's usage totals
+// cannot see it: the run reports the calls that worked and is silent about the
+// ones that did not. That silence is exactly what made a completely broken
+// integration look like a merely mediocre model, twice. Providers record
+// failures here and the benchmark drains the ledger when it writes its
+// summary.
+//
+// It is package level because it has to survive a provider being wrapped in a
+// recorder, which is the normal case.
+var (
+	ledgerMu    sync.Mutex
+	ledgerFail  int
+	ledgerRetry int
+	ledgerViol  int
+	ledgerRole  = map[Role]int{}
+)
+
+// RecordFailure notes a call the provider could not complete.
+func RecordFailure(r Role, retries int, schemaViolation bool) {
+	ledgerMu.Lock()
+	defer ledgerMu.Unlock()
+	ledgerFail++
+	ledgerRetry += retries
+	if schemaViolation {
+		ledgerViol++
+	}
+	ledgerRole[r]++
+}
+
+// RecordRetry notes attempts spent on a call that did eventually succeed.
+func RecordRetry(n int) {
+	if n <= 0 {
+		return
+	}
+	ledgerMu.Lock()
+	defer ledgerMu.Unlock()
+	ledgerRetry += n
+}
+
+// DrainFailures returns the ledger and resets it, so two runs in one process
+// do not report each other's failures.
+func DrainFailures() Usage {
+	ledgerMu.Lock()
+	defer ledgerMu.Unlock()
+	byRole := make(map[Role]int, len(ledgerRole))
+	for r, n := range ledgerRole {
+		byRole[r] = n
+	}
+	u := Usage{
+		Failures:         ledgerFail,
+		Retries:          ledgerRetry,
+		SchemaViolations: ledgerViol,
+		FailuresByRole:   byRole,
+	}
+	ledgerFail, ledgerRetry, ledgerViol = 0, 0, 0
+	ledgerRole = map[Role]int{}
+	return u
 }

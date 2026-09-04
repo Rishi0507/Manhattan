@@ -171,9 +171,18 @@ export default function App() {
           <div className="flex flex-wrap items-center justify-between gap-x-6 gap-y-2 py-3">
             <button
               onClick={() => setEntered(false)}
-              className="flex items-baseline gap-3 text-left"
+              className="flex items-center gap-3 text-left"
               title="back to the overview"
             >
+              {/* The mark is wider than it is tall, so it is sized by height and
+                  left to find its own width. Optically it wants to sit a shade
+                  below the cap height of the wordmark rather than centred on
+                  it, because its baseline rule reads as a baseline. */}
+              <img
+                src="/logo.png"
+                alt=""
+                className="h-[22px] w-auto shrink-0 translate-y-[1px] sm:h-[25px]"
+              />
               <span className="display text-[27px] leading-none font-semibold tracking-[-0.012em] text-ink sm:text-[31px]">
                 Manhattan
               </span>
