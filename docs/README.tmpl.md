@@ -4,7 +4,7 @@
 
 **Settlement reconciliation that proves its answers, and refuses when it cannot.**
 
-Razorpay AI Buildathon · Track 04, AI Finance Controller · Multi-source reconciliation
+Track 04, AI Finance Controller · Multi-source settlement reconciliation
 
 Manhattan posts **{{ .D.M1Posted }} of {{ .S.Settlements }}** settlements automatically ({{ pct .D.M1PostRate }}) with **{{ .D.M1Wrong }} wrong**, and hands back {{ .D.M1Held }} exceptions each carrying a named cause, a computed remedy and a price.
 
@@ -53,17 +53,17 @@ No API key required. **Every number in this file, in [RESULTS.md](RESULTS.md) an
 
 ---
 
-## For a judge, in four minutes
+## Start here
 
-1. **[The result](#against-the-system-that-already-exists).** Reading the settlement report and posting it gets {{ .D.B1Wrong }} of {{ .D.B1Posted }} wrong, invisibly. Verifying it first gets {{ .D.M1Wrong }} of {{ .D.M1Posted }} wrong.
+1. **[The result](#against-the-method-already-in-use).** Reading the settlement report and posting it gets {{ .D.B1Wrong }} of {{ .D.B1Posted }} wrong, invisibly. Verifying it first gets {{ .D.M1Wrong }} of {{ .D.M1Posted }} wrong.
 2. **[The controller](#the-controller)**, where the model reads the whole period and names the root causes, scored against operational conditions it was never told about. A graded harness, currently reporting an {{ pct .D.CloseRecallPct }} baseline from the deterministic provider.
-3. **[Where the rest of the AI is](#where-the-rest-of-the-ai-is)**: {{ n .S.ModelCalls }} calls across {{ len .S.CallsByRole }} jobs, two of them scored against ground truth.
+3. **[Where the rest of the AI is](#the-other-model-roles)**: {{ n .S.ModelCalls }} calls across {{ len .S.CallsByRole }} jobs, two of them scored against ground truth.
 4. **[RESULTS.md](RESULTS.md), the calibration section.** Whether the system knows *in advance* when it is about to be wrong.
 5. **`./run.sh demo`**, which opens on adversarial case 10: narrowing drops a real record, a coincidental subset closes the identity exactly, and the guard catches it.
 
 Longer: [docs/EXPLAIN.md](docs/EXPLAIN.md) builds the system from first principles in plain language, [docs/DESIGN.md](docs/DESIGN.md) has every derivation, and [LIMITATIONS.md](LIMITATIONS.md) is the full account of its operating limits.
 
-### The agent, at a glance
+### The agent
 
 | | |
 |---|---|
@@ -96,7 +96,7 @@ The two are not alternatives. **The check is worth something only because the re
 
 So the mechanism's rate is roughly {{ pct .D.CleanReconPct }}, and the headline figure is what it degrades to when a deployment's window is set too loosely. Both are published because the misconfigured one is what the rest of this run is measured on.
 
-### Against the system that already exists
+### Against the method already in use
 
 The comparison that matters is not a fuzzy matcher. It is **B1: read the settlement report's stated mapping and post it.** Instant, free, and right almost always.
 
@@ -114,7 +114,7 @@ That is the trade in one line: **{{ sub .D.B1Posted .D.M1Posted }} settlements o
 
 *(A confidence matcher on the same inputs posts {{ .S.B0Posted }} and gets {{ .S.B0PostedWrong }} wrong. It is the wrong comparison for a gateway and it is in [RESULTS.md](RESULTS.md#the-baseline-across-every-threshold) with a full threshold sweep, because the sweep says something the operating point does not: its correct-answer count is flat at {{ .D.B0MaxRight }} across every threshold, so tuning it never finds another right answer.)*
 
-### And it works where reconstruction cannot
+### Where reconstruction is impossible
 
 | merchant type | spread sigma (paise) | twin mass | reconstruction | **M1** |
 |---|---:|---:|---:|---:|
@@ -139,7 +139,7 @@ The verdict is deliberately weaker than a proof, and the receipt never blurs the
 | `CLAIM_CONTRADICTED` | the report's own account does not survive checking. Here is the residual and the diagnosis. |
 | `CLAIM_UNCHECKABLE` | part of the claim lives in a feed nobody joined. Our problem, not the report's. |
 
-### It does not cry wolf
+### False alarms
 
 A validation layer is only usable if it leaves correct reports alone, so this is
 the number that decides whether it ships: **{{ .D.FeeFalseAlarms }} false alarms
@@ -193,7 +193,7 @@ from it.
 | {{ .Scope }} | `{{ .Class }}` | {{ n64 .ValueINR }} | {{ clip .Evidence 76 }} |
 {{- end }}
 
-### Two jobs scored, not one
+### Two jobs scored
 
 `plan` chooses one action per turn from a closed set of eight, and the loop
 already records which action was chosen and which one the verifier accepted, so
@@ -208,7 +208,7 @@ it grades itself:
 
 {{ if .D.IsStub }}Both accuracy figures saturate here, and that is the finding rather than the result: a fixed decision tree either picks the right action immediately or never picks it, and never proposes one that cannot apply. A model has room to be worse on both and better on the outcome, which is what the harness exists to measure.{{ end }}
 
-### It is graded, and the harness is the contribution
+### How the controller is graded
 
 This run injects operational misconfigurations and records exactly what they are. **None of that reaches the model.** It sees status mixes, pool sizes, twin masses, held values and remedy counts, and has to infer the cause the way a controller would.
 
@@ -227,7 +227,7 @@ Findings corresponding to no injected condition: {{ range $i, $s := .D.Close.Spu
 {{ end }}
 ---
 
-## Where the rest of the AI is
+## The other model roles
 
 The fair criticism of this project is that arithmetic does the deciding, so what is the model for. Here is the accounting rather than an argument.
 
@@ -268,7 +268,7 @@ useful outcome.
 
 **The highest-volume model job is the one with no safety risk at all.** {{ n .S.NotesDrafted }} analyst-facing notes: what to do, why it works in terms of what was measured, and what it will **not** fix. Every fact is supplied and every figure is substituted from the receipt afterwards, so a draft containing a digit is rejected wholesale ({{ .S.NotesRejected }} were, this run). A note is attached to a settlement held either way, so the worst a bad draft costs is a confusing sentence in a work queue.
 
-### What the model must not do, and how that is enforced
+### What the model cannot do
 
 > **A wrong model output cannot produce a wrong posting.** Not unlikely to. Cannot.
 
@@ -321,7 +321,7 @@ Measured, at {{ .D.LiveSettlements }} settlements:
 {{ end }}
 ---
 
-## What this run deliberately gets wrong
+## Misconfigurations modelled in this run
 
 A reconciliation benchmark on perfectly configured data measures nothing an agent could help with, so {{ len .D.Conditions }} misconfigurations are modelled across {{ .D.ConditionMerchants }} merchant types. All of them are things a **deployment gets wrong on its own side**:
 
@@ -366,7 +366,7 @@ And the contribution as a function of how bad the configuration is:
 
 Paying a model to conclude that nothing can help, across most of a queue, is the same mistake as paying it to add up a column.
 
-### Only a corroborated action may post
+### Corroboration before posting
 
 | action | may post? |
 |---|---|
@@ -492,7 +492,7 @@ So it is ordered by **value cleared per analyst hour**. [Full top {{ len .S.TopE
 | `{{ .Ref }}` | `{{ .Status }}` | {{ ni (div (float .ValuePaise) 100) }} | {{ .Minutes }} | **{{ ni .INRPerHour }}** | {{ clip .Cause 52 }} |
 {{- end }}
 
-### What this is worth to a support desk
+### Value to a support desk
 
 The buyer named at the top is a settlement support desk, so the number that matters to them is deflection, not match rate. From stated assumptions:
 
@@ -508,7 +508,7 @@ Only the deflection rate is measured; the volume and the handling time are assum
 
 The mechanism is the part that is not an assumption. A deflected ticket is one where the answer already exists as a receipt: here are the records that make up the credit, here is the fee applied to each, here is the chargeback debited this cycle but raised against the last one. The {{ .D.M1Held }} that are not deflected arrive with a named cause, a computed remedy and a drafted note, which is a shorter investigation rather than none.
 
-### What checking costs, and what it buys
+### The cost of checking
 
 Against B1, because that is the system a gateway actually has.
 
@@ -534,7 +534,7 @@ belonged to, reverse the journal, re-post, and explain the movement to whoever
 signs the accounts. Four hours is a floor for that, not a ceiling, and it
 excludes every case that reaches an auditor or a merchant dispute.
 
-### At what defect rate is this worth buying
+### Break-even defect rate
 
 The extra work is fixed by the held population. The wrong postings prevented
 scale with how often reports are actually wrong. So there is a rate below which
@@ -555,7 +555,7 @@ handling cost and unwind cost and the break-even moves with them.
 
 ---
 
-## The baseline, published so it can be attacked
+## The B0 baseline, in full
 
 {{ .S.B0PostedWrong }} wrong of {{ .S.B0Posted }} posted is a figure produced by this benchmark about a baseline it also implements, so the full scoring function is published for independent checking:
 
@@ -565,7 +565,7 @@ That is the whole function. It measures how good a match *looks*, never whether 
 
 ---
 
-## Ask the receipts
+## Querying the receipts
 
 {{ len .D.QATranscript }} exchanges from this run, verbatim, showing every path the Q&A side can take.
 
@@ -581,7 +581,7 @@ The last one matters most. **An agent that answers every question is not grounde
 
 ---
 
-## How this ships
+## Running it
 
 It is a library and a binary, not a platform, and that is the point: the whole
 system is one Go module with no runtime dependencies, no database and no
@@ -591,7 +591,7 @@ network calls outside the model boundary.
 fee rows, refunds, chargebacks and adjustments, plus the bank credit. Every one
 maps onto fields a settlement report already carries:
 
-| Manhattan | Razorpay settlement report |
+| Manhattan | Gateway settlement report |
 |---|---|
 | `payment.gross_paise`, `captured_at`, `instrument` | `amount`, `created_at`, `method` on a settlement's payment rows |
 | `payment.fee_observed_paise`, `tax_observed_paise` | `fee`, `tax` per row, which is what makes the fee check independent |
@@ -642,7 +642,7 @@ Throughput is end to end: {{ .S.Settlements }} settlements in {{ f1 .S.WallClock
 
 **Determinism is per commit.** Same seed and same commit gives the same decisions on every settlement. Timings are measurements and move, so receipts are not byte-identical.
 
-### Where this stops
+### Resource limits
 
 A throughput figure without a pool size is not a measurement, so here is the boundary instead. Enumeration costs C(n/2, at most k) entries at twelve bytes each, which makes the limit exact rather than benchmarked. Inside a 1 GB budget for one settlement:
 
@@ -658,11 +658,11 @@ Cost tracks cardinality, not pool size: a 164-record pool at k=5 costs what a 1,
 
 ---
 
-## Scope and operating limits
+## Scope and limits
 
 Stated once, in proportion. The full treatment is in [LIMITATIONS.md](LIMITATIONS.md).
 
-**Synthetic data.** The pathology mix follows documented Razorpay mechanics
+**Synthetic data.** The pathology mix follows documented documented Indian payment gateway mechanics
 (paise amounts, T+2 cycles, MDR with 18% GST, netted refunds, chargeback debits,
 zero-MDR UPI). Reports are generated defective at a configured
 {{ pct1 .D.DefectConfiguredPct }}, which lands {{ .D.Defects }} defects across
@@ -731,4 +731,4 @@ Traditional reconciliation asks *how confident are we that these records match?*
 
 **No guessed matches. No confidence threshold. Proof, a checked claim, exhibited alternatives, or a named and priced reason none is available.**
 
-Built by **Rishi0507** for the Razorpay AI Buildathon, Track 04. MIT licensed; see [LICENSE](LICENSE).
+Built by **Rishi0507** for Track 04, AI Finance Controller. MIT licensed; see [LICENSE](LICENSE).

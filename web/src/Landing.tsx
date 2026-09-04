@@ -1,4 +1,5 @@
 import type { CaseOutcome, Summary } from "./types";
+import { ReconstructionFigure } from "./ReconstructionFigure";
 import { num, pct, rupees } from "./lib";
 
 /**
@@ -31,9 +32,10 @@ export function Landing({
   return (
     <div className="mx-auto max-w-[1080px] px-4 sm:px-6">
       {/* ---- Hero ---------------------------------------------------- */}
-      <section className="pt-12 pb-12 sm:pt-20 sm:pb-16">
+      <section className="grid grid-cols-1 items-center gap-12 pt-12 pb-12 sm:pt-20 sm:pb-16 lg:grid-cols-[minmax(0,1fr)_400px] lg:gap-14">
+        <div>
         <img src="/logo.png" alt="Manhattan" className="mb-7 h-11 w-auto" />
-        <p className="lbl">Razorpay AI Buildathon · Track 04 · AI Finance Controller</p>
+        <p className="lbl">Track 04 · AI Finance Controller · Multi-source settlement reconciliation</p>
 
         <h1 className="display mt-5 max-w-[19ch] text-[34px] leading-[1.08] font-medium tracking-[-0.015em] text-ink sm:text-[44px] lg:text-[54px]">
           An agent that proves settlements instead of guessing them.
@@ -58,6 +60,11 @@ export function Landing({
           >
             Open the dashboard
           </button>
+        </div>
+        </div>
+
+        <div className="hidden lg:block">
+          <ReconstructionFigure />
         </div>
       </section>
 

@@ -60,3 +60,13 @@ Thumbs.db
 *.test
 __pycache__/
 .venv/
+
+# Working notes.
+#
+# Setup walkthroughs and integration write-ups that duplicate what README.md
+# and LIMITATIONS.md already generate from the run. Keeping them out means
+# there is one place a figure can come from.
+GROQ_SETUP.md
+LIVE_API_RESULTS.md
+QUICK_START.md
+AI_INTEGRATION_SUMMARY.md

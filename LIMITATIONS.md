@@ -184,7 +184,7 @@ It is deliberately modest, because the argument does not need reports to be bad.
 
 The three defect shapes modelled are chosen as plausible rather than sampled from any observed population, and two of the three have documented real-world counterparts while the third does not.
 
-**The chargeback cycle mismatch is documented behaviour, not a hypothetical.** A dispute is raised against the original transaction and debited in whatever cycle the network resolves it in, which is routinely a different cycle from the one that carried the payment. Razorpay's own settlement documentation describes disputes and their fees as adjustments applied to a later settlement, and the card network rules that govern the timetable (Visa and Mastercard both allow dispute windows measured in months from the transaction date) are why the two cycles come apart at all. A settlement report whose own join is by capture date therefore has a structural reason to omit a debit that genuinely moved money in the cycle it is describing.
+**The chargeback cycle mismatch is documented behaviour, not a hypothetical.** A dispute is raised against the original transaction and debited in whatever cycle the network resolves it in, which is routinely a different cycle from the one that carried the payment. Published gateway settlement documentation describes disputes and their fees as adjustments applied to a later settlement, and the card network rules that govern the timetable (Visa and Mastercard both allow dispute windows measured in months from the transaction date) are why the two cycles come apart at all. A settlement report whose own join is by capture date therefore has a structural reason to omit a debit that genuinely moved money in the cycle it is describing.
 
 **The cross-cycle double-count** follows from the same timetable in the other direction, and is the ordinary failure mode of any reconciliation keyed on a date rather than on a settlement identifier.
 
@@ -240,13 +240,13 @@ What does not depend on these conditions is the safety property. Wrong postings 
 
 The headline benchmark of 996 settlements runs on the deterministic provider (`offline-stub`, parse=replay resolve=replay answer=replay), which is what makes every published number reproducible to the paise without a network call.
 
-The live path is implemented for three vendors, Groq, Gemini and Anthropic, each forced into structured output by its own vendor mechanism and each recording to a cassette. It has been run: `manhattan live` executed 30 settlements against a live model and the same 30 against the stub, and **the wrong-posting count was identical at 0**, with cost billed rather than modelled.
+The live path is implemented for three vendors, Groq, Gemini and Anthropic, each forced into structured output by its own vendor mechanism and each recording to a cassette. It has been run: `manhattan live` executed 120 settlements against a live model and the same 120 against the stub, and **the wrong-posting count was identical at 0**, with cost billed rather than modelled.
 
 `manhattan live` runs the same batch on both providers and asserts the property that matters, that wrong postings are **identical**, while reporting the figures that are free to move: diagnosis accuracy, agent repairs, note quality and actual billed cost. It exits non-zero if the wrong-posting column moves, because that would be a leak in the trust boundary rather than an interesting result.
 
 What the live run establishes is the architectural claim: model quality moves how much gets cleared and does not move whether what cleared was correct. What it does not establish is model quality at the full batch size, because the free-tier token allowances of the available providers do not reach 996 settlements in one sitting. The live figures are therefore reported at their own sample size and never blended into the headline.
 
-**The headline cost figures are modelled, not billed.** Measured token counts priced at published rates. The direction of that error is known: the replay path reports no cache reads, so every input token is priced at the uncached rate. The live run bills 124 INR per thousand against the 1,392 INR modelled here, on a smaller and cheaper model.
+**The headline cost figures are modelled, not billed.** Measured token counts priced at published rates. The direction of that error is known: the replay path reports no cache reads, so every input token is priced at the uncached rate. The live run bills 66 INR per thousand against the 1,392 INR modelled here, on a smaller and cheaper model.
 
 **One model job is graded and the rest are not.** Defect diagnosis scores 76% against the generator's own record of what it injected, which is a real accuracy figure for a real model output. Every other role is constrained rather than scored: a parse that goes wrong produces an exception, an action that goes wrong is rejected by the verifier, a drafted note that goes wrong is a confusing sentence. Those constraints are the safety argument and they are not accuracy measurements, and a reader should not read them as one.
 
@@ -258,7 +258,7 @@ What the live run establishes is the architectural claim: model quality moves ho
 
 ## Benchmarked on synthetic data
 
-The pathology mix reflects documented Razorpay settlement mechanics: paise-denominated amounts, T+2 cycles, MDR with 18% GST charged on the fee, refunds netted in the cycle they clear, chargeback debits with a flat dispute fee, zero-MDR UPI. Ground truth is recorded by the generator and never read by the pipeline, only by the benchmark and only after a decision has been made.
+The pathology mix reflects documented Indian gateway settlement mechanics: paise-denominated amounts, T+2 cycles, MDR with 18% GST charged on the fee, refunds netted in the cycle they clear, chargeback debits with a flat dispute fee, zero-MDR UPI. Ground truth is recorded by the generator and never read by the pipeline, only by the benchmark and only after a decision has been made.
 
 **Real merchant data will contain things the generator does not model.** Every accuracy figure in this repository should be read as a statement about the system's behaviour on a distribution chosen to be plausible, not as a measurement of the Indian merchant base.
 

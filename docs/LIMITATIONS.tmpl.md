@@ -184,7 +184,7 @@ It is deliberately modest, because the argument does not need reports to be bad.
 
 The three defect shapes modelled are chosen as plausible rather than sampled from any observed population, and two of the three have documented real-world counterparts while the third does not.
 
-**The chargeback cycle mismatch is documented behaviour, not a hypothetical.** A dispute is raised against the original transaction and debited in whatever cycle the network resolves it in, which is routinely a different cycle from the one that carried the payment. Razorpay's own settlement documentation describes disputes and their fees as adjustments applied to a later settlement, and the card network rules that govern the timetable (Visa and Mastercard both allow dispute windows measured in months from the transaction date) are why the two cycles come apart at all. A settlement report whose own join is by capture date therefore has a structural reason to omit a debit that genuinely moved money in the cycle it is describing.
+**The chargeback cycle mismatch is documented behaviour, not a hypothetical.** A dispute is raised against the original transaction and debited in whatever cycle the network resolves it in, which is routinely a different cycle from the one that carried the payment. Published gateway settlement documentation describes disputes and their fees as adjustments applied to a later settlement, and the card network rules that govern the timetable (Visa and Mastercard both allow dispute windows measured in months from the transaction date) are why the two cycles come apart at all. A settlement report whose own join is by capture date therefore has a structural reason to omit a debit that genuinely moved money in the cycle it is describing.
 
 **The cross-cycle double-count** follows from the same timetable in the other direction, and is the ordinary failure mode of any reconciliation keyed on a date rather than on a settlement identifier.
 
@@ -254,7 +254,7 @@ The live path is implemented for three vendors, Groq, Gemini and Anthropic, each
 
 ## Benchmarked on synthetic data
 
-The pathology mix reflects documented Razorpay settlement mechanics: paise-denominated amounts, T+2 cycles, MDR with 18% GST charged on the fee, refunds netted in the cycle they clear, chargeback debits with a flat dispute fee, zero-MDR UPI. Ground truth is recorded by the generator and never read by the pipeline, only by the benchmark and only after a decision has been made.
+The pathology mix reflects documented Indian gateway settlement mechanics: paise-denominated amounts, T+2 cycles, MDR with 18% GST charged on the fee, refunds netted in the cycle they clear, chargeback debits with a flat dispute fee, zero-MDR UPI. Ground truth is recorded by the generator and never read by the pipeline, only by the benchmark and only after a decision has been made.
 
 **Real merchant data will contain things the generator does not model.** Every accuracy figure in this repository should be read as a statement about the system's behaviour on a distribution chosen to be plausible, not as a measurement of the Indian merchant base.
 
