@@ -64,6 +64,50 @@ type Spec struct {
 	// being affected.
 	FeeDriftBps int64
 
+	// NegotiatedMDRBps is this merchant's ACTUAL rate, where it differs from
+	// the published schedule the pipeline is configured with. Zero means the
+	// merchant is on the published rate.
+	//
+	// MissingFeeRowRate is the fraction of payments whose per-payment fee row
+	// the settlement report does not carry.
+	//
+	// Together these two are what make the composite's false-alarm rate a
+	// measurement instead of a tautology, and the tautology is worth spelling
+	// out because it was real.
+	//
+	// The benchmark's generator and the pipeline's accounting engine compute
+	// contributions from the same policy. So a settlement report that was
+	// entirely correct could never disagree with the claim check: both sides
+	// were deriving the same number from the same schedule, and "zero false
+	// alarms on 469 clean reports" measured nothing at all.
+	//
+	// A negotiated rate breaks that, and it is the most ordinary thing in
+	// Indian payments. A merchant is signed at 185 bps rather than the
+	// published 200. The gateway applies 185, the credit reflects 185, and
+	// wherever the report carries a per-payment fee row the pipeline uses it
+	// and agrees. Where the report does NOT carry a fee row, and real reports
+	// have gaps, the pipeline falls back to the schedule it was configured
+	// with, computes 200, and disagrees with a report that was correct.
+	//
+	// That is a false alarm with a real cause, and its rate is now something
+	// this benchmark can be wrong about.
+	NegotiatedMDRBps  int64
+	MissingFeeRowRate float64
+
+	// NoMappingRate is the fraction of settlements the report carries no
+	// mapping for at all.
+	//
+	// This is the population the claim check cannot help with and where
+	// reconstruction is the only route to a posting. A bank credit whose
+	// narration carries no usable settlement reference, a merchant on a
+	// gateway that ships only a net figure, a historical period being
+	// backfilled: in every one of those the report has nothing to check.
+	//
+	// It matters because the composite's headline is mostly checked claims,
+	// and a reader is entitled to ask what the solver is for. This is the
+	// answer, measured rather than argued.
+	NoMappingRate float64
+
 	Policy accounting.Policy
 	Start  time.Time
 
@@ -371,13 +415,25 @@ func (b *builder) contributionOf(id string) money.Paise {
 		// fee where drift was configured. That is what makes the fee detector
 		// a real finding rather than a restatement: the settlement still
 		// reconstructs exactly, and the rate applied to it is still wrong.
+		// What ACTUALLY came out of the credit, which is FeeApplied wherever
+		// the generator recorded it: the drifted rate where drift was
+		// configured, the negotiated rate where the merchant has one, and the
+		// published schedule otherwise.
+		//
+		// This is deliberately independent of whether the REPORT carries a fee
+		// row. A payment whose fee row is missing still had a fee deducted,
+		// and the credit reflects it. The pipeline cannot see that and falls
+		// back to the schedule, which is exactly the divergence that makes a
+		// false alarm possible.
 		mdr := b.spec.Policy.MDR(p.Instrument, p.Gross)
-		if p.FeeObserved != nil {
-			mdr = *p.FeeObserved
-		}
 		gst := b.spec.Policy.GST(mdr)
-		if p.TaxObserved != nil {
-			gst = *p.TaxObserved
+		if p.FeeApplied > 0 || p.FeeRowMissing {
+			mdr, gst = p.FeeApplied, p.TaxApplied
+		} else if p.FeeObserved != nil {
+			mdr = *p.FeeObserved
+			if p.TaxObserved != nil {
+				gst = *p.TaxObserved
+			}
 		}
 		var refunded money.Paise
 		for _, r := range b.ds.Refunds {
@@ -401,11 +457,25 @@ func (b *builder) attachFee(p *model.Payment) {
 		return
 	}
 	bps := b.spec.Policy.MDRByInstrument[p.Instrument] + b.spec.FeeDriftBps
+	// A negotiated rate overrides the published schedule for this merchant.
+	// UPI stays at zero: it is zero by regulation, not by negotiation.
+	if b.spec.NegotiatedMDRBps > 0 && p.Instrument != model.InstrumentUPI {
+		bps = b.spec.NegotiatedMDRBps + b.spec.FeeDriftBps
+	}
 	if bps < 0 {
 		bps = 0
 	}
 	fee := money.MulRateBPS(p.Gross, bps, b.spec.Policy.FeeRounding)
 	tax := money.MulRateBPS(fee, b.spec.Policy.GSTBps, b.spec.Policy.TaxRounding)
+
+	// The money moved either way. What varies is whether the REPORT tells us
+	// how much, and a report with a gap is a report the pipeline has to guess
+	// at from the schedule it was configured with.
+	p.FeeApplied, p.TaxApplied = fee, tax
+	if b.spec.MissingFeeRowRate > 0 && b.rng.Float64() < b.spec.MissingFeeRowRate {
+		p.FeeRowMissing = true
+		return
+	}
 	p.FeeObserved = &fee
 	p.TaxObserved = &tax
 }
@@ -512,6 +582,11 @@ func (b *builder) reportMapping(ref string, truth []string, merchantID string) {
 	}
 
 	sort.Strings(stated)
+	if b.spec.NoMappingRate > 0 && b.rng.Float64() < b.spec.NoMappingRate {
+		// The report carries no mapping for this settlement at all. There is
+		// nothing to check and reconstruction is the only route.
+		return
+	}
 	b.ds.ReportedMapping[ref] = stated
 	if defect != "" {
 		b.ds.ReportDefects[ref] = defect

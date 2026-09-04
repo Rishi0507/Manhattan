@@ -33,7 +33,7 @@ No API key required. **Every number in this file, in [RESULTS.md](RESULTS.md) an
 4. **[RESULTS.md](RESULTS.md), the calibration section.** Whether the system knows *in advance* when it is about to be wrong.
 5. **`./run.sh demo`**, which opens on adversarial case 10: narrowing drops a real record, a coincidental subset closes the identity exactly, and the guard catches it.
 
-Longer: [docs/EXPLAIN.md](docs/EXPLAIN.md) is the system from first principles in plain language. [docs/DESIGN.md](docs/DESIGN.md) has every derivation. [LIMITATIONS.md](LIMITATIONS.md) is what it cannot do, and it is the document I would read first if I were judging this.
+Longer: [docs/EXPLAIN.md](docs/EXPLAIN.md) is the system from first principles in plain language. [docs/DESIGN.md](docs/DESIGN.md) has every derivation. [LIMITATIONS.md](LIMITATIONS.md) is what it cannot do.
 
 ---
 
@@ -49,7 +49,13 @@ Three comparison systems, identical inputs, identical narrowing.
 | defective reports flagged | 0 | 0 of {{ .D.Defects }} | | **{{ .D.M1Contradicted }} of {{ .D.Defects }}** |
 | false alarms on {{ .D.M1CleanChecked }} clean reports | | | | **{{ .D.M1FalseAlarms }}** |
 
-**M1 is the product.** {{ .D.M1FromProof }} postings are Manhattan's own proofs; {{ .D.M1FromClaim }} are the gateway's claim, checked. It posts {{ .D.ClaimUplift }} more than reconstruction alone and {{ sub .D.B1Posted .D.M1Posted }} fewer than the lookup, and the ones it holds back are the ones the lookup gets wrong.
+**M1 is the product, and the split matters, so here it is before you find it.** {{ .D.M1FromProof }} of its {{ .D.M1Posted }} postings ({{ pct .D.ProofSharePct }}) are Manhattan's own proofs. The other {{ .D.M1FromClaim }} are the gateway's claim, checked against the money.
+
+A fair reading of that is *most of this is a validation rule, and the solver mostly refuses*. Two things answer it.
+
+**{{ .D.NoClaim }} settlements in this run ({{ pct .D.NoClaimPct }}) arrive with no mapping to check at all** and reconstruction is the only route to a posting on them. A bank credit whose narration carries no usable settlement reference, a gateway shipping only a net figure, a historical period being backfilled. Reconstruction posts **{{ .D.NoClaimPosted }}** of those {{ .D.NoClaim }}, which is not a flattering number and is published as one; it is also {{ .D.NoClaimPosted }} settlements no validation rule could ever reach.
+
+**And the check is only trustworthy because the reconstruction exists.** The claim check knows a report is wrong by comparing it against an independent account of the money, and that account is the same contribution model the solver searches over. Delete the solver and you delete the thing the check checks against.
 
 ### And it works where reconstruction cannot
 
@@ -75,6 +81,22 @@ The verdict is deliberately weaker than a proof, and the receipt never blurs the
 | `CLAIM_CONSISTENT` | the batch the report named does produce this credit. Others may too; this was checked, not derived. |
 | `CLAIM_CONTRADICTED` | the report's own account does not survive checking. Here is the residual and the diagnosis. |
 | `CLAIM_UNCHECKABLE` | part of the claim lives in a feed nobody joined. Our problem, not the report's. |
+
+### The false-alarm rate, and why it is no longer a tautology
+
+A composite that holds settlements a lookup would have posted correctly is worse than the lookup, so this decides whether it ships: **{{ .D.FeeFalseAlarms }} false alarms on {{ .D.FeeFAClean }} clean reports** ({{ pct1 .D.FeeFAPct }}).
+
+**That zero used to mean nothing, and the reason is worth stating plainly.** The generator and the accounting engine derive contributions from the same fee schedule, so a correct report could not disagree with the check: both sides computed the same number from the same policy. Zero false alarms was arithmetic agreeing with itself.
+
+So the benchmark now models the thing that actually breaks this in production. **Negotiated rates.** Two merchants are signed below the published schedule, the way large merchants are, and their reports drop a per-payment fee row on a fraction of payments, the way real reports do. Where the row is present the pipeline uses it. Where it is missing, something must be assumed about a number the whole proof rests on, and a merchant on 178 bps priced at 200 is wrong by 66 rupees on a 30,000 rupee ticket. Nowhere near a pricing tolerance; fatal to a sum that must close to zero.
+
+Priced naively at the configured schedule that produces **{{ .D.NaiveFalseAlarm }} false alarms**, and it is a named scenario in [the sensitivity sweep](#the-agent). The fix was not a better guard but a better assumption: **price a missing row at the rate the merchant's own report demonstrates**, per instrument, from at least six observed rows. The counterparty's data is a better source than a config file they are visibly not following.
+
+The `fee_basis` guard stops that becoming a new hiding place, refusing any reconstruction whose pool contains contributions inferred from too little evidence. It cost two wrong postings to get right, because the first version tested the **witness** and never fired: mispriced records are the ones that do not sum, so the search excludes them and the witness is always clean, while the true batch containing one loses to a coincidence that does.
+
+> The question is not whether the answer used bad data. It is whether bad data was in the pool the answer was selected from.
+
+Still outside this benchmark: slab boundaries, per-network card rates, and promotional pricing that varies within an instrument. Named in [LIMITATIONS.md](LIMITATIONS.md) rather than modelled.
 
 ---
 
@@ -183,13 +205,13 @@ Repairs, split by the action that produced them, because one total hides which m
 
 And the contribution as a function of how bad the configuration is:
 
-| scenario | verified | wrong | repairs | of which narrowing | proven cures |
-|---|---:|---:|---:|---:|---:|
+| scenario | verified | wrong | repairs | by feed | by history | proven cures |
+|---|---:|---:|---:|---:|---:|---:|
 {{- range .Sensitivity }}
-| {{ .Scenario }} | {{ .Verified }} | {{ .Wrong }} | {{ .Repaired }} | {{ index .RepairedBy "NARROW_TO_HISTORY" }} | {{ .Cures }} |
+| {{ .Scenario }} | {{ .Verified }} | {{ .Wrong }} | **{{ .Repaired }}** | {{ index .RepairedBy "SEARCH_FEED" }} | {{ index .RepairedBy "NARROW_TO_HISTORY" }} | {{ .Cures }} |
 {{- end }}
 
-**At zero misconfiguration the narrowing action repairs {{ .D.ControlNarrow }}.** That is the loop being unnecessary, not failing. **Wrong postings are zero in every scenario**, including where the agent works hardest. And at twice the modelled misconfiguration narrowing repairs fall back to zero for a better reason: a merchant that badly configured proves almost nothing, never reaches the twelve proofs a profile needs, and has no history to corroborate against. That ceiling is in [LIMITATIONS.md](LIMITATIONS.md).
+**Read the two repair columns separately, because they behave differently and one total hides it.** `SEARCH_FEED` repairs at every scenario including a correctly configured one, because an unjoined feed is a data-availability problem rather than a configuration one. `NARROW_TO_HISTORY` repairs {{ .D.ControlNarrow }} at zero misconfiguration, which is the loop being unnecessary rather than failing. **Wrong postings are zero in every scenario**, including where the agent works hardest. And at twice the modelled misconfiguration narrowing repairs fall back to zero for a better reason: a merchant that badly configured proves almost nothing, never reaches the twelve proofs a profile needs, and has no history to corroborate against. That ceiling is in [LIMITATIONS.md](LIMITATIONS.md).
 
 ### The queue, as a flow
 
@@ -341,6 +363,22 @@ So it is ordered by **value cleared per analyst hour**. [Full top {{ len .S.TopE
 | `{{ .Ref }}` | `{{ .Status }}` | {{ ni (div (float .ValuePaise) 100) }} | {{ .Minutes }} | **{{ ni .INRPerHour }}** | {{ clip .Cause 52 }} |
 {{- end }}
 
+### What this is worth to a support desk
+
+The buyer named at the top is a settlement support desk, so the number that matters to them is deflection, not match rate. From stated assumptions:
+
+| | |
+|---|---:|
+| settlement disputes raised per month | {{ n .D.DisputesPerMonth }} *(assumption)* |
+| analyst minutes to answer one from raw files | {{ .D.MinutesEach }} *(assumption)* |
+| **deflected: answered from a receipt with no investigation** | **{{ pct .D.DeflectPct }}** *(this run's composite posting rate)* |
+| analyst hours saved per month | **{{ f0 .D.HoursSavedMonthly }}** |
+| at 1,000 INR per analyst hour | **{{ ni .D.MonthlySavingINR }} INR per month** |
+
+Only the deflection rate is measured; the volume and the handling time are assumptions and are labelled. Substitute your own and the arithmetic is one multiplication.
+
+The mechanism is the part that is not an assumption. A deflected ticket is one where the answer already exists as a receipt: here are the records that make up the credit, here is the fee applied to each, here is the chargeback debited this cycle but raised against the last one. The {{ .D.M1Held }} that are not deflected arrive with a named cause, a computed remedy and a drafted note, which is a shorter investigation rather than none.
+
 ### What refusing is worth
 
 | | |
@@ -398,6 +436,20 @@ Throughput is end to end: {{ .S.Settlements }} settlements in {{ f1 .S.WallClock
 
 **Determinism is per commit.** Same seed and same commit gives the same decisions on every settlement. Timings are measurements and move, so receipts are not byte-identical.
 
+### Where this stops
+
+A throughput figure without a pool size is not a measurement, so here is the boundary instead. Enumeration costs C(n/2, at most k) entries at twelve bytes each, which makes the limit exact rather than benchmarked. Inside a 1 GB budget for one settlement:
+
+| free cardinality | largest pool | entries |
+|---:|---:|---:|
+{{- range .D.OperatingLimits }}
+| {{ .K }} | **{{ n .MaxPoolN }}** | {{ f1 .EntriesM }} M |
+{{- end }}
+
+Cost tracks cardinality, not pool size: a 164-record pool at k=5 costs what a 1,126-record pool at k=3 does. Narrowing is what keeps a real merchant inside this, and the pools in this run land between {{ .S.Pools.NarrowedMin }} and {{ .S.Pools.NarrowedMax }} candidates.
+
+**Beyond the limit nothing crashes.** The feasibility gate checks the projected allocation *before* allocating and refuses, so an oversized pool becomes an `UNDERDETERMINED` with a computed remedy rather than an out-of-memory. And the claim-check path is unaffected at any size, because checking a batch somebody named is linear in the batch: **a merchant too large to reconstruct is still a merchant whose settlement report can be verified.** That is the second reason the composite matters and not just the first.
+
 ---
 
 ## What this cannot do
@@ -406,7 +458,7 @@ The full list is [LIMITATIONS.md](LIMITATIONS.md). The four that matter:
 
 **Reconstruction has a narrow regime.** Uniqueness is attainable only when free cardinality is roughly 3 to 7. Outside it, `UNDERDETERMINED` is the honest answer and no solver improvement changes that. The claim check is what reaches past it.
 
-**The claim check's false-alarm rate is optimistic by construction.** The generator's fee model and the verifier's contribution model are the same model, so a defect-free report that disagrees with our arithmetic over a fee slab or a rounding convention is a failure this benchmark cannot produce.
+**The claim check does not model every fee divergence.** Negotiated rates and missing fee rows are modelled and defeated by calibration. Slab boundaries, per-network card rates and promotional pricing that varies within an instrument are not, and a merchant whose rate moves mid-period would defeat the per-instrument calibration.
 
 **The report defect rate is a modelling choice.** {{ pct1 .D.DefectRatePct }}, chosen here, not observed. The sensitivity sweep varies it down to a tenth so the volume argument does not rest on it. The structural point does not move at all, because a reconciliation whose only check on the report is the report detects a defective one at no rate.
 

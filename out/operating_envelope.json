@@ -1,0 +1,44 @@
+[
+  {
+    "free_cardinality": 3,
+    "max_pool_within_budget": 1126,
+    "entries_millions": 59.485456,
+    "budget_mb": 1024,
+    "comment": "comfortable for a mid-market merchant"
+  },
+  {
+    "free_cardinality": 4,
+    "max_pool_within_budget": 328,
+    "entries_millions": 59.572592,
+    "budget_mb": 1024,
+    "comment": "comfortable for a mid-market merchant"
+  },
+  {
+    "free_cardinality": 5,
+    "max_pool_within_budget": 164,
+    "entries_millions": 58.25272,
+    "budget_mb": 1024,
+    "comment": "typical after narrowing on a daily-settling merchant"
+  },
+  {
+    "free_cardinality": 6,
+    "max_pool_within_budget": 108,
+    "entries_millions": 58.664432,
+    "budget_mb": 1024,
+    "comment": "typical after narrowing on a daily-settling merchant"
+  },
+  {
+    "free_cardinality": 7,
+    "max_pool_within_budget": 82,
+    "entries_millions": 55.681036,
+    "budget_mb": 1024,
+    "comment": "typical after narrowing on a daily-settling merchant"
+  },
+  {
+    "free_cardinality": 8,
+    "max_pool_within_budget": 68,
+    "entries_millions": 50.423872,
+    "budget_mb": 1024,
+    "comment": "typical after narrowing on a daily-settling merchant"
+  }
+]

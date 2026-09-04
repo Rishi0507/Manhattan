@@ -31,6 +31,33 @@ type Config struct {
 	// the fee comparison becomes a comparison of the policy against itself,
 	// and no anomaly claim is made at all.
 	UseObservedFees bool
+
+	// CalibrateMissingFees prices a payment whose report carries no fee row at
+	// the rate this merchant's OTHER payments demonstrably paid, rather than
+	// at the configured schedule.
+	//
+	// Real settlement reports have gaps. The obvious fallback is the published
+	// schedule, and it is wrong for every merchant on a negotiated rate, which
+	// is most of the large ones. A 22 basis point difference on a 30,000 rupee
+	// ticket is 66 rupees, nowhere near a pricing tolerance and fatal to a sum
+	// that has to close to zero.
+	//
+	// The counterparty's own report is the better source. If forty of this
+	// merchant's card payments carry fee rows averaging 178 bps, then 178 is
+	// what this merchant pays, and pricing the missing rows at 200 because a
+	// config file says so is choosing the worse of two available answers.
+	//
+	// Calibration is per merchant and per instrument, because that is the
+	// granularity a rate card actually varies at. Where a merchant has too few
+	// observed rows on an instrument to establish anything, the schedule is
+	// still the fallback, and the fee-basis guard is what stops a
+	// reconstruction resting on that.
+	CalibrateMissingFees bool
+
+	// MinRowsToCalibrate is how many observed fee rows an instrument needs
+	// before its effective rate is trusted. Six is enough to see past
+	// per-transaction rounding without waiting for a month of data.
+	MinRowsToCalibrate int
 	// CycleWindow is how far either side of the credit's value date an event
 	// may fall and still belong to the batch. Narrowing applies it; the
 	// accounting engine only reports it onto receipts.
@@ -39,7 +66,13 @@ type Config struct {
 
 // DefaultConfig returns declared mode with the shipped policy.
 func DefaultConfig() Config {
-	return Config{Policy: DefaultPolicy(), Mode: ModeDeclared, Delta: 0}
+	return Config{
+		Policy:               DefaultPolicy(),
+		Mode:                 ModeDeclared,
+		Delta:                0,
+		CalibrateMissingFees: true,
+		MinRowsToCalibrate:   6,
+	}
 }
 
 // Delta returns the effective per-item tolerance, which is zero in declared
@@ -68,6 +101,9 @@ func Build(ds *model.Dataset, cfg Config) []model.Record {
 		refundsByPayment[r.PaymentID] = append(refundsByPayment[r.PaymentID], r)
 	}
 
+	// What this merchant's own report says it actually pays, per instrument.
+	rates := calibrate(ds, cfg)
+
 	records := make([]model.Record, 0, len(ds.Payments)+len(ds.Chargebacks)+len(ds.Adjustments))
 
 	for _, p := range ds.Payments {
@@ -77,11 +113,21 @@ func Build(ds *model.Dataset, cfg Config) []model.Record {
 
 		// What was actually deducted, where the report says so.
 		mdr, gst := policyMDR, policyGST
-		if cfg.UseObservedFees && p.FeeObserved != nil {
+		calibrated := false
+		switch {
+		case cfg.UseObservedFees && p.FeeObserved != nil:
 			mdr = *p.FeeObserved
 			gst = cfg.Policy.GST(mdr)
 			if p.TaxObserved != nil {
 				gst = *p.TaxObserved
+			}
+		case cfg.UseObservedFees && cfg.CalibrateMissingFees:
+			// No fee row. Price it at what this merchant's other payments on
+			// this instrument demonstrably paid, rather than at the schedule.
+			if bps, ok := rates[rateKey{p.MerchantID, p.Instrument}]; ok {
+				mdr = money.MulRateBPS(p.Gross, bps, cfg.Policy.FeeRounding)
+				gst = cfg.Policy.GST(mdr)
+				calibrated = true
 			}
 		}
 
@@ -95,21 +141,22 @@ func Build(ds *model.Dataset, cfg Config) []model.Record {
 		}
 
 		rec := model.Record{
-			ID:           p.ID,
-			Kind:         model.KindPayment,
-			MerchantID:   p.MerchantID,
-			Instrument:   p.Instrument,
-			Currency:     p.Currency,
-			EventAt:      p.CapturedAt,
-			Gross:        p.Gross,
-			MDR:          mdr,
-			GST:          gst,
-			PolicyMDR:    policyMDR,
-			PolicyGST:    policyGST,
-			Refund:       refunded,
-			Reconciled:   p.Reconciled,
-			SettlementID: p.SettlementID,
-			FeeObserved:  p.FeeObserved,
+			ID:            p.ID,
+			Kind:          model.KindPayment,
+			MerchantID:    p.MerchantID,
+			Instrument:    p.Instrument,
+			Currency:      p.Currency,
+			EventAt:       p.CapturedAt,
+			Gross:         p.Gross,
+			MDR:           mdr,
+			GST:           gst,
+			PolicyMDR:     policyMDR,
+			PolicyGST:     policyGST,
+			Refund:        refunded,
+			Reconciled:    p.Reconciled,
+			SettlementID:  p.SettlementID,
+			FeeObserved:   p.FeeObserved,
+			FeeCalibrated: calibrated,
 		}
 
 		// gross - MDR - GST(MDR) - refunds settled this cycle.
@@ -229,4 +276,55 @@ func Recompute(witness []model.Record, target money.Paise, cfg Config) Equation 
 	}
 	eq.Closes = eq.SlackConsumed <= eq.SlackAllowed
 	return eq
+}
+
+// rateKey identifies one merchant's pricing on one instrument.
+type rateKey struct {
+	merchant   string
+	instrument model.Instrument
+}
+
+// calibrate reads the effective rate a merchant's own report demonstrates.
+//
+// Gross-weighted rather than a mean of per-payment rates, because a rate card
+// applies to money and a mean of rates over-weights small tickets. Instruments
+// with too few observed rows are left out entirely, so the schedule remains the
+// fallback and the fee-basis guard remains the thing that catches it.
+func calibrate(ds *model.Dataset, cfg Config) map[rateKey]int64 {
+	if !cfg.UseObservedFees || !cfg.CalibrateMissingFees {
+		return nil
+	}
+	min := cfg.MinRowsToCalibrate
+	if min <= 0 {
+		min = 6
+	}
+
+	type agg struct {
+		gross, fee money.Paise
+		n          int
+	}
+	sums := map[rateKey]*agg{}
+	for _, p := range ds.Payments {
+		if p.FeeObserved == nil || p.Gross == 0 {
+			continue
+		}
+		k := rateKey{p.MerchantID, p.Instrument}
+		a := sums[k]
+		if a == nil {
+			a = &agg{}
+			sums[k] = a
+		}
+		a.gross += p.Gross
+		a.fee += *p.FeeObserved
+		a.n++
+	}
+
+	out := map[rateKey]int64{}
+	for k, a := range sums {
+		if a.n < min || a.gross == 0 {
+			continue
+		}
+		out[k] = money.BPS(a.fee, a.gross)
+	}
+	return out
 }

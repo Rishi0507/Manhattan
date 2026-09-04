@@ -90,6 +90,13 @@ type Summary struct {
 	M1FalseAlarms  int `json:"m1_false_alarms_on_clean_reports"`
 	M1CleanReports int `json:"m1_clean_reports_checked"`
 
+	// NoClaim counts settlements the gateway report carries no mapping for.
+	// There is nothing to check on these and reconstruction is the only route
+	// to a posting, which is the measured answer to "what is the solver for
+	// when most postings come from checked claims".
+	NoClaim       int `json:"settlements_with_no_report_mapping"`
+	NoClaimPosted int `json:"settlements_with_no_mapping_posted_by_reconstruction"`
+
 	MedianLatencyMS float64 `json:"median_latency_ms"`
 	P95LatencyMS    float64 `json:"p95_latency_ms"`
 	B0MedianMS      float64 `json:"b0_median_latency_ms"`
@@ -366,6 +373,13 @@ type BatchSpec struct {
 	// ReportDefectRate overrides the generator's rate of defective settlement
 	// reports. Nil uses the generator default.
 	ReportDefectRate *float64
+	// NaiveFeeFallback prices a payment with no fee row at the configured
+	// schedule instead of at the merchant's own observed rate.
+	//
+	// This exists to be measured against, and it is what the system did
+	// before. It is the difference between a false-alarm rate that is a
+	// tautology and one that is a result.
+	NaiveFeeFallback bool
 }
 
 // windowSlackHours widens the reconciliation window for merchants whose
@@ -395,6 +409,50 @@ type BatchSpec struct {
 var windowSlackHours = map[string]float64{
 	"d2c_ecommerce": 24,
 	"travel":        22,
+	// Marketplace carries BOTH a wide window and an unjoined disputes feed,
+	// and that overlap is deliberate.
+	//
+	// A benchmark where every merchant has exactly one problem is a benchmark
+	// a lookup table can score full marks on, and the deterministic stub that
+	// writes the close is close to being one: it applies a fixed rule per
+	// merchant and reports the first that matches. Giving one merchant two
+	// conditions is what makes the close's condition recall a measurement of
+	// reasoning rather than of rule coverage, and the stub is expected to miss
+	// the second. Real deployments are not tidy either.
+	"marketplace": 26,
+}
+
+// negotiatedRate names merchants signed at a rate other than the published
+// schedule the pipeline is configured with, and how often their settlement
+// report omits a per-payment fee row.
+//
+// This exists because the composite's false-alarm rate was a tautology before
+// it did, and that is worth stating rather than hiding in a changelog.
+//
+// The generator and the accounting engine derive contributions from the same
+// policy. So a settlement report that was entirely correct could never
+// disagree with the claim check: both sides computed the same number from the
+// same schedule, and "zero false alarms on 469 clean reports" was not a
+// measurement. It was arithmetic agreeing with itself.
+//
+// A negotiated rate is the most ordinary thing in Indian payments. A merchant
+// is signed at 185 bps rather than the published 200. The gateway applies 185,
+// the credit reflects 185, and wherever the report carries a per-payment fee
+// row the pipeline uses it and agrees. Where the report has a GAP, and real
+// reports have gaps, the pipeline falls back to the schedule it was configured
+// with, computes 200, and disagrees with a report that was correct.
+//
+// That is a false alarm with a real cause, and it means the false-alarm rate
+// is now a number this benchmark can be wrong about.
+var negotiatedRate = map[string]struct {
+	bps         int64
+	missingRows float64
+}{
+	// A large marketplace with the negotiating power to get 15 bps off, and a
+	// report that drops a fee row on roughly one payment in twelve.
+	"marketplace": {bps: 185, missingRows: 0.08},
+	// A travel merchant on a promotional rate, with a cleaner report.
+	"travel": {bps: 178, missingRows: 0.04},
 }
 
 // unjoinedFeed names the merchants whose disputes feed was never joined.
@@ -474,8 +532,15 @@ func RunBatch(ctx context.Context, spec BatchSpec, provider llm.Provider) (*evid
 		// A realistic spread of difficulty. Pool jitter is what turns a single
 		// operating point into the distribution the track brief asks for.
 		gs.PoolTarget = 34
+		// One settlement in six arrives with no mapping to check, which is the
+		// population reconstruction exists for.
+		gs.NoMappingRate = 0.17
 		if spec.ReportDefectRate != nil {
 			gs.ReportDefectRate = *spec.ReportDefectRate
+		}
+		if nr, ok := negotiatedRate[arch]; ok {
+			gs.NegotiatedMDRBps = nr.bps
+			gs.MissingFeeRowRate = nr.missingRows
 		}
 		gs.PoolJitter = 14
 
@@ -493,6 +558,9 @@ func RunBatch(ctx context.Context, spec BatchSpec, provider llm.Provider) (*evid
 		ds := generate.Generate(gs)
 
 		cfg := pipeline.DefaultConfig()
+		if spec.NaiveFeeFallback {
+			cfg.Accounting.CalibrateMissingFees = false
+		}
 		slack := windowSlackHours
 		if spec.WindowSlack != nil {
 			slack = spec.WindowSlack
@@ -643,6 +711,22 @@ func RunBatch(ctx context.Context, spec BatchSpec, provider llm.Provider) (*evid
 			nc.CycleDays = m.SettlementCycleDays
 			nc.EnforceInstrument = m.InstrumentSegregated
 			pool := narrow.Apply(eng.Records, credit, m, nc).Pool
+
+			if _, hasMapping := ds.ReportedMapping[credit.Ref]; !hasMapping {
+				sum.NoClaim++
+				if rec.Status == evidence.StatusVerified {
+					sum.NoClaimPosted++
+					sum.M1Posted++
+					sum.M1FromProof++
+					archM1++
+					if !sameSet(rec.Witness, truth) {
+						sum.M1PostedWrong++
+						archM1Wrong++
+					}
+				} else {
+					sum.M1Held++
+				}
+			}
 
 			// B1, the lookup. It reads the report's mapping directly; the
 			// pipeline above never saw it.

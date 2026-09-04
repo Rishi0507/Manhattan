@@ -137,6 +137,27 @@ type Derived struct {
 	// per pair, which read as a stutter when a map was ranged over directly.
 	Confusions string
 
+	// The split a reader is entitled to see up front, and the population that
+	// answers what the solver is for.
+	NoClaim         int
+	NoClaimPosted   int
+	NoClaimPct      float64
+	ProofSharePct   float64
+	FeeFalseAlarms  int
+	FeeFAClean      int
+	FeeFAPct        float64
+	NaiveFalseAlarm int
+	NaiveClean      int
+	NaiveFAPct      float64
+	OperatingLimits []bench.OperatingLimit
+
+	// Deflection, the commercial number.
+	DisputesPerMonth  int
+	MinutesEach       int
+	DeflectPct        float64
+	HoursSavedMonthly float64
+	MonthlySavingINR  float64
+
 	// The period close, which is the controller doing the job the track names.
 	Close          *evidence.PeriodClose
 	CloseRecallPct float64
@@ -300,7 +321,8 @@ type docData struct {
 // wrong can substitute their own and redo the arithmetic in one step.
 const remediationCostINR = 2400
 
-func deriveDocs(sum bench.Summary, cases []bench.CaseOutcome, sweep []bench.SweepPoint, env []bench.EnvelopePoint) Derived {
+func deriveDocs(sum bench.Summary, cases []bench.CaseOutcome, sweep []bench.SweepPoint,
+	env []bench.EnvelopePoint, sens []bench.SensitivityPoint, opLimits []bench.OperatingLimit) Derived {
 	var d Derived
 	d.GeneratedFromRun = sum.RunID
 
@@ -419,6 +441,35 @@ func deriveDocs(sum bench.Summary, cases []bench.CaseOutcome, sweep []bench.Swee
 		d.CloseFound = len(pc.ConditionsFound)
 		d.CloseInjected = len(pc.ConditionsInjected)
 	}
+
+	d.NoClaim, d.NoClaimPosted = sum.NoClaim, sum.NoClaimPosted
+	if sum.Settlements > 0 {
+		d.NoClaimPct = 100 * float64(sum.NoClaim) / float64(sum.Settlements)
+		d.ProofSharePct = 100 * float64(sum.M1FromProof) / float64(sum.M1Posted)
+	}
+	d.FeeFalseAlarms, d.FeeFAClean = sum.M1FalseAlarms, sum.M1CleanReports
+	if sum.M1CleanReports > 0 {
+		d.FeeFAPct = 100 * float64(sum.M1FalseAlarms) / float64(sum.M1CleanReports)
+	}
+	for _, sp := range sens {
+		if sp.NaiveFees {
+			d.NaiveFalseAlarm = sp.M1FalseAl
+		}
+	}
+	d.OperatingLimits = opLimits
+
+	// The deflection arithmetic, from stated assumptions rather than a claim.
+	//
+	// Every figure here is an assumption except the deflection rate, which is
+	// this run's own composite posting rate. A reader who disagrees with the
+	// volume or the handling time substitutes theirs and redoes one
+	// multiplication, which is the only honest way to publish a commercial
+	// number from synthetic data.
+	d.DisputesPerMonth, d.MinutesEach = 4000, 18
+	d.DeflectPct = d.M1PostRate
+	d.HoursSavedMonthly = float64(d.DisputesPerMonth) * (d.DeflectPct / 100) *
+		float64(d.MinutesEach) / 60
+	d.MonthlySavingINR = d.HoursSavedMonthly * 1000
 
 	d.TotalSweptConfigs = len(sweep)
 	d.PeakSampledMB, d.PeakSolverMB, d.Host = sum.PeakMemoryMB, sum.PeakSolverMB, sum.Host
@@ -755,9 +806,9 @@ func renderDoc(tmplPath, outPath string, data docData) error {
 // renderNarrativeDocs writes README.md and LIMITATIONS.md from the run.
 func renderNarrativeDocs(ctx context.Context, sum bench.Summary, cases []bench.CaseOutcome,
 	sweep []bench.SweepPoint, env []bench.EnvelopePoint, sens []bench.SensitivityPoint,
-	store *evidence.Store, p llm.Provider) error {
+	opLimits []bench.OperatingLimit, store *evidence.Store, p llm.Provider) error {
 
-	d := deriveDocs(sum, cases, sweep, env)
+	d := deriveDocs(sum, cases, sweep, env, sens, opLimits)
 	d.Sensitivity = sens
 
 	// The live-versus-stub delta, folded in only if `manhattan live` has been
@@ -823,9 +874,10 @@ func runDocs(ctx context.Context, args []string) error {
 	var sweep []bench.SweepPoint
 	var env []bench.EnvelopePoint
 	var sens []bench.SensitivityPoint
+	var opLimits []bench.OperatingLimit
 	for name, dst := range map[string]any{
 		"summary": &sum, "cases": &cases, "sweep": &sweep,
-		"envelope": &env, "sensitivity": &sens,
+		"envelope": &env, "sensitivity": &sens, "operating_envelope": &opLimits,
 	} {
 		b, err := os.ReadFile(filepath.Join(*dir, name+".json"))
 		if err != nil {
@@ -849,5 +901,5 @@ func runDocs(ctx context.Context, args []string) error {
 	if err != nil {
 		return err
 	}
-	return renderNarrativeDocs(ctx, sum, cases, sweep, env, sens, store, provider)
+	return renderNarrativeDocs(ctx, sum, cases, sweep, env, sens, opLimits, store, provider)
 }

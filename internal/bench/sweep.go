@@ -430,3 +430,69 @@ func b0For(eng *pipeline.Engine, cfg pipeline.Config, credit model.BankCredit) b
 	pool := narrow.Apply(eng.Records, credit, m, nc).Pool
 	return baseline.Match(pool, credit.Amount, credit.DeclaredTxnCount, baseline.DefaultConfig())
 }
+
+// OperatingLimit is the largest candidate pool one settlement can be
+// reconstructed from, at a given free cardinality, inside a memory budget.
+type OperatingLimit struct {
+	K        int     `json:"free_cardinality"`
+	MaxPoolN int     `json:"max_pool_within_budget"`
+	EntriesM float64 `json:"entries_millions"`
+	BudgetMB int     `json:"budget_mb"`
+	Comment  string  `json:"comment"`
+}
+
+// OperatingEnvelope answers the scale question with a boundary rather than a
+// benchmark.
+//
+// The published throughput figure is measured on this repository's pools,
+// which narrow to a few dozen candidates, and quoting it without saying at
+// what pool size is the kind of number an infrastructure reviewer is right to
+// distrust. The honest statement is where it stops.
+//
+// Enumeration is C(n/2, at most k) entries at twelve bytes each, so the limit
+// is computable rather than measurable and it is exact. Cost tracks the free
+// cardinality, not the pool: a 100-record pool at k=5 costs more than a
+// 320-record pool at k=3, and the table shows that inversion directly.
+//
+// What happens beyond the limit is not a crash. The feasibility gate checks
+// the projected allocation BEFORE allocating and refuses, so an oversized pool
+// becomes an UNDERDETERMINED with a computed remedy rather than an out of
+// memory. And the claim-check path is unaffected at any size, because checking
+// a batch somebody named is linear in the batch. A merchant too large to
+// reconstruct is still a merchant whose settlement report can be verified.
+func OperatingEnvelope(budgetMB int) []OperatingLimit {
+	if budgetMB <= 0 {
+		budgetMB = 1024
+	}
+	budget := int64(budgetMB) << 20
+
+	var out []OperatingLimit
+	for k := 3; k <= 8; k++ {
+		lo, hi := k*2, 20000
+		best := 0
+		for lo <= hi {
+			mid := (lo + hi) / 2
+			_, bytes := solver.PredictEntries(mid, k)
+			if bytes <= budget && bytes >= 0 {
+				best, lo = mid, mid+1
+			} else {
+				hi = mid - 1
+			}
+		}
+		entries, _ := solver.PredictEntries(best, k)
+		comment := "comfortable for a mid-market merchant"
+		switch {
+		case best < 60:
+			comment = "only the smallest pools; the claim check carries the rest"
+		case best < 200:
+			comment = "typical after narrowing on a daily-settling merchant"
+		case best > 2000:
+			comment = "beyond any pool narrowing should be producing"
+		}
+		out = append(out, OperatingLimit{
+			K: k, MaxPoolN: best, EntriesM: float64(entries) / 1e6,
+			BudgetMB: budgetMB, Comment: comment,
+		})
+	}
+	return out
+}

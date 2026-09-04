@@ -61,6 +61,23 @@ type Payment struct {
 	FeeObserved *money.Paise `json:"fee_observed_paise,omitempty"`
 	TaxObserved *money.Paise `json:"tax_observed_paise,omitempty"`
 
+	// FeeApplied and TaxApplied are what ACTUALLY came out of the bank credit,
+	// which is not always what the report says and not always what the policy
+	// says either. The generator records them; the pipeline never reads them.
+	//
+	// They exist so the benchmark can build a credit that reflects the money
+	// that really moved, including on payments whose fee row the report does
+	// not carry. Without them a merchant on a negotiated rate would be
+	// indistinguishable from one on the published schedule, and the claim
+	// check could never raise a false alarm because both sides would be
+	// deriving the same number from the same policy.
+	FeeApplied money.Paise `json:"-"`
+	TaxApplied money.Paise `json:"-"`
+	// FeeRowMissing marks a payment the settlement report carries with no
+	// per-payment fee row. Real reports have gaps, and a gap forces the
+	// pipeline back onto the schedule it was configured with.
+	FeeRowMissing bool `json:"fee_row_missing,omitempty"`
+
 	// SettlementID is the gateway's own mapping claim. Manhattan treats it as
 	// a claim to be verified, not as an answer, and the demo posture withholds
 	// it entirely (data mode 2).
@@ -272,6 +289,11 @@ type Record struct {
 	Chargeback  money.Paise  `json:"chargeback_paise"`
 	Adjustment  money.Paise  `json:"adjustment_paise"`
 	FeeObserved *money.Paise `json:"fee_observed_paise,omitempty"`
+	// FeeCalibrated marks a contribution priced at the merchant's own observed
+	// effective rate because the report carried no fee row for it. It is a
+	// better guess than the configured schedule and it is still a guess, which
+	// is what the fee-basis guard exists to weigh.
+	FeeCalibrated bool `json:"fee_calibrated,omitempty"`
 
 	Reconciled   bool   `json:"reconciled"`
 	SettlementID string `json:"settlement_id,omitempty"`

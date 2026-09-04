@@ -15,6 +15,7 @@ type SensitivityPoint struct {
 	Scenario   string  `json:"scenario"`
 	SlackScale float64 `json:"window_slack_scale"`
 	DefectRate float64 `json:"report_defect_rate"`
+	NaiveFees  bool    `json:"missing_fee_rows_priced_naively"`
 
 	Verified   int            `json:"verified"`
 	Wrong      int            `json:"auto_posted_wrong"`
@@ -53,13 +54,18 @@ func Sensitivity(ctx context.Context, base BatchSpec, provider llm.Provider) []S
 		name       string
 		slackScale float64
 		defect     float64
+		naiveFees  bool
 	}
 	scens := []scen{
-		{"correctly configured, reports clean", 0, 0},
-		{"correctly configured, reports as modelled", 0, 0.06},
-		{"window misconfiguration as modelled", 1, 0.06},
-		{"window misconfiguration, reports ten times cleaner", 1, 0.006},
-		{"window misconfiguration twice as bad", 1.5, 0.06},
+		{"correctly configured, reports clean", 0, 0, false},
+		{"correctly configured, reports as modelled", 0, 0.06, false},
+		{"window misconfiguration as modelled", 1, 0.06, false},
+		{"window misconfiguration, reports ten times cleaner", 1, 0.006, false},
+		{"window misconfiguration twice as bad", 1.5, 0.06, false},
+		// The control that makes the false-alarm rate a measurement. Missing
+		// fee rows priced at the configured schedule rather than at the rate
+		// the merchant's own report demonstrates.
+		{"missing fee rows priced naively", 1, 0.06, true},
 	}
 
 	var out []SensitivityPoint
@@ -71,6 +77,7 @@ func Sensitivity(ctx context.Context, base BatchSpec, provider llm.Provider) []S
 		// the feed path.
 		spec.Settlements = 360
 		spec.ReportDefectRate = &sc.defect
+		spec.NaiveFeeFallback = sc.naiveFees
 		spec.WindowSlack = map[string]float64{}
 		for m, h := range windowSlackHours {
 			if sc.slackScale > 0 {
@@ -85,6 +92,7 @@ func Sensitivity(ctx context.Context, base BatchSpec, provider llm.Provider) []S
 			Scenario:   sc.name,
 			SlackScale: sc.slackScale,
 			DefectRate: sc.defect,
+			NaiveFees:  sc.naiveFees,
 			Verified:   sum.AutoPosted,
 			Wrong:      sum.AutoPostedWrong,
 			Repaired:   sum.AgentRepaired,

@@ -102,12 +102,13 @@ func runBench(ctx context.Context, args []string) error {
 	envelope := bench.Envelope()
 
 	arts := map[string]any{
-		"summary":     summary,
-		"cases":       cases,
-		"sweep":       sweep,
-		"envelope":    envelope,
-		"sensitivity": sensitivity,
-		"buckets":     bench.LogSpaced(sweep, 8),
+		"summary":            summary,
+		"cases":              cases,
+		"sweep":              sweep,
+		"envelope":           envelope,
+		"operating_envelope": bench.OperatingEnvelope(1024),
+		"sensitivity":        sensitivity,
+		"buckets":            bench.LogSpaced(sweep, 8),
 		// The same curve segmented by batch cardinality, because that is the
 		// variable the index has to be read against.
 		"cardinality_bands": bench.CardinalityBands(sweep, 4),
@@ -130,7 +131,8 @@ func runBench(ctx context.Context, args []string) error {
 	// README.md and LIMITATIONS.md are regenerated in the same command that
 	// produced the numbers, so the three documents cannot disagree. Leaving
 	// this as a separate step is what let them drift apart once already.
-	if err := renderNarrativeDocs(ctx, summary, cases, sweep, envelope, sensitivity, store, provider); err != nil {
+	if err := renderNarrativeDocs(ctx, summary, cases, sweep, envelope, sensitivity,
+		bench.OperatingEnvelope(1024), store, provider); err != nil {
 		return err
 	}
 

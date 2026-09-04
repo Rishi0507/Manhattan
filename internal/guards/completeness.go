@@ -251,6 +251,111 @@ func FeedCompletenessCheck(unjoinedInWindow []model.Record, poolIDs map[string]b
 	}
 }
 
+// MinCalibrationRows is how many observed fee rows a pool needs before a
+// contribution calibrated from them is treated as evidence rather than a guess.
+const MinCalibrationRows = 6
+
+// FeeBasisCheck weighs how much of a pool was priced from what a report said
+// against how much was inferred.
+//
+// It cost wrong postings twice and the second time is the instructive one.
+//
+// Where a settlement report carries a per-payment fee row, a contribution is
+// derived from money that demonstrably moved. Where the row is missing, and
+// real reports have gaps, something has to be assumed about a number the whole
+// proof rests on.
+//
+// The first version tested only the WITNESS and never fired, for the same
+// reason every other failure in this file exists. Mispriced records are the
+// ones that do not sum, so the search excludes them and selects a witness made
+// entirely of correctly priced records. Testing the witness asks "did the
+// search avoid the bad data", and the answer is always yes, because avoiding it
+// is what a search does. Meanwhile the TRUE batch contained a mispriced record,
+// did not sum, and lost to a coincidence that did.
+//
+//	The question is not whether the answer used bad data. It is whether bad
+//	data was in the pool the answer was selected from.
+//
+// The second version tested the pool and priced missing rows at the configured
+// schedule, which held almost everything, correctly and uselessly. The right
+// answer was not a better guard, it was a better assumption: price a missing
+// row at the rate this merchant's OWN report demonstrates rather than at a
+// schedule they are visibly not on. That is accounting.CalibrateMissingFees,
+// and it is what this check now weighs.
+//
+// A calibrated contribution is still inferred. What makes it defensible is
+// that the inference came from the counterparty's own data, on the same
+// merchant and the same instrument, and this check refuses to treat it as
+// evidence when there was not enough of that data to establish anything.
+func FeeBasisCheck(pool []model.Record, feesObserved bool) Check {
+	const name = "fee_basis"
+
+	if !feesObserved {
+		return Check{
+			Name:  name,
+			State: CheckInactive,
+			Detail: "every contribution in this data mode is policy-derived, so there is no " +
+				"observed subset to test an assumption against",
+		}
+	}
+
+	var calibrated, assumed, observed int
+	for _, r := range pool {
+		if r.Kind != model.KindPayment || r.Gross == 0 {
+			continue
+		}
+		switch {
+		case r.FeeObserved != nil:
+			observed++
+		case r.FeeCalibrated:
+			calibrated++
+		default:
+			assumed++
+		}
+	}
+
+	switch {
+	case calibrated == 0 && assumed == 0:
+		return Check{
+			Name:   name,
+			State:  CheckPass,
+			Detail: "every contribution in this pool came from a fee row the report actually carried",
+		}
+
+	case assumed > 0:
+		return Check{
+			Name:  name,
+			State: CheckFail,
+			Detail: fmt.Sprintf(
+				"%d candidate(s) have no fee row and too few comparable rows on the same "+
+					"instrument to infer this merchant's rate, so their contributions fall back "+
+					"to the configured schedule. A merchant on a negotiated rate is priced "+
+					"wrong by the difference, which can put the true batch out of reach and a "+
+					"coincidence within it", assumed),
+		}
+
+	case observed < MinCalibrationRows:
+		return Check{
+			Name:  name,
+			State: CheckFail,
+			Detail: fmt.Sprintf(
+				"%d candidate(s) were priced from this merchant's observed rate, inferred from "+
+					"only %d rows against a floor of %d. That is not enough to establish a rate",
+				calibrated, observed, MinCalibrationRows),
+		}
+	}
+
+	return Check{
+		Name:  name,
+		State: CheckPass,
+		Detail: fmt.Sprintf(
+			"%d of %d contributions came from fee rows the report carried; the other %d had no "+
+				"row and were priced at the effective rate those %d rows demonstrate for this "+
+				"merchant and instrument, rather than at the configured schedule",
+			observed, observed+calibrated, calibrated, observed),
+	}
+}
+
 // DriftBaseline is a stored per-constraint drop rate from a prior run.
 type DriftBaseline struct {
 	RunID string                        `json:"baseline_source"`

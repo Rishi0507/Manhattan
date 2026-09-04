@@ -24,6 +24,9 @@
         "JoinDisputes": true,
         "ReportDefectRate": 0,
         "FeeDriftBps": 0,
+        "NegotiatedMDRBps": 0,
+        "MissingFeeRowRate": 0,
+        "NoMappingRate": 0,
         "Policy": {
           "version": "fees_2026_08",
           "mdr_bps_by_instrument": {
@@ -54,7 +57,7 @@
     "pool_n": 40,
     "k_star": 12,
     "collision_index": 6.993192879457462,
-    "latency_ms": 20,
+    "latency_ms": 32,
     "receipt": {
       "settlement_ref": "bank_credit_travel_2026_08_25_1003",
       "run_id": "case_01_clean_positive_only",
@@ -296,6 +299,11 @@
             "name": "feed_completeness",
             "state": "pass",
             "detail": "every source known to this run was joined into the candidate pool"
+          },
+          {
+            "name": "fee_basis",
+            "state": "pass",
+            "detail": "every contribution in this pool came from a fee row the report actually carried"
           }
         ]
       },
@@ -322,11 +330,11 @@
       },
       "timing_ms": {
         "entropy_gate": 0,
-        "feasibility": 8,
+        "feasibility": 11,
         "fee_check": 0,
         "narrow": 0,
-        "prove": 4,
-        "reconstruct": 7
+        "prove": 9,
+        "reconstruct": 10
       },
       "policy_version": "fees_2026_08",
       "replay_seed": 1001
@@ -369,6 +377,9 @@
         "JoinDisputes": true,
         "ReportDefectRate": 0,
         "FeeDriftBps": 0,
+        "NegotiatedMDRBps": 0,
+        "MissingFeeRowRate": 0,
+        "NoMappingRate": 0,
         "Policy": {
           "version": "fees_2026_08",
           "mdr_bps_by_instrument": {
@@ -401,7 +412,7 @@
     "pool_n": 24,
     "k_star": 12,
     "collision_index": 0.009569086072731547,
-    "latency_ms": 15,
+    "latency_ms": 21,
     "receipt": {
       "settlement_ref": "bank_credit_travel_2026_08_25_1003",
       "run_id": "case_02_signed_items",
@@ -651,6 +662,11 @@
             "name": "feed_completeness",
             "state": "pass",
             "detail": "every source known to this run was joined into the candidate pool"
+          },
+          {
+            "name": "fee_basis",
+            "state": "pass",
+            "detail": "every contribution in this pool came from a fee row the report actually carried"
           }
         ],
         "zero_contribution_records": [
@@ -680,11 +696,11 @@
       },
       "timing_ms": {
         "entropy_gate": 0,
-        "feasibility": 9,
+        "feasibility": 12,
         "fee_check": 0,
-        "narrow": 0,
-        "prove": 1,
-        "reconstruct": 4
+        "narrow": 1,
+        "prove": 2,
+        "reconstruct": 6
       },
       "policy_version": "fees_2026_08",
       "replay_seed": 1002
@@ -728,6 +744,9 @@
         "JoinDisputes": true,
         "ReportDefectRate": 0,
         "FeeDriftBps": 0,
+        "NegotiatedMDRBps": 0,
+        "MissingFeeRowRate": 0,
+        "NoMappingRate": 0,
         "Policy": {
           "version": "fees_2026_08",
           "mdr_bps_by_instrument": {
@@ -761,7 +780,7 @@
     "pool_n": 258,
     "k_star": 3,
     "collision_index": 0.16817783731093572,
-    "latency_ms": 72,
+    "latency_ms": 84,
     "receipt": {
       "settlement_ref": "bank_credit_travel_2026_08_23_1001",
       "run_id": "case_03_large_batch_complement",
@@ -1262,6 +1281,11 @@
             "name": "feed_completeness",
             "state": "pass",
             "detail": "every source known to this run was joined into the candidate pool"
+          },
+          {
+            "name": "fee_basis",
+            "state": "pass",
+            "detail": "every contribution in this pool came from a fee row the report actually carried"
           }
         ],
         "zero_contribution_records": [
@@ -1292,11 +1316,11 @@
       },
       "timing_ms": {
         "entropy_gate": 0,
-        "feasibility": 5,
+        "feasibility": 10,
         "fee_check": 0,
         "narrow": 0,
-        "prove": 8,
-        "reconstruct": 57
+        "prove": 4,
+        "reconstruct": 69
       },
       "policy_version": "fees_2026_08",
       "replay_seed": 1003
@@ -1342,6 +1366,9 @@
         "JoinDisputes": true,
         "ReportDefectRate": 0,
         "FeeDriftBps": 0,
+        "NegotiatedMDRBps": 0,
+        "MissingFeeRowRate": 0,
+        "NoMappingRate": 0,
         "Policy": {
           "version": "fees_2026_08",
           "mdr_bps_by_instrument": {
@@ -1374,7 +1401,7 @@
     "pool_n": 318,
     "k_star": 4,
     "collision_index": 0.617929367521851,
-    "latency_ms": 16,
+    "latency_ms": 11,
     "receipt": {
       "settlement_ref": "bank_credit_travel_2026_08_23_1001",
       "run_id": "case_04_underdetermined",
@@ -1571,7 +1598,7 @@
       },
       "timing_ms": {
         "entropy_gate": 0,
-        "feasibility": 15,
+        "feasibility": 10,
         "fee_check": 0,
         "narrow": 1
       },
@@ -1774,6 +1801,9 @@
         "JoinDisputes": true,
         "ReportDefectRate": 0,
         "FeeDriftBps": 0,
+        "NegotiatedMDRBps": 0,
+        "MissingFeeRowRate": 0,
+        "NoMappingRate": 0,
         "Policy": {
           "version": "fees_2026_08",
           "mdr_bps_by_instrument": {
@@ -1806,7 +1836,7 @@
     "pool_n": 34,
     "k_star": 12,
     "collision_index": 1.343340077841329,
-    "latency_ms": 27,
+    "latency_ms": 11,
     "receipt": {
       "settlement_ref": "bank_credit_travel_2026_08_25_1003",
       "run_id": "case_05_ambiguous_twin",
@@ -2057,11 +2087,11 @@
       },
       "timing_ms": {
         "entropy_gate": 0,
-        "feasibility": 21,
+        "feasibility": 8,
         "fee_check": 0,
         "narrow": 0,
         "prove": 0,
-        "reconstruct": 5
+        "reconstruct": 3
       },
       "policy_version": "fees_2026_08",
       "replay_seed": 1005
@@ -2104,6 +2134,9 @@
         "JoinDisputes": true,
         "ReportDefectRate": 0,
         "FeeDriftBps": 8,
+        "NegotiatedMDRBps": 0,
+        "MissingFeeRowRate": 0,
+        "NoMappingRate": 0,
         "Policy": {
           "version": "fees_2026_08",
           "mdr_bps_by_instrument": {
@@ -2136,7 +2169,7 @@
     "pool_n": 34,
     "k_star": 12,
     "collision_index": 2.4272189000134428,
-    "latency_ms": 22,
+    "latency_ms": 14,
     "receipt": {
       "settlement_ref": "bank_credit_travel_2026_08_25_1003",
       "run_id": "case_06_fee_anomaly_observed",
@@ -2361,7 +2394,7 @@
             "already_reconciled",
             "currency_mismatch"
           ],
-          "expected_spurious_collisions": 0.005297968797941638,
+          "expected_spurious_collisions": 0.005298013263928814,
           "inconclusive": false,
           "note": "no alternative reconstruction exists at substitution depth 2 over a pool widened to 105 records (an estimated 0.0053 chance collisions would have been tolerable here)"
         },
@@ -2380,6 +2413,11 @@
             "name": "feed_completeness",
             "state": "pass",
             "detail": "every source known to this run was joined into the candidate pool"
+          },
+          {
+            "name": "fee_basis",
+            "state": "pass",
+            "detail": "every contribution in this pool came from a fee row the report actually carried"
           }
         ]
       },
@@ -2406,11 +2444,11 @@
       },
       "timing_ms": {
         "entropy_gate": 0,
-        "feasibility": 13,
+        "feasibility": 8,
         "fee_check": 0,
         "narrow": 0,
-        "prove": 3,
-        "reconstruct": 5
+        "prove": 2,
+        "reconstruct": 4
       },
       "policy_version": "fees_2026_08",
       "replay_seed": 1006
@@ -2453,6 +2491,9 @@
         "JoinDisputes": true,
         "ReportDefectRate": 0,
         "FeeDriftBps": 8,
+        "NegotiatedMDRBps": 0,
+        "MissingFeeRowRate": 0,
+        "NoMappingRate": 0,
         "Policy": {
           "version": "fees_2026_08",
           "mdr_bps_by_instrument": {
@@ -2485,7 +2526,7 @@
     "pool_n": 34,
     "k_star": 12,
     "collision_index": 2.424857733454302,
-    "latency_ms": 24,
+    "latency_ms": 14,
     "receipt": {
       "settlement_ref": "bank_credit_travel_2026_08_25_1003",
       "run_id": "case_07_fee_check_circular",
@@ -2729,6 +2770,11 @@
             "name": "feed_completeness",
             "state": "pass",
             "detail": "every source known to this run was joined into the candidate pool"
+          },
+          {
+            "name": "fee_basis",
+            "state": "inactive",
+            "detail": "every contribution in this data mode is policy-derived, so there is no observed subset to test an assumption against"
           }
         ]
       },
@@ -2755,11 +2801,11 @@
       },
       "timing_ms": {
         "entropy_gate": 0,
-        "feasibility": 15,
+        "feasibility": 2,
         "fee_check": 0,
         "narrow": 0,
-        "prove": 4,
-        "reconstruct": 5
+        "prove": 1,
+        "reconstruct": 11
       },
       "policy_version": "fees_2026_08",
       "replay_seed": 1006
@@ -2802,6 +2848,9 @@
         "JoinDisputes": true,
         "ReportDefectRate": 0,
         "FeeDriftBps": 0,
+        "NegotiatedMDRBps": 0,
+        "MissingFeeRowRate": 0,
+        "NoMappingRate": 0,
         "Policy": {
           "version": "fees_2026_08",
           "mdr_bps_by_instrument": {
@@ -3083,6 +3132,11 @@
             "name": "feed_completeness",
             "state": "pass",
             "detail": "every source known to this run was joined into the candidate pool"
+          },
+          {
+            "name": "fee_basis",
+            "state": "pass",
+            "detail": "every contribution in this pool came from a fee row the report actually carried"
           }
         ]
       },
@@ -3109,11 +3163,11 @@
       },
       "timing_ms": {
         "entropy_gate": 0,
-        "feasibility": 17,
+        "feasibility": 15,
         "fee_check": 0,
         "narrow": 0,
-        "prove": 0,
-        "reconstruct": 4
+        "prove": 2,
+        "reconstruct": 3
       },
       "policy_version": "fees_2026_08",
       "replay_seed": 1008
@@ -3156,6 +3210,9 @@
         "JoinDisputes": false,
         "ReportDefectRate": 0,
         "FeeDriftBps": 0,
+        "NegotiatedMDRBps": 0,
+        "MissingFeeRowRate": 0,
+        "NoMappingRate": 0,
         "Policy": {
           "version": "fees_2026_08",
           "mdr_bps_by_instrument": {
@@ -3189,7 +3246,7 @@
     "pool_n": 25,
     "k_star": 12,
     "collision_index": 0.019657506384222142,
-    "latency_ms": 54,
+    "latency_ms": 29,
     "receipt": {
       "settlement_ref": "bank_credit_travel_2026_08_25_1003",
       "run_id": "case_09_unjoined_disputes_feed",
@@ -3440,6 +3497,11 @@
             "name": "feed_completeness",
             "state": "pass",
             "detail": "every source known to this run was joined into the candidate pool"
+          },
+          {
+            "name": "fee_basis",
+            "state": "pass",
+            "detail": "every contribution in this pool came from a fee row the report actually carried"
           }
         ]
       },
@@ -3495,11 +3557,11 @@
       },
       "timing_ms": {
         "entropy_gate": 0,
-        "feasibility": 13,
+        "feasibility": 11,
         "fee_check": 0,
         "narrow": 0,
-        "prove": 3,
-        "reconstruct": 7
+        "prove": 6,
+        "reconstruct": 0
       },
       "policy_version": "fees_2026_08",
       "replay_seed": 1009
@@ -3543,6 +3605,9 @@
         "JoinDisputes": true,
         "ReportDefectRate": 0,
         "FeeDriftBps": 0,
+        "NegotiatedMDRBps": 0,
+        "MissingFeeRowRate": 0,
+        "NoMappingRate": 0,
         "Policy": {
           "version": "fees_2026_08",
           "mdr_bps_by_instrument": {
@@ -3573,7 +3638,7 @@
     "pool_n": 29,
     "k_star": 12,
     "collision_index": 0.3749135973981732,
-    "latency_ms": 21,
+    "latency_ms": 17,
     "receipt": {
       "settlement_ref": "bank_credit_travel_2026_08_25_1003",
       "run_id": "case_10_narrowing_sensitive",
@@ -3827,6 +3892,11 @@
             "name": "feed_completeness",
             "state": "pass",
             "detail": "every source known to this run was joined into the candidate pool"
+          },
+          {
+            "name": "fee_basis",
+            "state": "pass",
+            "detail": "every contribution in this pool came from a fee row the report actually carried"
           }
         ]
       },
@@ -3865,11 +3935,11 @@
       },
       "timing_ms": {
         "entropy_gate": 0,
-        "feasibility": 12,
+        "feasibility": 5,
         "fee_check": 0,
         "narrow": 0,
-        "prove": 3,
-        "reconstruct": 5
+        "prove": 5,
+        "reconstruct": 6
       },
       "policy_version": "fees_2026_08",
       "replay_seed": 1010
@@ -3913,6 +3983,9 @@
         "JoinDisputes": true,
         "ReportDefectRate": 0,
         "FeeDriftBps": 0,
+        "NegotiatedMDRBps": 0,
+        "MissingFeeRowRate": 0,
+        "NoMappingRate": 0,
         "Policy": {
           "version": "fees_2026_08",
           "mdr_bps_by_instrument": {

@@ -3,15 +3,16 @@
     "scenario": "correctly configured, reports clean",
     "window_slack_scale": 0,
     "report_defect_rate": 0,
-    "verified": 120,
+    "missing_fee_rows_priced_naively": false,
+    "verified": 117,
     "auto_posted_wrong": 0,
-    "agent_repaired": 16,
+    "agent_repaired": 14,
     "agent_repairs_by_action": {
-      "SEARCH_FEED": 16
+      "SEARCH_FEED": 14
     },
-    "agent_proven_cures": 1,
-    "agent_invoked": 123,
-    "m1_auto_posted": 317,
+    "agent_proven_cures": 2,
+    "agent_invoked": 128,
+    "m1_auto_posted": 282,
     "m1_auto_posted_wrong": 0,
     "m1_false_alarms": 0,
     "b1_auto_posted_wrong": 0,
@@ -21,74 +22,97 @@
     "scenario": "correctly configured, reports as modelled",
     "window_slack_scale": 0,
     "report_defect_rate": 0.06,
-    "verified": 110,
+    "missing_fee_rows_priced_naively": false,
+    "verified": 104,
     "auto_posted_wrong": 0,
-    "agent_repaired": 11,
+    "agent_repaired": 9,
     "agent_repairs_by_action": {
-      "SEARCH_FEED": 11
+      "SEARCH_FEED": 9
     },
-    "agent_proven_cures": 0,
-    "agent_invoked": 128,
-    "m1_auto_posted": 298,
+    "agent_proven_cures": 5,
+    "agent_invoked": 122,
+    "m1_auto_posted": 272,
     "m1_auto_posted_wrong": 0,
     "m1_false_alarms": 0,
-    "b1_auto_posted_wrong": 22,
-    "report_defects_present": 22
+    "b1_auto_posted_wrong": 16,
+    "report_defects_present": 16
   },
   {
     "scenario": "window misconfiguration as modelled",
     "window_slack_scale": 1,
     "report_defect_rate": 0.06,
-    "verified": 73,
+    "missing_fee_rows_priced_naively": false,
+    "verified": 47,
     "auto_posted_wrong": 0,
-    "agent_repaired": 18,
+    "agent_repaired": 19,
     "agent_repairs_by_action": {
-      "NARROW_TO_HISTORY": 7,
-      "SEARCH_FEED": 11
+      "NARROW_TO_HISTORY": 9,
+      "SEARCH_FEED": 10
     },
-    "agent_proven_cures": 38,
-    "agent_invoked": 185,
-    "m1_auto_posted": 292,
+    "agent_proven_cures": 54,
+    "agent_invoked": 212,
+    "m1_auto_posted": 259,
     "m1_auto_posted_wrong": 0,
     "m1_false_alarms": 0,
-    "b1_auto_posted_wrong": 22,
-    "report_defects_present": 22
+    "b1_auto_posted_wrong": 16,
+    "report_defects_present": 16
   },
   {
     "scenario": "window misconfiguration, reports ten times cleaner",
     "window_slack_scale": 1,
     "report_defect_rate": 0.006,
-    "verified": 83,
+    "missing_fee_rows_priced_naively": false,
+    "verified": 46,
     "auto_posted_wrong": 0,
-    "agent_repaired": 20,
+    "agent_repaired": 18,
     "agent_repairs_by_action": {
       "NARROW_TO_HISTORY": 8,
-      "SEARCH_FEED": 12
+      "SEARCH_FEED": 10
     },
-    "agent_proven_cures": 36,
-    "agent_invoked": 177,
-    "m1_auto_posted": 312,
+    "agent_proven_cures": 56,
+    "agent_invoked": 212,
+    "m1_auto_posted": 264,
     "m1_auto_posted_wrong": 0,
     "m1_false_alarms": 0,
-    "b1_auto_posted_wrong": 1,
-    "report_defects_present": 1
+    "b1_auto_posted_wrong": 2,
+    "report_defects_present": 2
   },
   {
     "scenario": "window misconfiguration twice as bad",
     "window_slack_scale": 1.5,
     "report_defect_rate": 0.06,
-    "verified": 51,
+    "missing_fee_rows_priced_naively": false,
+    "verified": 24,
     "auto_posted_wrong": 0,
-    "agent_repaired": 11,
+    "agent_repaired": 5,
     "agent_repairs_by_action": {
-      "SEARCH_FEED": 11
+      "SEARCH_FEED": 5
     },
-    "agent_proven_cures": 59,
-    "agent_invoked": 200,
-    "m1_auto_posted": 290,
+    "agent_proven_cures": 73,
+    "agent_invoked": 221,
+    "m1_auto_posted": 256,
     "m1_auto_posted_wrong": 0,
     "m1_false_alarms": 0,
-    "b1_auto_posted_wrong": 22,
-    "report_defects_present": 22
+    "b1_auto_posted_wrong": 16,
+    "report_defects_present": 16
+  },
+  {
+    "scenario": "missing fee rows priced naively",
+    "window_slack_scale": 1,
+    "report_defect_rate": 0.06,
+    "missing_fee_rows_priced_naively": true,
+    "verified": 14,
+    "auto_posted_wrong": 0,
+    "agent_repaired": 3,
+    "agent_repairs_by_action": {
+      "SEARCH_FEED": 3
+    },
+    "agent_proven_cures": 28,
+    "agent_invoked": 229,
+    "m1_auto_posted": 243,
+    "m1_auto_posted_wrong": 0,
+    "m1_false_alarms": 13,
+    "b1_auto_posted_wrong": 16,
+    "report_defects_present": 16
   }
 ]

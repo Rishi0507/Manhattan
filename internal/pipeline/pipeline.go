@@ -537,6 +537,7 @@ func (e *Engine) decide(
 			narrowed.Dropped[narrow.ConstraintZeroContribution], scope == solver.ScopeDeclared),
 		guards.GrossRatioCheck(witness, pool, e.Mode.FeesObserved(), cfg.Accounting.Policy.BandBps),
 		guards.FeedCompletenessCheck(unjoinedInWindow, poolIDs),
+		guards.FeeBasisCheck(pool, e.Mode.FeesObserved()),
 	}
 
 	if !probe.Stable {
