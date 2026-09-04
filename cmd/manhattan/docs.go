@@ -181,6 +181,20 @@ type Derived struct {
 	// ActionCount is the size of the controller's action vocabulary, read
 	// from the vocabulary itself so the documented number cannot drift from
 	// the enum the model is actually constrained to.
+	// The delta against B1, stated rather than left to be derived.
+	//
+	// Most of what the composite posts, B1 would also have posted. The part
+	// that is genuinely this system's contribution is the defective reports it
+	// contradicted plus the settlements it posted where no mapping existed at
+	// all, bought by declining to post the ones it could not stand behind. A
+	// reader works this out in about ninety seconds, so publishing it is
+	// strictly better than being seen to leave it out.
+	DeltaDefectsCaught int
+	DeltaNoMapping     int
+	DeltaTotal         int
+	DeltaPct           float64
+	DeltaSurrendered   int
+
 	ActionCount     int
 	DiagAccuracyPct float64
 
@@ -570,6 +584,14 @@ func deriveDocs(sum bench.Summary, cases []bench.CaseOutcome, sweep []bench.Swee
 	d.ModelFailures = sum.ModelFailures
 	d.ModelSchemaViolations = sum.ModelSchemaViolated
 	d.ModelRoles = len(sum.CallsByRole)
+	d.DeltaDefectsCaught = sum.M1CaughtDefects
+	d.DeltaNoMapping = sum.NoClaimPosted
+	d.DeltaTotal = d.DeltaDefectsCaught + d.DeltaNoMapping
+	if sum.Settlements > 0 {
+		d.DeltaPct = 100 * float64(d.DeltaTotal) / float64(sum.Settlements)
+	}
+	d.DeltaSurrendered = sum.B1Posted - sum.M1Posted
+
 	d.ActionCount = len(agent.AllActions)
 	d.DiagAccuracyPct = 100 * sum.DiagnosisAccuracy
 

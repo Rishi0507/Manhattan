@@ -114,6 +114,30 @@ That is the trade in one line: **117 settlements of extra coverage, against ever
 
 *(A confidence matcher on the same inputs posts 671 and gets 561 wrong. It is the wrong comparison for a gateway and it is in [RESULTS.md](RESULTS.md#the-baseline-across-every-threshold) with a full threshold sweep, because the sweep says something the operating point does not: its correct-answer count is flat at 110 across every threshold, so tuning it never finds another right answer.)*
 
+### What this adds over trusting the report
+
+Most of what the composite posts, B1 would have posted too. Stating the
+difference plainly is more useful than leaving it to be derived:
+
+| | settlements |
+|---|---:|
+| Posted by both Manhattan and B1 | 667 |
+| **Defective reports Manhattan contradicted and B1 posted anyway** | **34** |
+| **Posted where the report carried no mapping to trust** | **30** |
+| **Net addition** | **64** (6.4% of 996) |
+| Postings declined that B1 made | 117 |
+
+So the trade is 64 settlements gained for
+117 declined. That is the honest shape of it, and it is
+worth taking because the 117 declined are returned as
+priced exceptions with a named cause, while the 34
+B1 gets wrong are posted silently and surface at quarter end. A decision you
+know you have not made costs an analyst minutes. A wrong posting you do not
+know about costs an investigation.
+
+The 30 in the second row are the ones no claim-checking
+approach can reach at all, because there is no claim to check.
+
 ### Where reconstruction is impossible
 
 | merchant type | spread sigma (paise) | twin mass | reconstruction | **M1** |

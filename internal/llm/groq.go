@@ -362,14 +362,41 @@ func schemaName(req Request) string {
 	return string(req.Role)
 }
 
-// isSchemaRefusal reports whether the API rejected the schema itself.
+// isSchemaRefusal reports whether the API rejected the SCHEMA, as opposed to
+// the model having failed to satisfy it.
+//
+// The distinction matters and an earlier version got it wrong by matching the
+// word "schema" anywhere in the error. Two very different failures both
+// mention it:
+//
+//	"invalid JSON schema for response_format ... additionalProperties:false
+//	 must be set on every object"     the schema is unusable, downgrade
+//	"Generated JSON does not match the expected schema"
+//	                                  the schema is fine, the model missed
+//
+// Treating the second as a refusal dropped the role out of strict mode for the
+// rest of the run, which quietly removed the very guarantee the strict mode is
+// there to provide, and did it in response to a single bad generation. Only
+// the first kind downgrades; the second is retried under the same schema.
 func isSchemaRefusal(err error) bool {
 	s := strings.ToLower(err.Error())
-	for _, m := range []string{
-		"json_schema", "response_format", "schema", "additionalproperties",
-		"strict", "not supported",
+	for _, modelMissed := range []string{
+		"generated json does not match",
+		"failed to generate json",
+		"failed to validate json",
 	} {
-		if strings.Contains(s, m) {
+		if strings.Contains(s, modelMissed) {
+			return false
+		}
+	}
+	for _, unusable := range []string{
+		"invalid json schema",
+		"must be set on every object",
+		"is required to be supplied",
+		"response_format",
+		"not supported",
+	} {
+		if strings.Contains(s, unusable) {
 			return true
 		}
 	}
@@ -380,20 +407,38 @@ func isSchemaRefusal(err error) bool {
 //
 // The endpoint refuses a strict json_schema unless EVERY object in it, not
 // only the root, sets additionalProperties:false and lists every one of its
-// properties as required. The schemas in this repository set both at the top
-// level and rely on the reader for nested objects, which is fine for a human
-// and is rejected here.
+// properties as required. The schemas here set both at the top level and rely
+// on the reader for nested objects, which is fine for a human and is rejected
+// here.
 //
-// So the closure is made explicit rather than assumed. This is not a
-// loosening: it is strictly stronger than what the schemas asked for, since a
-// nested object can now neither carry a field the caller did not declare nor
-// omit one it did. The cost is that a field the schema treated as optional
-// must now be emitted, and the pipeline already reads absent and empty the
-// same way, so an empty string arrives where nothing would have.
+// Making every property required has a consequence that has to be handled or
+// it breaks the roles it was meant to strengthen. A field the schema treated
+// as optional must now be emitted even when it does not apply, and a model
+// asked for a number it has no value for correctly emits null, which the
+// declared type then rejects:
+//
+//	'/window_hours' does not validate: expected number, but got null
+//
+// That failed every planning call that did not happen to involve a window,
+// and the batch recorded each one as an exception the agent could not clear.
+// So a property that was NOT originally required has null added to its type.
+// It is required to be present and permitted to be empty, which is what
+// "optional" meant in the first place. Fields that were already required keep
+// their exact type and cannot be null.
 func strictSchema(in map[string]any) map[string]any {
 	if in == nil {
 		return nil
 	}
+
+	wasRequired := map[string]bool{}
+	if req, ok := in["required"].([]any); ok {
+		for _, r := range req {
+			if name, ok := r.(string); ok {
+				wasRequired[name] = true
+			}
+		}
+	}
+
 	out := make(map[string]any, len(in)+2)
 	for k, v := range in {
 		switch k {
@@ -405,11 +450,16 @@ func strictSchema(in map[string]any) map[string]any {
 			}
 			cleaned := make(map[string]any, len(props))
 			for name, spec := range props {
-				if m, ok := spec.(map[string]any); ok {
-					cleaned[name] = strictSchema(m)
-				} else {
+				m, ok := spec.(map[string]any)
+				if !ok {
 					cleaned[name] = spec
+					continue
 				}
+				sub := strictSchema(m)
+				if !wasRequired[name] {
+					sub = nullable(sub)
+				}
+				cleaned[name] = sub
 			}
 			out[k] = cleaned
 		case "items":
@@ -430,8 +480,8 @@ func strictSchema(in map[string]any) map[string]any {
 			for name := range props {
 				names = append(names, name)
 			}
-			// Sorted, because an unordered required list would make the request
-			// body differ between runs and a cassette keyed on it would miss.
+			// Sorted, so the request body for a given schema is stable between
+			// runs and a cassette keyed on it still matches.
 			sort.Strings(names)
 			req := make([]any, len(names))
 			for i, n := range names {
@@ -441,4 +491,30 @@ func strictSchema(in map[string]any) map[string]any {
 		}
 	}
 	return out
+}
+
+// nullable widens a property's type so it may be present and empty.
+//
+// An enum is left alone: adding null to a closed vocabulary would let the
+// model answer "none of these", and the vocabulary being closed is a property
+// other tests depend on.
+func nullable(spec map[string]any) map[string]any {
+	if _, hasEnum := spec["enum"]; hasEnum {
+		return spec
+	}
+	switch t := spec["type"].(type) {
+	case string:
+		if t == "null" {
+			return spec
+		}
+		spec["type"] = []any{t, "null"}
+	case []any:
+		for _, e := range t {
+			if s, _ := e.(string); s == "null" {
+				return spec
+			}
+		}
+		spec["type"] = append(t, "null")
+	}
+	return spec
 }

@@ -114,6 +114,30 @@ That is the trade in one line: **{{ sub .D.B1Posted .D.M1Posted }} settlements o
 
 *(A confidence matcher on the same inputs posts {{ .S.B0Posted }} and gets {{ .S.B0PostedWrong }} wrong. It is the wrong comparison for a gateway and it is in [RESULTS.md](RESULTS.md#the-baseline-across-every-threshold) with a full threshold sweep, because the sweep says something the operating point does not: its correct-answer count is flat at {{ .D.B0MaxRight }} across every threshold, so tuning it never finds another right answer.)*
 
+### What this adds over trusting the report
+
+Most of what the composite posts, B1 would have posted too. Stating the
+difference plainly is more useful than leaving it to be derived:
+
+| | settlements |
+|---|---:|
+| Posted by both Manhattan and B1 | {{ sub .D.M1Posted .D.DeltaTotal }} |
+| **Defective reports Manhattan contradicted and B1 posted anyway** | **{{ .D.DeltaDefectsCaught }}** |
+| **Posted where the report carried no mapping to trust** | **{{ .D.DeltaNoMapping }}** |
+| **Net addition** | **{{ .D.DeltaTotal }}** ({{ pct1 .D.DeltaPct }} of {{ .S.Settlements }}) |
+| Postings declined that B1 made | {{ .D.DeltaSurrendered }} |
+
+So the trade is {{ .D.DeltaTotal }} settlements gained for
+{{ .D.DeltaSurrendered }} declined. That is the honest shape of it, and it is
+worth taking because the {{ .D.DeltaSurrendered }} declined are returned as
+priced exceptions with a named cause, while the {{ .D.DeltaDefectsCaught }}
+B1 gets wrong are posted silently and surface at quarter end. A decision you
+know you have not made costs an analyst minutes. A wrong posting you do not
+know about costs an investigation.
+
+The {{ .D.DeltaNoMapping }} in the second row are the ones no claim-checking
+approach can reach at all, because there is no claim to check.
+
 ### Where reconstruction is impossible
 
 | merchant type | spread sigma (paise) | twin mass | reconstruction | **M1** |
