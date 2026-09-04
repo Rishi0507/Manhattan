@@ -1,6 +1,6 @@
 # What Manhattan cannot do
 
-State these before anyone asks. Every one is a design decision with a reason, and several were discovered by running the system rather than by reasoning about it.
+Every one is a design decision with a reason, and several were discovered by running the system rather than by reasoning about it.
 
 ---
 
@@ -273,7 +273,3 @@ The archetype table is likewise modelled. The spread and twin-mass values come f
 The deterministic path needs no statistical gate, because a closed integer identity is not a probabilistic claim. Those techniques govern the *residual*, and after this design the residual is large, measured, and **segmented by merchant archetype**, because `UNDERDETERMINED` is now an explicit population with a known shape rather than a hidden one. A calibrated probabilistic layer over the `UNDERDETERMINED` and `AMBIGUOUS` buckets, with a distribution-free error guarantee, is the obvious next thing to build.
 
 Being able to name what was left out, why, and exactly which population it would serve is the point of this document.
-
----
-
-*This document is generated from run `{{ .S.RunID }}`, seed `{{ .S.Seed }}`, by `manhattan bench`. Its source is `docs/LIMITATIONS.tmpl.md`. No figure in it is typed by hand, so it cannot come to describe a run other than the one that produced [RESULTS.md](RESULTS.md) and [README.md](README.md).*
