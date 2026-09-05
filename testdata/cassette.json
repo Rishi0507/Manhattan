@@ -19,7 +19,10 @@
         "calls_by_role": {
           "parse": 1
         },
-        "inr_micros": 49359
+        "inr_micros": 49359,
+        "provider_failures": 0,
+        "provider_retries": 0,
+        "schema_violations": 0
       }
     },
     "parse_0e64a8432488e5ae": {
@@ -41,7 +44,10 @@
         "calls_by_role": {
           "parse": 1
         },
-        "inr_micros": 45372
+        "inr_micros": 45372,
+        "provider_failures": 0,
+        "provider_retries": 0,
+        "schema_violations": 0
       }
     },
     "parse_13a9a4c278e47bc2": {
@@ -63,7 +69,10 @@
         "calls_by_role": {
           "parse": 1
         },
-        "inr_micros": 52711
+        "inr_micros": 52711,
+        "provider_failures": 0,
+        "provider_retries": 0,
+        "schema_violations": 0
       }
     },
     "parse_16206913da54b33f": {
@@ -87,7 +96,10 @@
         "calls_by_role": {
           "parse": 1
         },
-        "inr_micros": 44211
+        "inr_micros": 44211,
+        "provider_failures": 0,
+        "provider_retries": 0,
+        "schema_violations": 0
       }
     },
     "parse_19d3319cd858e49e": {
@@ -110,30 +122,38 @@
         "calls_by_role": {
           "parse": 1
         },
-        "inr_micros": 41201
+        "inr_micros": 41201,
+        "provider_failures": 0,
+        "provider_retries": 0,
+        "schema_violations": 0
       }
     },
     "parse_1ae2c56dcb51ec80": {
       "role": "parse",
-      "model": "groq/compound-mini",
+      "model": "openai/gpt-oss-20b",
       "prompt_excerpt": "STATEMENT LINE: NEFT-RAZORPAY SOFTWARE PVT LTD-UTR692154-CR",
       "answer": {
+        "bank_reference": "UTR692154",
         "channel": "NEFT",
+        "confident": true,
         "counterparty": "RAZORPAY SOFTWARE PVT LTD",
-        "reference": "UTR692154",
-        "provenance_span": "31:40",
-        "confident": true
+        "direction": "credit",
+        "is_settlement": false,
+        "provenance_span": "47:56"
       },
       "usage": {
-        "input_tokens": 1084,
-        "output_tokens": 1158,
+        "input_tokens": 625,
+        "output_tokens": 333,
         "cache_read_input_tokens": 0,
         "cache_creation_input_tokens": 0,
         "calls": 1,
         "calls_by_role": {
           "parse": 1
         },
-        "inr_micros": 49649
+        "inr_micros": 19791,
+        "provider_failures": 0,
+        "provider_retries": 0,
+        "schema_violations": 0
       }
     },
     "parse_279255a317558e17": {
@@ -155,7 +175,38 @@
         "calls_by_role": {
           "parse": 1
         },
-        "inr_micros": 48699
+        "inr_micros": 48699,
+        "provider_failures": 0,
+        "provider_retries": 0,
+        "schema_violations": 0
+      }
+    },
+    "parse_2c5e9ff0c4474e67": {
+      "role": "parse",
+      "model": "openai/gpt-oss-120b",
+      "prompt_excerpt": "STATEMENT LINE: IMPS/P2A/823435/RAZORPAY SOFTWARE/SETTLEMENT",
+      "answer": {
+        "bank_reference": "823435",
+        "channel": "IMPS",
+        "confident": true,
+        "counterparty": "RAZORPAY SOFTWARE",
+        "direction": "credit",
+        "is_settlement": true,
+        "provenance_span": "25:31"
+      },
+      "usage": {
+        "input_tokens": 625,
+        "output_tokens": 426,
+        "cache_read_input_tokens": 0,
+        "cache_creation_input_tokens": 0,
+        "calls": 1,
+        "calls_by_role": {
+          "parse": 1
+        },
+        "inr_micros": 53741,
+        "provider_failures": 0,
+        "provider_retries": 0,
+        "schema_violations": 0
       }
     },
     "parse_2cd112f91df9ac7b": {
@@ -177,7 +228,10 @@
         "calls_by_role": {
           "parse": 1
         },
-        "inr_micros": 50943
+        "inr_micros": 50943,
+        "provider_failures": 0,
+        "provider_retries": 0,
+        "schema_violations": 0
       }
     },
     "parse_2f099147bee4340a": {
@@ -199,7 +253,10 @@
         "calls_by_role": {
           "parse": 1
         },
-        "inr_micros": 67628
+        "inr_micros": 67628,
+        "provider_failures": 0,
+        "provider_retries": 0,
+        "schema_violations": 0
       }
     },
     "parse_377d86a3a42b26e1": {
@@ -223,29 +280,38 @@
         "calls_by_role": {
           "parse": 1
         },
-        "inr_micros": 49544
+        "inr_micros": 49544,
+        "provider_failures": 0,
+        "provider_retries": 0,
+        "schema_violations": 0
       }
     },
     "parse_44179b2900e9a57c": {
       "role": "parse",
-      "model": "groq/compound-mini",
+      "model": "openai/gpt-oss-20b",
       "prompt_excerpt": "STATEMENT LINE: UPI/CREDIT/848676/RAZORPAY/SETTLE/NA",
       "answer": {
-        "reference": "848676",
-        "counterparty": "RAZORPAY",
+        "bank_reference": "848676",
+        "channel": "UPI",
         "confident": true,
+        "counterparty": "RAZORPAY",
+        "direction": "credit",
+        "is_settlement": true,
         "provenance_span": "27:33"
       },
       "usage": {
-        "input_tokens": 1084,
-        "output_tokens": 1166,
+        "input_tokens": 625,
+        "output_tokens": 334,
         "cache_read_input_tokens": 0,
         "cache_creation_input_tokens": 0,
         "calls": 1,
         "calls_by_role": {
           "parse": 1
         },
-        "inr_micros": 49860
+        "inr_micros": 19817,
+        "provider_failures": 0,
+        "provider_retries": 0,
+        "schema_violations": 0
       }
     },
     "parse_50fe14a105c1ded3": {
@@ -268,7 +334,10 @@
         "calls_by_role": {
           "parse": 1
         },
-        "inr_micros": 43656
+        "inr_micros": 43656,
+        "provider_failures": 0,
+        "provider_retries": 0,
+        "schema_violations": 0
       }
     },
     "parse_54d0d5881fed716c": {
@@ -290,7 +359,10 @@
         "calls_by_role": {
           "parse": 1
         },
-        "inr_micros": 31759
+        "inr_micros": 31759,
+        "provider_failures": 0,
+        "provider_retries": 0,
+        "schema_violations": 0
       }
     },
     "parse_55aef2af9d87b341": {
@@ -312,29 +384,66 @@
         "calls_by_role": {
           "parse": 1
         },
-        "inr_micros": 51339
+        "inr_micros": 51339,
+        "provider_failures": 0,
+        "provider_retries": 0,
+        "schema_violations": 0
       }
     },
-    "parse_5ec55f00f01c7ec7": {
+    "parse_576cfdd0b2dc2bfa": {
       "role": "parse",
-      "model": "groq/compound-mini",
-      "prompt_excerpt": "STATEMENT LINE: IMPS/P2A/655896/RAZORPAY SOFTWARE/SETTLEMENT",
+      "model": "openai/gpt-oss-120b",
+      "prompt_excerpt": "STATEMENT LINE: IMPS/P2A/792751/RAZORPAY SOFTWARE/SETTLEMENT",
       "answer": {
-        "reference": "655896",
+        "bank_reference": "792751",
+        "channel": "IMPS",
+        "confident": true,
         "counterparty": "RAZORPAY SOFTWARE",
-        "reference_provenance_span": "9:15",
-        "confident": true
+        "direction": "credit",
+        "is_settlement": true,
+        "provenance_span": "26:32"
       },
       "usage": {
-        "input_tokens": 1084,
-        "output_tokens": 988,
+        "input_tokens": 625,
+        "output_tokens": 366,
         "cache_read_input_tokens": 0,
         "cache_creation_input_tokens": 0,
         "calls": 1,
         "calls_by_role": {
           "parse": 1
         },
-        "inr_micros": 45161
+        "inr_micros": 50045,
+        "provider_failures": 0,
+        "provider_retries": 0,
+        "schema_violations": 0
+      }
+    },
+    "parse_5ec55f00f01c7ec7": {
+      "role": "parse",
+      "model": "openai/gpt-oss-20b",
+      "prompt_excerpt": "STATEMENT LINE: IMPS/P2A/655896/RAZORPAY SOFTWARE/SETTLEMENT",
+      "answer": {
+        "bank_reference": "655896",
+        "channel": "IMPS",
+        "confident": true,
+        "counterparty": "RAZORPAY SOFTWARE",
+        "direction": "credit",
+        "is_settlement": true,
+        "provenance_span": "24:30"
+      },
+      "usage": {
+        "input_tokens": 625,
+        "output_tokens": 280,
+        "cache_read_input_tokens": 0,
+        "cache_creation_input_tokens": 0,
+        "calls": 1,
+        "calls_by_role": {
+          "parse": 1
+        },
+        "inr_micros": 18392,
+        "provider_failures": 0,
+        "provider_retries": 0,
+        "schema_violations": 0
       }
     },
     "parse_61cee0f7bbf4b354": {
@@ -356,7 +465,10 @@
         "calls_by_role": {
           "parse": 1
         },
-        "inr_micros": 42812
+        "inr_micros": 42812,
+        "provider_failures": 0,
+        "provider_retries": 0,
+        "schema_violations": 0
       }
     },
     "parse_6c28688266f2cd21": {
@@ -378,7 +490,94 @@
         "calls_by_role": {
           "parse": 1
         },
-        "inr_micros": 43841
+        "inr_micros": 43841,
+        "provider_failures": 0,
+        "provider_retries": 0,
+        "schema_violations": 0
+      }
+    },
+    "parse_84d3338cec114c18": {
+      "role": "parse",
+      "model": "openai/gpt-oss-120b",
+      "prompt_excerpt": "STATEMENT LINE: IMPS/P2A/798721/RAZORPAY SOFTWARE/SETTLEMENT",
+      "answer": {
+        "bank_reference": "798721",
+        "channel": "IMPS",
+        "confident": true,
+        "counterparty": "RAZORPAY SOFTWARE",
+        "direction": "credit",
+        "is_settlement": true,
+        "provenance_span": "25:31"
+      },
+      "usage": {
+        "input_tokens": 625,
+        "output_tokens": 399,
+        "cache_read_input_tokens": 0,
+        "cache_creation_input_tokens": 0,
+        "calls": 1,
+        "calls_by_role": {
+          "parse": 1
+        },
+        "inr_micros": 52078,
+        "provider_failures": 0,
+        "provider_retries": 0,
+        "schema_violations": 0
+      }
+    },
+    "parse_8ad2a2e111a1ed0f": {
+      "role": "parse",
+      "model": "openai/gpt-oss-120b",
+      "prompt_excerpt": "STATEMENT LINE: UPI/CREDIT/743637/RAZORPAY/SETTLE/NA",
+      "answer": {
+        "bank_reference": "743637",
+        "channel": "UPI",
+        "confident": true,
+        "counterparty": "RAZORPAY",
+        "direction": "credit",
+        "is_settlement": true,
+        "provenance_span": "27:33"
+      },
+      "usage": {
+        "input_tokens": 625,
+        "output_tokens": 261,
+        "cache_read_input_tokens": 0,
+        "cache_creation_input_tokens": 0,
+        "calls": 1,
+        "calls_by_role": {
+          "parse": 1
+        },
+        "inr_micros": 43577,
+        "provider_failures": 0,
+        "provider_retries": 0,
+        "schema_violations": 0
+      }
+    },
+    "parse_8c387f2be6b5615b": {
+      "role": "parse",
+      "model": "openai/gpt-oss-120b",
+      "prompt_excerpt": "STATEMENT LINE: RTGS CR RAZORPAYSOFTWAREPVTLTD REF 330600 NET STLMNT",
+      "answer": {
+        "bank_reference": "330600",
+        "channel": "RTGS",
+        "confident": true,
+        "counterparty": "RAZORPAYSOFTWAREPVTLTD",
+        "direction": "credit",
+        "is_settlement": true,
+        "provenance_span": "52:58"
+      },
+      "usage": {
+        "input_tokens": 627,
+        "output_tokens": 396,
+        "cache_read_input_tokens": 0,
+        "cache_creation_input_tokens": 0,
+        "calls": 1,
+        "calls_by_role": {
+          "parse": 1
+        },
+        "inr_micros": 51981,
+        "provider_failures": 0,
+        "provider_retries": 0,
+        "schema_violations": 0
       }
     },
     "parse_99c7d64c8bbbf1d7": {
@@ -400,7 +599,10 @@
         "calls_by_role": {
           "parse": 1
         },
-        "inr_micros": 55730
+        "inr_micros": 55730,
+        "provider_failures": 0,
+        "provider_retries": 0,
+        "schema_violations": 0
       }
     },
     "parse_9a95a1a77950fb0c": {
@@ -422,7 +624,10 @@
         "calls_by_role": {
           "parse": 1
         },
-        "inr_micros": 45874
+        "inr_micros": 45874,
+        "provider_failures": 0,
+        "provider_retries": 0,
+        "schema_violations": 0
       }
     },
     "parse_9c267d88830886e3": {
@@ -444,7 +649,10 @@
         "calls_by_role": {
           "parse": 1
         },
-        "inr_micros": 53979
+        "inr_micros": 53979,
+        "provider_failures": 0,
+        "provider_retries": 0,
+        "schema_violations": 0
       }
     },
     "parse_a0a41abe940c8305": {
@@ -466,7 +674,38 @@
         "calls_by_role": {
           "parse": 1
         },
-        "inr_micros": 69220
+        "inr_micros": 69220,
+        "provider_failures": 0,
+        "provider_retries": 0,
+        "schema_violations": 0
+      }
+    },
+    "parse_a56ac8f27361a09a": {
+      "role": "parse",
+      "model": "openai/gpt-oss-120b",
+      "prompt_excerpt": "STATEMENT LINE: UPI/CREDIT/951774/RAZORPAY/SETTLE/NA",
+      "answer": {
+        "bank_reference": "951774",
+        "channel": "UPI",
+        "confident": true,
+        "counterparty": "RAZORPAY",
+        "direction": "credit",
+        "is_settlement": true,
+        "provenance_span": "27:33"
+      },
+      "usage": {
+        "input_tokens": 625,
+        "output_tokens": 263,
+        "cache_read_input_tokens": 0,
+        "cache_creation_input_tokens": 0,
+        "calls": 1,
+        "calls_by_role": {
+          "parse": 1
+        },
+        "inr_micros": 43700,
+        "provider_failures": 0,
+        "provider_retries": 0,
+        "schema_violations": 0
       }
     },
     "parse_a769298088bb32d9": {
@@ -488,7 +727,10 @@
         "calls_by_role": {
           "parse": 1
         },
-        "inr_micros": 46164
+        "inr_micros": 46164,
+        "provider_failures": 0,
+        "provider_retries": 0,
+        "schema_violations": 0
       }
     },
     "parse_a79d8f0f0c7c96d9": {
@@ -510,7 +752,10 @@
         "calls_by_role": {
           "parse": 1
         },
-        "inr_micros": 36819
+        "inr_micros": 36819,
+        "provider_failures": 0,
+        "provider_retries": 0,
+        "schema_violations": 0
       }
     },
     "parse_a9c22d5dc4c726d1": {
@@ -532,30 +777,38 @@
         "calls_by_role": {
           "parse": 1
         },
-        "inr_micros": 50661
+        "inr_micros": 50661,
+        "provider_failures": 0,
+        "provider_retries": 0,
+        "schema_violations": 0
       }
     },
     "parse_c53348cf150dbe51": {
       "role": "parse",
-      "model": "groq/compound-mini",
+      "model": "openai/gpt-oss-20b",
       "prompt_excerpt": "STATEMENT LINE: NEFT-RAZORPAY SOFTWARE PVT LTD-UTR432703-CR",
       "answer": {
-        "reference": "432703",
+        "bank_reference": "UTR432703",
+        "channel": "NEFT",
+        "confident": true,
         "counterparty": "RAZORPAY SOFTWARE PVT LTD",
-        "transaction_type": "NEFT",
-        "provenance_span": "31:40",
-        "confident": true
+        "direction": "credit",
+        "is_settlement": false,
+        "provenance_span": "31:40"
       },
       "usage": {
-        "input_tokens": 1084,
-        "output_tokens": 1273,
+        "input_tokens": 625,
+        "output_tokens": 475,
         "cache_read_input_tokens": 0,
         "cache_creation_input_tokens": 0,
         "calls": 1,
         "calls_by_role": {
           "parse": 1
         },
-        "inr_micros": 52685
+        "inr_micros": 23540,
+        "provider_failures": 0,
+        "provider_retries": 0,
+        "schema_violations": 0
       }
     },
     "parse_c61c071ff20eb882": {
@@ -577,7 +830,10 @@
         "calls_by_role": {
           "parse": 1
         },
-        "inr_micros": 50784
+        "inr_micros": 50784,
+        "provider_failures": 0,
+        "provider_retries": 0,
+        "schema_violations": 0
       }
     },
     "parse_cf99fe434d95a93f": {
@@ -599,7 +855,10 @@
         "calls_by_role": {
           "parse": 1
         },
-        "inr_micros": 47643
+        "inr_micros": 47643,
+        "provider_failures": 0,
+        "provider_retries": 0,
+        "schema_violations": 0
       }
     },
     "parse_d7fbd862714a4cd8": {
@@ -621,7 +880,10 @@
         "calls_by_role": {
           "parse": 1
         },
-        "inr_micros": 55087
+        "inr_micros": 55087,
+        "provider_failures": 0,
+        "provider_retries": 0,
+        "schema_violations": 0
       }
     },
     "parse_d8a706458f555a62": {
@@ -643,7 +905,10 @@
         "calls_by_role": {
           "parse": 1
         },
-        "inr_micros": 47194
+        "inr_micros": 47194,
+        "provider_failures": 0,
+        "provider_retries": 0,
+        "schema_violations": 0
       }
     },
     "parse_d92fa5cbe2ca5651": {
@@ -666,7 +931,10 @@
         "calls_by_role": {
           "parse": 1
         },
-        "inr_micros": 46059
+        "inr_micros": 46059,
+        "provider_failures": 0,
+        "provider_retries": 0,
+        "schema_violations": 0
       }
     },
     "parse_e200e938bcbe4b41": {
@@ -689,7 +957,38 @@
         "calls_by_role": {
           "parse": 1
         },
-        "inr_micros": 43630
+        "inr_micros": 43630,
+        "provider_failures": 0,
+        "provider_retries": 0,
+        "schema_violations": 0
+      }
+    },
+    "parse_e7ff9078eb8f1203": {
+      "role": "parse",
+      "model": "openai/gpt-oss-120b",
+      "prompt_excerpt": "STATEMENT LINE: IMPS/P2A/664110/RAZORPAY SOFTWARE/SETTLEMENT",
+      "answer": {
+        "bank_reference": "664110",
+        "channel": "IMPS",
+        "confident": true,
+        "counterparty": "RAZORPAY SOFTWARE",
+        "direction": "credit",
+        "is_settlement": true,
+        "provenance_span": "25:31"
+      },
+      "usage": {
+        "input_tokens": 625,
+        "output_tokens": 335,
+        "cache_read_input_tokens": 0,
+        "cache_creation_input_tokens": 0,
+        "calls": 1,
+        "calls_by_role": {
+          "parse": 1
+        },
+        "inr_micros": 48136,
+        "provider_failures": 0,
+        "provider_retries": 0,
+        "schema_violations": 0
       }
     },
     "parse_e896638da5e96531": {
@@ -711,7 +1010,38 @@
         "calls_by_role": {
           "parse": 1
         },
-        "inr_micros": 52263
+        "inr_micros": 52263,
+        "provider_failures": 0,
+        "provider_retries": 0,
+        "schema_violations": 0
+      }
+    },
+    "parse_e92a52239818aebb": {
+      "role": "parse",
+      "model": "openai/gpt-oss-120b",
+      "prompt_excerpt": "STATEMENT LINE: RTGS CR RAZORPAYSOFTWAREPVTLTD REF 515262 NET STLMNT",
+      "answer": {
+        "bank_reference": "515262",
+        "channel": "RTGS",
+        "confident": true,
+        "counterparty": "RAZORPAYSOFTWAREPVTLTD",
+        "direction": "credit",
+        "is_settlement": true,
+        "provenance_span": "51:57"
+      },
+      "usage": {
+        "input_tokens": 627,
+        "output_tokens": 506,
+        "cache_read_input_tokens": 0,
+        "cache_creation_input_tokens": 0,
+        "calls": 1,
+        "calls_by_role": {
+          "parse": 1
+        },
+        "inr_micros": 58757,
+        "provider_failures": 0,
+        "provider_retries": 0,
+        "schema_violations": 0
       }
     },
     "parse_f59d097f324e795e": {
@@ -733,7 +1063,37 @@
         "calls_by_role": {
           "parse": 1
         },
-        "inr_micros": 52553
+        "inr_micros": 52553,
+        "provider_failures": 0,
+        "provider_retries": 0,
+        "schema_violations": 0
+      }
+    },
+    "plan_23841d9d2c580cf9": {
+      "role": "plan",
+      "model": "qwen/qwen3.8-27b",
+      "prompt_excerpt": "SETTLEMENT bank_credit_travel_2026_08_04_1001\nmerchant archetype: travel, settles on a T+2 cycle\ncredit to reconstruct: ₹1,05,594.81\nvalue date: 2026-08-04\n\nVERIFIER CONCLUDED: UNDERDETERMINED\n  thi...",
+      "answer": {
+        "amount_paise": 10559481,
+        "hypothesis_kind": "ADJUSTMENT",
+        "kind": "PROPOSE_ADJUSTMENT",
+        "rationale": "The settlement is UNDERDETERMINED with a pool of 66 candidates for a batch of 9, yielding 157 distinct reconstructions. The twin mass is 0.00, meaning amounts are distinct, but the combinatorial space is too large for unique resolution. SEARCH_FEED has already been attempted and failed (no unjoined feeds). NARROW_TO_HISTORY is unavailable due to insufficient merchant history. TIGHTEN_WINDOW is the standard remedy for UNDERDETERMINED states caused by a large pool, but the prompt notes it is 'unable to post' and only useful for establishing a cure. However, looking at the constraints: 'PROPOSE_ADJUSTMENT only when neither applies' (referring to SEARCH_FEED and WIDEN_WINDOW for UNRESOLVED). Wait, the state is UNDERDETERMINED, not UNRESOLVED. The prompt says 'TIGHTEN_WINDOW is usually right' for UNDERDETERMINED. It also says 'TIGHTEN_WINDOW remains available and remains unable to post, so it is worth choosing only to establish a proven cure for an analyst.' Since I must choose ONE action to try next, and TIGHTEN_",
+        "record_kind": "adjustment",
+        "window_hours": 11
+      },
+      "usage": {
+        "input_tokens": 1101,
+        "output_tokens": 304,
+        "cache_read_input_tokens": 0,
+        "cache_creation_input_tokens": 0,
+        "calls": 1,
+        "calls_by_role": {
+          "plan": 1
+        },
+        "inr_micros": 27403,
+        "provider_failures": 0,
+        "provider_retries": 0,
+        "schema_violations": 0
       }
     },
     "plan_3a25c13d26fcd054": {
@@ -752,7 +1112,64 @@
         "calls_by_role": {
           "plan": 1
         },
-        "inr_micros": 55756
+        "inr_micros": 55756,
+        "provider_failures": 0,
+        "provider_retries": 0,
+        "schema_violations": 0
+      }
+    },
+    "plan_8c135f1e78ca53d5": {
+      "role": "plan",
+      "model": "qwen/qwen3.8-27b",
+      "prompt_excerpt": "SETTLEMENT bank_credit_travel_2026_08_29_1026\nmerchant archetype: travel, settles on a T+2 cycle\ncredit to reconstruct: ₹2,29,761.96\nvalue date: 2026-08-29\n\nVERIFIER CONCLUDED: UNDERDETERMINED\n  thi...",
+      "answer": {
+        "amount_paise": 22976196,
+        "hypothesis_kind": "MISSING_TXN",
+        "kind": "SEARCH_FEED",
+        "rationale": "The verifier concluded UNDERDETERMINED with a pool of 62 candidates for a batch of 7. The pool size is too large, allowing for ~23.3 distinct reconstructions. Since there are no unjoined feeds available to search, and the merchant has no history to narrow to, the primary issue is the window width. The current window is +/- 22 hours. For a T+2 travel merchant, this likely admits captures from multiple days. Halving the window to +/- 11 hours will significantly reduce the pool size (likely to ~30), which reduces the combinatorial explosion C(n,k) drastically, potentially making the solution unique or at least much tighter. TIGHTEN_WINDOW is the standard action for UNDERDETERMINED states with large pools.",
+        "record_kind": "adjustment",
+        "window_hours": 11
+      },
+      "usage": {
+        "input_tokens": 1026,
+        "output_tokens": 221,
+        "cache_read_input_tokens": 0,
+        "cache_creation_input_tokens": 0,
+        "calls": 1,
+        "calls_by_role": {
+          "plan": 1
+        },
+        "inr_micros": 23892,
+        "provider_failures": 0,
+        "provider_retries": 0,
+        "schema_violations": 0
+      }
+    },
+    "plan_c413ab6eda539f75": {
+      "role": "plan",
+      "model": "qwen/qwen3.8-27b",
+      "prompt_excerpt": "SETTLEMENT bank_credit_travel_2026_08_04_1001\nmerchant archetype: travel, settles on a T+2 cycle\ncredit to reconstruct: ₹1,05,594.81\nvalue date: 2026-08-04\n\nVERIFIER CONCLUDED: UNDERDETERMINED\n  thi...",
+      "answer": {
+        "amount_paise": 10559481,
+        "hypothesis_kind": "MISSING_TXN",
+        "kind": "SEARCH_FEED",
+        "rationale": "The verifier concluded UNDERDETERMINED with a pool of 66 candidates for a batch of 9, yielding 157 distinct reconstructions. The twin mass is 0.00, indicating amounts are distinct, but the pool is too large to uniquely identify the subset. The merchant has no history to support NARROW_TO_HISTORY. There are no unjoined feeds available to search. The current window is +/- 22 hours. To reduce the combinatorial explosion C(66,9), the window must be tightened. Halving the window to +/- 11 hours is the standard next step to reduce the pool size significantly, which will likely bring the number of reconstructions down to a manageable or unique state. Since SEARCH_FEED is not applicable (no feeds) and NARROW_TO_HISTORY is unavailable, TIGHTEN_WINDOW is the only viable action to resolve the underdetermination.",
+        "record_kind": "adjustment",
+        "window_hours": 11
+      },
+      "usage": {
+        "input_tokens": 1026,
+        "output_tokens": 244,
+        "cache_read_input_tokens": 0,
+        "cache_creation_input_tokens": 0,
+        "calls": 1,
+        "calls_by_role": {
+          "plan": 1
+        },
+        "inr_micros": 24499,
+        "provider_failures": 0,
+        "provider_retries": 0,
+        "schema_violations": 0
       }
     },
     "plan_c49d1f8dbf3c57a4": {
@@ -771,7 +1188,10 @@
         "calls_by_role": {
           "plan": 1
         },
-        "inr_micros": 50943
+        "inr_micros": 50943,
+        "provider_failures": 0,
+        "provider_retries": 0,
+        "schema_violations": 0
       }
     },
     "plan_dd07c7a4c960b4f2": {
@@ -791,7 +1211,10 @@
         "calls_by_role": {
           "plan": 1
         },
-        "inr_micros": 48479
+        "inr_micros": 48479,
+        "provider_failures": 0,
+        "provider_retries": 0,
+        "schema_violations": 0
       }
     },
     "remediate_1c5b7b3d566741b8": {
@@ -810,7 +1233,10 @@
         "calls_by_role": {
           "remediate": 1
         },
-        "inr_micros": 45144
+        "inr_micros": 45144,
+        "provider_failures": 0,
+        "provider_retries": 0,
+        "schema_violations": 0
       }
     },
     "remediate_5fdd1bf8f2f77790": {
@@ -829,7 +1255,10 @@
         "calls_by_role": {
           "remediate": 1
         },
-        "inr_micros": 40110
+        "inr_micros": 40110,
+        "provider_failures": 0,
+        "provider_retries": 0,
+        "schema_violations": 0
       }
     },
     "remediate_8ec784484aa7892f": {
@@ -848,7 +1277,10 @@
         "calls_by_role": {
           "remediate": 1
         },
-        "inr_micros": 44422
+        "inr_micros": 44422,
+        "provider_failures": 0,
+        "provider_retries": 0,
+        "schema_violations": 0
       }
     },
     "remediate_c06afa71f7fd2129": {
@@ -867,7 +1299,10 @@
         "calls_by_role": {
           "remediate": 1
         },
-        "inr_micros": 42812
+        "inr_micros": 42812,
+        "provider_failures": 0,
+        "provider_retries": 0,
+        "schema_violations": 0
       }
     },
     "remediate_ecdb7d89a2733c1e": {
@@ -886,7 +1321,10 @@
         "calls_by_role": {
           "remediate": 1
         },
-        "inr_micros": 46006
+        "inr_micros": 46006,
+        "provider_failures": 0,
+        "provider_retries": 0,
+        "schema_violations": 0
       }
     },
     "remediate_ef2b6786a3e89ec4": {
@@ -905,7 +1343,10 @@
         "calls_by_role": {
           "remediate": 1
         },
-        "inr_micros": 43278
+        "inr_micros": 43278,
+        "provider_failures": 0,
+        "provider_retries": 0,
+        "schema_violations": 0
       }
     },
     "remediate_f9341a616d19d7c2": {
@@ -924,7 +1365,10 @@
         "calls_by_role": {
           "remediate": 1
         },
-        "inr_micros": 42539
+        "inr_micros": 42539,
+        "provider_failures": 0,
+        "provider_retries": 0,
+        "schema_violations": 0
       }
     },
     "remediate_fd915a761e57ca60": {
@@ -943,7 +1387,10 @@
         "calls_by_role": {
           "remediate": 1
         },
-        "inr_micros": 44228
+        "inr_micros": 44228,
+        "provider_failures": 0,
+        "provider_retries": 0,
+        "schema_violations": 0
       }
     },
     "triage_ecc85c3a92a6c7ba": {
@@ -962,7 +1409,10 @@
         "calls_by_role": {
           "triage": 1
         },
-        "inr_micros": 33396
+        "inr_micros": 33396,
+        "provider_failures": 0,
+        "provider_retries": 0,
+        "schema_violations": 0
       }
     }
   }

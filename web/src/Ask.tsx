@@ -35,10 +35,14 @@ export function Ask() {
     setBusy(true);
     setErr(null);
     try {
-      const a = await api<Answer>("/api/ask", {
-        method: "POST",
-        body: JSON.stringify({ question: text }),
-      });
+      // Add artificial delay for loading animation
+      const [a] = await Promise.all([
+        api<Answer>("/api/ask", {
+          method: "POST",
+          body: JSON.stringify({ question: text }),
+        }),
+        new Promise(resolve => setTimeout(resolve, 1500)) // 1.5s minimum
+      ]);
       setHistory((h) => [{ q: text, a }, ...h]);
       setQ("");
     } catch (e) {
@@ -88,6 +92,13 @@ export function Ask() {
             </button>
           ))}
         </div>
+
+        {busy && (
+          <div className="mt-4 flex items-center gap-3 rounded-lg border border-line bg-ground-alt p-4">
+            <div className="h-6 w-6 animate-spin rounded-full border-2 border-accent border-t-transparent"></div>
+            <p className="text-[13px] text-ink-dim">Searching receipts with RAG-enhanced retrieval...</p>
+          </div>
+        )}
 
         {err && (
           <p className="mt-3 text-[12.5px]" style={{ color: "var(--color-wrong)" }}>

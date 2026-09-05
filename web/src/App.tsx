@@ -10,9 +10,11 @@ import { Cases } from "./Cases";
 import { Exceptions } from "./Exceptions";
 import { Calibration } from "./Calibration";
 import { Ask } from "./Ask";
+import { Forecast } from "./Forecast";
+import { TaxAnalysis } from "./TaxAnalysis";
 import { ReceiptView } from "./ReceiptView";
 
-type Tab = "close" | "hook" | "run" | "cases" | "exceptions" | "calibration" | "ask";
+type Tab = "close" | "hook" | "run" | "cases" | "exceptions" | "calibration" | "ask" | "forecast" | "tax";
 
 /**
  * The shell.
@@ -225,6 +227,8 @@ export default function App() {
                 { id: "cases", label: "Cases", badge: cases.length || undefined },
                 { id: "exceptions", label: "Exceptions", badge: exceptionCount || undefined },
                 { id: "calibration", label: "Calibration" },
+                { id: "forecast", label: "Forecast" },
+                { id: "tax", label: "Tax" },
                 { id: "ask", label: "Ask" },
               ]}
             />
@@ -261,6 +265,8 @@ export default function App() {
           {tab === "cases" && <Cases cases={cases} onOpen={setOpen} />}
           {tab === "exceptions" && <Exceptions receipts={receipts} onOpen={setOpen} />}
           {tab === "calibration" && <Calibration sweep={sweep} envelope={envelope} />}
+          {tab === "forecast" && <Forecast />}
+          {tab === "tax" && <TaxAnalysis />}
           {tab === "ask" && <Ask />}
         </main>
       )}

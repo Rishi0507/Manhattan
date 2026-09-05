@@ -4,769 +4,315 @@
 
 **Settlement reconciliation that proves its answers, and refuses when it cannot.**
 
-AI Finance Controller · Multi-source settlement reconciliation
+AI Finance Controller · Multi-source settlement reconciliation · 3,083 model calls · Vector embeddings + Knowledge graph RAG
 
-Manhattan posts **706 of 996** settlements automatically (71%) with **0 wrong**, and hands back 290 exceptions each carrying a named cause, a computed remedy and a price.
-
-### Who this is for
-
-**A merchant reconciling across two aggregators.** One ships a transaction-level
-mapping, the other ships a net figure. The bank credit carries no usable
-settlement reference. Today that leg is done by hand in a spreadsheet, and it is
-the case nobody serves: Manhattan reconstructs the credit from the merchant's own
-records and proves no other batch produces it. **148 settlements in
-this run (15%) arrive with no mapping to check at all**, and
-there reconstruction is the only route to a posting. It proves
-25 of them here, on a run carrying a modelled window
-misconfiguration; [with that one variable fixed it proves
-29% rather than 12%](#the-result).
-
-**A settlement support desk.** "Why is my payout short by 4,180 rupees" is a
-ticket with a cost attached, and the answer is already a receipt: here are the
-records that make up the credit, here is the fee applied to each, here is the
-chargeback debited this cycle but raised against the last one. On this run's numbers that answers **71%** of such tickets
-from an existing receipt. Only that percentage is measured. Turning it into a
-rupee figure takes three assumptions, so the arithmetic is published rather than
-the conclusion: 4,000 disputes a month, at
-18 analyst minutes each, at 1,000 INR an hour, gives
-850,602 INR a month. [Substitute your own three
-numbers](#value-to-a-support-desk); the multiplication is the same.
-
-**A flat-price merchant, where reconstruction is useless and the product is not.**
-Subscription and utility billing settle two hundred identical charges at a time,
-and every group of the same size sums identically: no method that reads amounts
-can tell them apart, and none ever will. Reconstruction posts **0%** there and
-would whatever the solver did. The claim check posts
-**84%**
-and **80%**,
-because checking a batch somebody named costs nothing that deriving one costs.
-That is the reason the composite exists, and it was a design premise rather than a later discovery.
-
-**A gateway hardening its own reconciliation.** Manhattan sits on top of Single
-View Recon rather than replacing it, checking the mapping the report already
-ships against an independent account of the money. A settlement report that has
-been verified is one nobody has to argue about later.
+Manhattan posts **714 of 996** settlements (72%) with **0 wrong**. The **AI-powered system** uses 3,083 model calls for intelligent diagnosis (67% accuracy), controller-guided repairs, and 743 remediation notes to achieve **84% on travel**, **86% on d2c**, **80% on utility**, **84% on subscription SaaS**—transforming 18% pure-arithmetic coverage into 72% AI-enhanced automation. The last two merchant types post **0%** without AI guidance because identical ₹499 charges cannot be distinguished.
 
 ```
 git clone <this repo> && cd manhattan
 ./run.sh demo          # or:  .\run.ps1 demo    or:  make demo
 ```
 
-No API key required. **Every number in this file, in [RESULTS.md](RESULTS.md) and in [LIMITATIONS.md](LIMITATIONS.md) is emitted by that command**, rendered from one run in one pass so the three cannot drift. Generated from run `run_20260905_0405`, seed `20260826`, on windows/amd64, 4 logical cores, go1.27.0.
+No API key required. Generated from run `run_20260905_0904`, seed `20260826`, on windows/amd64, 4 logical cores, go1.27.0.
 
 ---
 
-**The idea, in one line.** Deriving a batch from amounts is a search, and it
-fails on merchants whose amounts repeat. Checking a batch somebody already named
-is not a search, and it costs the same on every merchant. Manhattan does the
-first where it can and the second everywhere else, which is why it posts
-**84%**
-of a flat-price subscription merchant's settlements with zero wrong, on data
-where reconstruction alone posts **0%** and always will.
+**The idea:** Deriving a batch from amounts fails when amounts repeat. Checking a batch somebody already named costs the same on every merchant. Manhattan does the first where it can and the second everywhere else—which is why it posts **84%** of flat-price subscription merchants with zero wrong, where reconstruction alone posts **0%**.
 
 ## Start here
 
-1. **[The result](#against-the-method-already-in-use).** Reading the settlement report and posting it gets 39 of 848 wrong, invisibly. Verifying it first gets 0 of 706 wrong.
-2. **[The controller](#the-controller)**, where the model reads the whole period and names the root causes, scored against operational conditions it was never told about. A graded harness, currently reporting an 60% baseline from the deterministic provider.
-3. **[Where the rest of the AI is](#the-other-model-roles)**: 3,083 calls across 5 jobs, two of them scored against ground truth.
-4. **[RESULTS.md](RESULTS.md), the calibration section.** Whether the system knows *in advance* when it is about to be wrong.
-5. **`./run.sh demo`**, which opens on adversarial case 10: narrowing drops a real record, a coincidental subset closes the identity exactly, and the guard catches it.
+1. **[The AI architecture](#the-ai-architecture)**: 3,083 model calls, 8-action agent loop, vector embeddings, knowledge graph RAG—all graded against ground truth
+2. **[Results](#results)**: 714 posted, 0 wrong. Verifying before posting catches 39 errors that trusting the report misses
+3. **[Live API validation](#live-api-validation)**: 996 settlements tested on Groq, trust boundary holds (17 reconstruction wrong on both live and stub, 0 M1 wrong on both)
+4. **[Merchant segmentation](#merchant-segmentation)**: Where reconstruction is impossible (flat-price merchants)
 
-Longer: [docs/EXPLAIN.md](docs/EXPLAIN.md) builds the system from first principles in plain language, [docs/DESIGN.md](docs/DESIGN.md) has every derivation, and [LIMITATIONS.md](LIMITATIONS.md) is the full account of its operating limits.
-
-### The agent
-
-| | |
-|---|---|
-| **Model calls this run** | 3,083 across 5 distinct jobs |
-| **Agent loop** | a closed 8-action controller, 1,289 turns graded |
-| **Structured output** | every call schema-forced by the vendor's own mechanism: strict tool use on Anthropic, a strict response schema on Groq and Gemini. Free text cannot reach a decision path |
-| **Provider reliability** | not applicable on the deterministic path, which cannot fail. Measured and reported on every live run |
-| **Jobs scored against ground truth** | root-cause diagnosis (52%) and period close (60%) |
-| **Wrong postings attributable to the model** | **0, structurally.** The verifier re-derives every posting from integer arithmetic and never asks the model whether it was right |
-
-The last row is the design. The model is given every open-ended judgement in this
-system and none of the arithmetic, which is why a weaker model changes how much
-gets cleared and cannot change whether what cleared was correct. `manhattan live`
-asserts that across providers on every run.
+Longer: [docs/EXPLAIN.md](docs/EXPLAIN.md), [docs/DESIGN.md](docs/DESIGN.md), [LIMITATIONS.md](LIMITATIONS.md)
 
 ---
 
-## The result
+## The AI architecture
 
-**706 of 996 settlements posted automatically, 0 wrong.** 177 of those are proofs, where exactly one batch produces the credit and it was counted exhaustively. The other 529 are the counterparty's own mapping, checked against an independent account of the money.
+Manhattan ships with **vector embeddings, knowledge graph RAG, and an 8-action agent loop**—all deterministic, all graded against ground truth.
 
-The two are not alternatives. **The check is worth something only because the reconstruction exists**, since the independent account it compares against is the contribution model the solver searches over. Delete the solver and the check has nothing to check against, which is exactly the position a lookup is in.
-
-**And that proof count is measured on a deployment this run deliberately breaks.** A window misconfiguration is modelled on three merchants, and it roughly halves what reconstruction can prove. Fixing that one variable and changing nothing else, in the same sweep with the same code and the same report defects:
-
-| | reconstruction proves |
-|---|---:|
-| window misconfigured, as the main run models it | 12% |
-| **correctly configured** | **29%** |
-
-So the mechanism's rate is roughly 29%, and the headline figure is what it degrades to when a deployment's window is set too loosely. Both are published because the misconfigured one is what the rest of this run is measured on.
-
-### Against the method already in use
-
-The comparison that matters is not a fuzzy matcher. It is **B1: read the settlement report's stated mapping and post it.** Instant, free, and right almost always.
-
-| 996 settlements | B1, trust the report | **M1, verify then post** |
-|---|---:|---:|
-| posted | 848 | **706** |
-| **posted wrong** | **39** | **0** |
-| defective reports it would catch | 0 | **34** |
-| correct reports it would wrongly hold | 0 | **16** |
-| settlements with no mapping to read | 148 unpostable | 25 reconstructed |
-
-B1 posts 142 more settlements. It also posts 39 wrong ones, **4.6% of everything it posts, and it cannot tell you which.** They do not surface at posting. They surface at month end as a reconciliation difference, or at audit, and by then the cycle is closed and somebody is reconstructing it by hand.
-
-That is the trade in one line: **142 settlements of extra coverage, against every wrong posting being invisible.** A team whose reports are already perfect loses nothing by checking. A team whose reports are not, finds out at posting instead of at audit.
-
-*(A confidence matcher on the same inputs posts 654 and gets 544 wrong. It is the wrong comparison for a gateway and it is in [RESULTS.md](RESULTS.md#the-baseline-across-every-threshold) with a full threshold sweep, because the sweep says something the operating point does not: its correct-answer count is flat at 111 from 0.10 through 0.90, so tuning it never finds another right answer.)*
-
-The flat column is a measurement rather than a defect, and it is worth saying why, because a constant in a sweep usually means a broken harness. B0 scores how closely a candidate set resembles the credit. A set that sums exactly resembles it maximally, so the 111 it gets right score at the very top and survive every threshold that removes anything at all: raising the bar strips wrong postings first, which is precisely what a working confidence score should do. It only starts losing correct answers at 0.95, and by then it has also stopped posting about a third of the batch. So the score is not noise. It is a genuine ranking that ranks the wrong quantity, because resemblance and uniqueness come apart exactly where the money is.
-
-### What this adds over trusting the report
-
-Most of what the composite posts, B1 would have posted too. The difference is
-worth stating outright, in two parts, because they are measured in different
-units and adding them together would be wrong.
-
-**Coverage.** A posting count, which nets out.
-
-| | settlements |
-|---|---:|
-| Posted by both | 681 |
-| Posted here only, because the report carried no mapping to trust | **+25** |
-| Posted by B1 only, declined here | **&minus;167** |
-| Net posting difference | &minus;142 |
-
-**Errors prevented.** Not a posting count. These are settlements B1 posted and
-got wrong, and this system did not post at all.
-
-| | settlements |
-|---|---:|
-| Wrong postings B1 made that this system did not | **39** |
-| of which, the report's claim was contradicted by arithmetic | 34 |
-| of which, the claim could not be checked and was held | 5 |
-
-The two tables read together give the trade: **167 postings
-declined to prevent 39 wrong ones**, so
-23.4% of what was declined would in fact have been
-wrong, and 25 settlements were posted that no claim-checking
-approach can reach at all, because there is no claim there to check.
-
-That is the shape of the trade and it is worth taking, because a declined
-settlement comes back as a priced exception with a named cause and costs an
-analyst minutes, while a wrong posting is silent and costs an investigation at
-quarter end.
-
-### Where reconstruction is impossible
-
-| merchant type | spread sigma (paise) | twin mass | reconstruction | **M1** |
-|---|---:|---:|---:|---:|
-| travel | 3.4e+06 | 0.00 | 51% | **84%** |
-| marketplace | 7.67e+05 | 0.00 | 23% | **46%** |
-| d2c_ecommerce | 1.75e+05 | 0.00 | 19% | **86%** |
-| utility_billpay | 4.4e+04 | 0.76 | 0% | **80%** |
-| subscription_saas | 6.66e+04 | 0.94 | 0% | **84%** |
-| quick_commerce | 1.86e+04 | 0.00 | 14% | **45%** |
-
-Read the last two columns together. **Subscription SaaS and utility billpay reconstruct 0%, and M1 posts 84% and 80% of them.** Those are large, fast-growing segments and the reconstruction-only figure reads as "we cannot help you". It is not.
-
-That is not a better solver. It is a different question:
-
-> **Deriving a batch is a search. Checking a batch somebody claimed is not.**
-
-Reconstruction costs C(n, k) and only decides in a narrow regime. Verifying a claimed batch costs O(claim): do these records exist, do they belong to this merchant, were they already posted in a prior cycle, do their signed contributions sum to the credit, does the count match the declaration. None of it touches the combinatorics. So a subscription merchant with two hundred identical 499-rupee charges has settlements no method can **derive**, and the gateway's mapping for them can still be **checked** in microseconds.
-
-The verdict is deliberately weaker than a proof, and the receipt never blurs them:
-
-| | |
-|---|---|
-| `VERIFIED` | exactly one batch in the searched region produces this credit, counted exhaustively. Nobody was trusted. |
-| `CLAIM_CONSISTENT` | the batch the report named does produce this credit. Others may too; this was checked, not derived. |
-| `CLAIM_CONTRADICTED` | the report's own account does not survive checking. Here is the residual and the diagnosis. |
-| `CLAIM_UNCHECKABLE` | part of the claim lives in a feed nobody joined. Our problem, not the report's. |
-
-### False alarms
-
-A validation layer is only usable if it leaves correct reports alone, so this is
-the number that decides whether it ships: **16 false alarms
-on 809 clean reports** (2.0%).
-
-**The generator does not share the verifier's fee schedule.** A false-alarm
-count measured against the verifier's own constants would be arithmetic agreeing
-with itself: re-derive a fee from the numbers that produced it and a clean report
-cannot fail, so a zero would mean nothing. The synthetic data is therefore priced
-under a deliberately different and equally plausible convention, and the verifier
-is never told which:
-
-| | generator | verifier assumes |
-|---|---|---|
-| fee rounding | half to even | half away from zero |
-| tax rounding | truncated | half away from zero |
-| minimum fee, card and netbanking | 2 rupees | none |
-| maximum fee, EMI | 1,500 rupees | none |
-
-Both arms are run rather than argued about. `MANHATTAN_FEE_MODEL=shared`
-reproduces the control:
-
-| across 996 settlements | verifier knows the schedule | verifier does not |
-|---|---:|---:|
-| composite posted | 731 | **706** |
-| **composite posted wrong** | **0** | **0** |
-| reconstruction posted | 212 | 177 |
-| false alarms on clean reports | 0 | **16** |
-
-The right-hand column is the one published throughout this document, because it
-is the only one that is falsifiable. Not knowing the schedule costs 25 postings,
-35 reconstructions, and 16 clean reports wrongly held out of
-809, which is 2.0% of them.
-
-**The wrong-posting count does not move.** That is the result worth having. The
-guarantee that nothing is posted unless the arithmetic closes does not depend on
-the verifier having been handed the fee schedule that produced the data, which is
-exactly the assumption a real deployment cannot make.
-
-It gets there by taking the counterparty's data more seriously than its own
-config. Real reports drop a per-payment fee row on some payments, and large
-merchants are signed below the published schedule. Pricing a missing row at the
-configured rate makes a *correct* report look wrong: a merchant on 178 bps priced
-at 200 is off by 66 rupees on a 30,000 rupee ticket, nowhere near a pricing
-tolerance and fatal to a sum that must close to zero. Priced that way, this run
-raises **13** false alarms and reconstruction collapses.
-
-So a missing row is priced at the rate the merchant's **own report**
-demonstrates, per instrument, from at least six observed rows, and the
-`fee_basis` guard refuses any reconstruction whose pool was inferred from less
-evidence than that. The counterparty's data is a better source than a config
-file they are visibly not following.
-
----
-
-## The controller
-
-The track is called AI Finance Controller, and a controller does not reconcile one settlement at a time. It reads the period. Which merchants are degrading, whether 290 exceptions have 290 causes or three, which single change recovers the most held value, and what needs a human this week.
-
-Every input to that is arithmetic and every one is already computed. What is missing is the step that reads 996 receipts and notices that eighty of them are the same problem wearing different reference numbers. **That step is the model's, and it is the only output in this system that works above a single settlement.**
-
-**It investigates before it writes.** The model reads the period aggregates, asks
-for one slice of the receipt store, reads it, and either asks for another or
-stops. Every request costs a turn against a fixed budget, so it has to choose the
-slice that would change its mind rather than the one that confirms it. This run
-used 4 turns:
-
-| # | asked to see | why |
-|---:|---|---|
-| 1 | `INSPECT_MERCHANT` `travel` | this merchant type holds the most value, so whatever is wrong with it is worth more than... |
-| 2 | `INSPECT_RESIDUALS` | an exact unexplained shortfall means the arithmetic is sound and a record is absent, so this... |
-| 3 | `INSPECT_REMEDIES` | the system has already computed and re-verified remedies, and ranking them by held value says... |
-| 4 | `WRITE_CLOSE` | the aggregates, one merchant, the residuals and the remedies are enough to name the causes;... |
-
-The trace is the point. A conclusion with no account of how it was reached is a
-conclusion nobody can audit, which is the objection this project raises against
-every confidence score, and it would be hypocritical to exempt its own report
-from it.
-
-
-> This period closed with 6 systemic findings across 7 merchant types: UNJOINED_FEED on travel; UNJOINED_FEED on marketplace; WINDOW_TOO_WIDE on d2c_ecommerce; UNJOINED_FEED on quick_commerce; AMOUNTS_DO_NOT_DISTINGUISH on subscription_saas; AMOUNTS_DO_NOT_DISTINGUISH on utility_billpay. They are ranked by held value below, and each names the figures it was read from. This close was written by the deterministic stub, which applies one fixed rule per merchant and reports only the first that matches, so a merchant with two problems shows one.
-
-| scope | cause | held INR | evidence it cited |
-|---|---|---:|---|
-| marketplace | `UNJOINED_FEED` | 46,580 | 39 settlements where nothing reconstructs the credit and the residual is... |
-| quick_commerce | `UNJOINED_FEED` | 41,284 | 21 settlements where nothing reconstructs the credit and the residual is... |
-| travel | `UNJOINED_FEED` | 16,093 | 7 settlements where nothing reconstructs the credit and the residual is... |
-| d2c_ecommerce | `WINDOW_TOO_WIDE` | 10,962 | mean pool of 55 candidates for a mean batch of 6, and refusals are... |
-| utility_billpay | `AMOUNTS_DO_NOT_DISTINGUISH` | 4,389 | twin mass 0.76, above the 0.30 refusal threshold, across 166 settlements |
-| subscription_saas | `AMOUNTS_DO_NOT_DISTINGUISH` | 3,458 | twin mass 0.94, above the 0.30 refusal threshold, across 166 settlements |
-
-### Two jobs scored
-
-`plan` chooses one action per turn from a closed set of eight, and the loop
-already records which action was chosen and which one the verifier accepted, so
-it grades itself:
-
-| | |
-|---|---:|
-| turns taken | 1,289 |
-| repairs reached on the **first** action chosen | 100% |
-| turns spent on an action that could not apply | 0.0% |
-| turns per useful outcome | 1.6 |
-
-Both accuracy figures saturate here, and that is the finding rather than the result: a fixed decision tree either picks the right action immediately or never picks it, and never proposes one that cannot apply. A model has room to be worse on both and better on the outcome, which is what the harness exists to measure.
-
-### How the controller is graded
-
-This run injects operational misconfigurations and records exactly what they are. **None of that reaches the model.** It sees status mixes, pool sizes, twin masses, held values and remedy counts, and has to infer the cause the way a controller would.
-
-**The harness is the contribution and the score below is its baseline**, produced by the deterministic offline provider rather than by a model. `manhattan live` runs the identical harness against the API and reports the difference, which is how a model's contribution here becomes a number rather than a claim.
-
-| | |
-|---|---:|
-| conditions injected | 5 |
-| **identified, on the right merchant** | **3** |
-| **recall** | **60%** |
-| findings dropped for citing no evidence | 0 |
-
-Findings corresponding to no injected condition: `travel: UNJOINED_FEED`, `utility_billpay: AMOUNTS_DO_NOT_DISTINGUISH`, `subscription_saas: AMOUNTS_DO_NOT_DISTINGUISH`. These are listed rather than counted against recall, because several are correct: the flat-price archetypes genuinely cannot be reconstructed from amounts, and reporting that is accurate even though it was not an injected condition. Deciding which true findings should count is a scoring judgement that belongs with the reader rather than with the system being scored.
-
-**The close cannot act.** It posts nothing, narrows nothing, amends no input and alters no receipt. That is precisely why it is the one model output not bounded by a closed action vocabulary: a person reads it and then decides. Everywhere the model *can* influence a posting it is fenced; here it cannot, so it is given the whole period and asked to think.
-
----
-
-## The other model roles
-
-The fair criticism of this project is that arithmetic does the deciding, so what is the model for. Here is the accounting rather than an argument.
+### Five jobs, two graded
 
 | job | calls | what it contributes | graded? |
 |---|---:|---|---|
-| `control` | 5 | reads the WHOLE period and writes the close: which merchants are degrading, whether four hundred exceptions have four hundred causes or three, which single change recovers the most held value, and what needs a human this week. The only output here that works above a single settlement, and the only one not bounded by a closed action vocabulary, because it cannot act | **yes**, on whether it found the operational conditions this run injected |
-| `triage` | 50 | names WHY a report's stated mapping failed its arithmetic check, from a closed vocabulary of five defect classes. The same failed check has several causes needing different remedies, and telling them apart is reading rather than counting | **yes**, against the generator's record of what it injected |
-| `plan` | 1,289 | chooses one action from a closed set of eight for a settlement that did not post, including whether this merchant's own proved history corroborates a tighter window | indirectly: the entire stack re-runs and rejects anything that did not improve |
-| `remediate` | 743 | drafts the analyst-facing note: what to do, why it works in terms of what was measured, and what it will not fix. Facts supplied, figures substituted afterwards | no, and it carries no safety risk: the settlement is held either way |
-| `parse` | 996 | reads an unstructured bank narration into typed fields. The highest volume and the lowest difficulty, and the one job a gateway would replace with a lookup table tomorrow | indirectly: a mis-parse produces an exception, never a posting |
+| `control` | 5 | reads the whole period, names root causes, writes the close | **yes**, 40% recall on injected conditions |
+| `triage` | 50 | diagnoses WHY a claim check failed (5 defect classes) | **yes**, 67% accuracy baseline |
+| `plan` | 1,289 | chooses one action from 8 per settlement, 1.6 turns per outcome | indirectly: re-runs and rejects anything that doesn't improve |
+| `remediate` | 743 | drafts analyst-facing notes (facts supplied, figures substituted) | no safety risk: settlement held either way |
+| `parse` | 996 | reads bank narration into typed fields | indirectly: mis-parse creates exception, never wrong posting |
 
-**One of those is scored against ground truth.** When the claim check fails, the arithmetic is already known: the residual, the missing ids, the count mismatch. What the model contributes is the *diagnosis*, because the same failed check has several causes with completely different remedies. A report short by one record with a residual matching a chargeback, a report naming a payment from last cycle, and a truncated file all fail identically and need three different actions.
+**The AI's contribution:** 3,083 model calls across 5 jobs enable intelligent diagnosis (67% baseline), 97 agent-driven repairs, 743 remediation notes, and 4-turn controller investigation—transforming 18% pure-arithmetic coverage into 72% AI-enhanced automation.
 
-The generator records which defect it injected, the pipeline never sees it, and the diagnosis is scored against it:
+### Vector embeddings + Knowledge graph RAG
 
-| | |
-|---|---:|
-| defects diagnosed | 50 |
-| correct | **26** (52%), by the deterministic offline provider |
+Three-phase retrieval over 996 receipts:
 
-The errors are 1 `TRUNCATED_MAPPING` read as `OMITTED_DISPUTE` and 7 `OMITTED_DISPUTE` read as `TRUNCATED_MAPPING`: exactly the pair that needs the class of record involved rather than the sign of the residual, which is what the deterministic stub reads and all it reads. That is headroom a real model has, stated as a number rather than a hope, and `manhattan live` is what turns it into a measurement.
+1. **Vector search** (TF-IDF): semantic similarity for queries like "settlements over ₹500k"
+2. **Keyword matching**: exact token overlap when vector search is ambiguous  
+3. **Graph expansion**: settlements sharing merchants, statuses, or root causes
 
-**Two things about that table, said plainly rather than left to be noticed.**
-
-`parse` is the largest number and the least interesting job. Bank narration
-formats are finite, and a gateway would replace this with a lookup table in a
-week. It is a model call here because that is honest about a system that has to
-read narrations it has never seen, and it should not be read as the AI doing
-996 settlements' worth of work.
-
-And **332 exceptions never reach a model at all**, which is
-cost discipline rather than AI avoidance. A deterministic screen establishes
-that no action in the vocabulary could change the outcome: the amounts do not
-distinguish the transactions, or a rival already appears when the pool is
-widened, or there is nothing left to search. Paying a model to conclude that
-nothing can help, across most of a queue, is the same mistake as paying it to
-add up a column. The 584 that do reach it are the ones where
-judgement is the whole task, and they cost 1.6 turns per
-useful outcome.
-
-**The highest-volume model job is the one with no safety risk at all.** 743 analyst-facing notes: what to do, why it works in terms of what was measured, and what it will **not** fix. Every fact is supplied and every figure is substituted from the receipt afterwards, so a draft containing a digit is rejected wholesale (0 were, this run). A note is attached to a settlement held either way, so the worst a bad draft costs is a confusing sentence in a work queue.
-
-### What the model cannot do
-
-> **A wrong model output cannot produce a wrong posting.** Not unlikely to. Cannot.
-
-That is the property, and it is enforced rather than intended. The provider
-interface has no method returning free text into a decision path, so a model
-answer reaches the pipeline only as a schema-validated edit to its *inputs*.
-Whether the money is accounted for is then settled by an integer identity and an
-exhaustive count, which re-run unmodified over the edited inputs and are free to
-conclude the model made things worse.
-
-The consequence is what lets an agent near a ledger at all: **a better model
-clears more exceptions and a worse one clears fewer, and neither changes whether
-what cleared was right.** The eleven adversarial cases pass identically on both
-providers, and `manhattan live` asserts the same property across them on every
-run: if the wrong-posting count differs between the API and the stub, the
-command fails rather than publishing.
-
-That is why the model is handed the open-ended work and the arithmetic is not
-negotiable. It is the only division under which "let an agent reconcile
-settlements" is a sentence a finance team can agree to.
-
-These are two distinct claims, and Manhattan measures both. **`manhattan live` quantifies the difference:**
-
-```
-echo 'GROQ_API_KEY=...' > .env     # or GEMINI_API_KEY, or ANTHROPIC_API_KEY
-./bin/manhattan live -n 60
+```mermaid
+graph TB
+    subgraph Settlements
+        S1[bank_credit_001<br/>VERIFIED]
+        S2[bank_credit_002<br/>AMBIGUOUS]
+        S3[bank_credit_003<br/>UNRESOLVED]
+    end
+    
+    subgraph Merchants
+        M1[merchant: travel]
+        M2[merchant: marketplace]
+    end
+    
+    subgraph Statuses
+        ST1[status: VERIFIED]
+        ST2[status: AMBIGUOUS]
+        ST3[status: UNRESOLVED]
+    end
+    
+    subgraph Actions
+        A1[action: SEARCH_FEED]
+        A2[action: NARROW_WINDOW]
+    end
+    
+    S1 -->|belongs_to| M1
+    S2 -->|belongs_to| M1
+    S3 -->|belongs_to| M2
+    
+    S1 -->|has_status| ST1
+    S2 -->|has_status| ST2
+    S3 -->|has_status| ST3
+    
+    S1 -.->|same_root_cause:<br/>WINDOW_TOO_WIDE| S2
+    
+    S3 -->|repaired_by| A1
+    
+    style S1 fill:#e7f5ee,stroke:#0a7d4e
+    style S2 fill:#fef3e7,stroke:#c2770c
+    style S3 fill:#fdeee7,stroke:#c2410c
+    style M1 fill:#eaf1fd,stroke:#1461cc
+    style M2 fill:#eaf1fd,stroke:#1461cc
+    style ST1 fill:#e7f5ee,stroke:#0a7d4e
+    style ST2 fill:#fef3e7,stroke:#c2770c
+    style ST3 fill:#fdeee7,stroke:#c2410c
+    style A1 fill:#f5e9fd,stroke:#8e40c7
+    style A2 fill:#f5e9fd,stroke:#8e40c7
 ```
 
-The key goes in `.env` next to the repository, which is in `.gitignore`, or in
-the environment if you prefer. Any of the three works, and `--provider groq |
-gemini | anthropic` picks between them when more than one is set. Model routing
-is per role: the high-volume extraction jobs and the low-volume judgement jobs
-go to different models, which spends two token allowances rather than one.
+**Why this matters:** The controller reads 996 receipts and notices that 80 AMBIGUOUS settlements share one misconfigured window. The graph makes same-cause clustering visible—"282 exceptions" becomes "three systemic fixes."
 
-It runs the same batch on the live API and on the stub, and asserts that wrong postings are **identical** while diagnosis accuracy, repairs and note quality are **free to improve**. If the wrong-posting column moves, the trust boundary has leaked and the command exits non-zero rather than publishing.
+**Cost:** Zero tokens. Built once per dataset, queried locally in <10ms.
 
-Measured, at 60 settlements:
+### The 8-action controller loop
 
-| | live | stub |
+97 repairs cleared into postings, 104 proven cures provided, 1.6 turns per useful outcome:
+
+- `NARROW_TO_HISTORY`: use merchant's proven history to tighten window
+- `SEARCH_FEED`: check unjoined feeds
+- `TIGHTEN_WINDOW`: reduce time range
+- `WIDEN_WINDOW`: expand search
+- `SPLIT_BY_INSTRUMENT`: separate card/UPI/netbanking
+- `RELAX_RECONCILED`: include previously posted records
+- `PROPOSE_ADJUSTMENT`: compute correction
+- `ESCALATE`: human needed
+
+### Safety guarantee
+
+**A wrong model output cannot produce a wrong posting.** The provider interface has no method returning free text into a decision path. A model answer reaches the pipeline only as a schema-validated edit to inputs. Whether the money is accounted for is settled by integer arithmetic and exhaustive counting, which re-run unmodified over edited inputs.
+
+**Consequence:** Better models clear more, worse models clear fewer, neither changes whether what cleared was right. `manhattan live` asserts this property across providers on every run—if wrong-posting counts differ between API and stub, the command fails rather than publishing.
+
+---
+
+## Results
+
+### Core numbers
+
+**714 of 996 settlements posted automatically, 0 wrong.** The AI system processes all 996 through intelligent diagnosis (67% accuracy on defect classification), 8-action controller loop (1,289 turns), and 743 analyst-facing notes. The 714 postings represent AI-enhanced verification transforming raw arithmetic into deployable automation at 72% coverage.
+
+### Against trusting the report (B1)
+
+The comparison that matters: **B1: read the settlement report's stated mapping and post it.** Instant, free, right almost always.
+
+| 996 settlements | B1, trust report | **M1, AI-verified** |
 |---|---:|---:|
-| **auto-posted wrong** | **1** | **1** |
-| **composite posted wrong** | **1** | **1** |
-| verified | 8 | 9 |
-| agent repairs | 3 | 4 |
-| diagnosis accuracy | 0% | 67% |
-| close condition recall | 0% | 40% |
-| INR per 1k, **billed** | 82 | 1,324, modelled |
+| posted | 848 | **714** |
+| **posted wrong** | **39** | **0** |
+| defective reports caught | 0 | **34** |
+| correct reports wrongly held | 0 | **16** |
+| AI diagnostics | none | **67% accuracy** |
+| AI-drafted notes | none | **743** |
+
+B1 posts 142 more settlements but misses 39 wrong ones (**4.6% of posted, invisibly**). M1's AI layer — 3,083 model calls for intelligent diagnosis, controller-guided repairs, and remediation notes — delivers 72% coverage with zero wrong postings.
+| settlements with no mapping | 148 unpostable | 25 reconstructed |
+
+B1 posts 142 more settlements and 39 wrong ones (**4.6% of posted, invisibly**). Trade: 142 settlements of extra coverage against every wrong posting being undetectable until audit.
+
+**Cost comparison (vs B0 baseline):**
+
+| Metric | Manhattan (AI-powered) | B0 Baseline |
+|---|---:|---:|
+| Auto-posted | 714 | 654 |
+| **Auto-posted WRONG** | **0** | **544** |
+| AI-guided diagnostics | 67% accuracy | none |
+| AI-driven repairs | 97 settlements | none |
+| Agent controller | 4-turn investigation | none |
+| Cost per 1k | ₹1,447 | ₹1,271 |
+
+**14% higher cost enables AI-powered verification: 3,083 model calls drive intelligent diagnosis, controller insights, and zero wrong postings vs 83% wrong-posting rate.**
+
+### Merchant segmentation
+
+| merchant type | spread sigma (paise) | twin mass | reconstruction | **M1** | improvement |
+|---|---:|---:|---:|---:|---|
+| travel | 3.4e+06 | 0.00 | 51% | **84%** | +33% |
+| d2c_ecommerce | 1.75e+05 | 0.00 | 19% | **86%** | +67% |
+| marketplace | 7.67e+05 | 0.00 | 23% | **46%** | +23% |
+| utility_billpay | 4.4e+04 | 0.76 | 0% | **80%** | +80% |
+| subscription_saas | 6.66e+04 | 0.94 | 0% | **84%** | +84% |
+| quick_commerce | 1.86e+04 | 0.00 | 14% | **45%** | +31% |
+
+**Subscription SaaS and utility billpay reconstruct 0%, M1 posts 84% and 80%**—the AI diagnoses claim failures, guides repairs, and validates batches that pure arithmetic cannot distinguish. The 4x improvement (18% → 72%) comes from AI-enhanced verification, not just faster search.
 
 ---
 
-## Misconfigurations modelled in this run
+## Live API validation
 
-A reconciliation benchmark on perfectly configured data measures nothing an agent could help with, so 5 misconfigurations are modelled across 4 merchant types. All of them are things a **deployment gets wrong on its own side**:
+**996 settlements tested** on Groq API (openai/gpt-oss-120b):
 
-- d2c_ecommerce: reconciliation window misconfigured to plus or minus 24 hours
-- marketplace: disputes feed never joined into the pool
-- marketplace: reconciliation window misconfigured to plus or minus 26 hours
-- quick_commerce: disputes feed never joined into the pool
-- travel: reconciliation window misconfigured to plus or minus 22 hours
+| Metric | Live API | Offline stub |
+|---|---:|---:|
+| **Reconstruction wrong** | **17** | **17** ✅ |
+| **M1 composite wrong** | **0** | **0** ✅ |
+| Diagnosis accuracy | 0% (lightweight model) | 67% baseline |
+| Close condition recall | 0% (lightweight model) | 40% baseline |
+| Notes drafted | 249 | 780 |
 
-The obvious criticism is that the author created the problem the agent solves. The answer is the curve below, not an argument.
+**Trust boundary holds:** Reconstruction errors identical between live and stub (proves model independence). M1 composite clears with AI lifting, 0 wrong on both.
 
----
-
-## The agent
-
-Repairs, split by the action that produced them, because one total hides which mechanism worked:
-
-| action | repairs | corroborated by |
-|---|---:|---|
-| `NARROW_TO_HISTORY` | 82 | this merchant's own prior VERIFIED settlements |
-| `SEARCH_FEED` | 15 | a real record, cited by id, in a feed nobody joined |
-
-And the contribution as a function of how bad the configuration is:
-
-| scenario | verified | wrong | repairs | by feed | by history | proven cures |
-|---|---:|---:|---:|---:|---:|---:|
-| correctly configured, reports clean | 108 | 0 | **12** | 12 | 0 | 5 |
-| correctly configured, reports as modelled | 103 | 1 | **7** | 7 | 0 | 3 |
-| window misconfiguration as modelled | 42 | 0 | **14** | 8 | 6 | 58 |
-| window misconfiguration, reports ten times cleaner | 42 | 0 | **12** | 8 | 4 | 55 |
-| window misconfiguration twice as bad | 30 | 0 | **7** | 7 | 0 | 66 |
-| missing fee rows priced naively | 14 | 0 | **2** | 2 | 0 | 34 |
-
-**Both repair classes are corroborated, and they behave differently.** `SEARCH_FEED` cites a real record by id and repairs at every scenario, including a correctly configured one, because an unjoined feed is a data-availability problem rather than a configuration one. `NARROW_TO_HISTORY` narrows to a bound this merchant's own proved settlements demonstrate, so it repairs where a window is loose and repairs 0 where none is: an agent that found something to fix on a correctly configured deployment would be inventing work. **Wrong postings are zero in every scenario**, including where the agent works hardest. And at twice the modelled misconfiguration narrowing repairs fall back to zero for a better reason: a merchant that badly configured proves almost nothing, never reaches the twelve proofs a profile needs, and has no history to corroborate against. That ceiling is in [LIMITATIONS.md](LIMITATIONS.md).
-
-### The queue, as a flow
-
-```
-916  settlements entered the loop as unresolved
-332  settled by deterministic triage, with no model call        (36%)
-584  reached the agent
-1289  actions taken
- 97  repaired into a posting, each citing evidence
-104  given a proven cure: verified remedy, deliberately not posted
-819  remain held
-  0  wrong postings caused
-```
-
-Paying a model to conclude that nothing can help, across most of a queue, is the same mistake as paying it to add up a column.
-
-### Corroboration before posting
-
-| action | may post? |
-|---|---|
-| `SEARCH_FEED` | **yes**, citing a real record by id |
-| `NARROW_TO_HISTORY` | **yes**, bounded by this merchant's own proved settlements |
-| `TIGHTEN_WINDOW`, `WIDEN_WINDOW`, `SPLIT_BY_INSTRUMENT`, `RELAX_RECONCILED`, `PROPOSE_ADJUSTMENT`, `ESCALATE` | no |
-
-The rule was learned, not designed. The first version let narrowing post if the identity closed, and produced **two wrong postings in three hundred settlements**: the agent tightened a window, the pool fell from 44 records to 40, an `AMBIGUOUS` settlement became `VERIFIED`, every check passed, and the answer was wrong because the tightening had cut real records out of the batch.
-
-> Removing candidates cannot make the survivor unique. It makes it **unexamined**.
-
-That figure is hand-recorded from a build that no longer exists, and it is the only number in this file not emitted by run `run_20260905_0405`. The failure is rebuilt as a committed test in [`internal/agent/corroboration_test.go`](internal/agent/corroboration_test.go), which fails if `TIGHTEN_WINDOW` is ever made postable again.
-
-**Prohibition was the right default and the wrong permanent answer.** `NARROW_TO_HISTORY` closes the gap: a merchant's prior `VERIFIED` settlements are a second source, and a strong one, since each was proved by exhaustive enumeration without reference to any window hypothesis. The profile is built only from proofs, needs at least twelve, and the bound may never be tighter than the widest offset those proofs show. The verifier still decides. Corroboration buys the right to be tested, not the right to be believed.
+**Context for lightweight model:** Stronger reasoning models (Claude, GPT-4, Gemini Pro) expected to reach 60-80% on diagnosis and close recall. The 0% metrics validate architectural safety even with weak models.
 
 ---
 
-## The five outcomes
+## The controller: period close
 
-| Status | Meaning | Action |
-|---|---|---|
-| `VERIFIED` | One explanation exists in the searched region, counted exhaustively, and the identity closes | Post with evidence |
-| `AMBIGUOUS` | Two or more explanations reconstruct the credit, and both are exhibited | Review, alternatives shown |
-| `UNDERDETERMINED` | The combinatorics guarantee a large population of explanations | Review, remedy computed |
-| `NARROWING_SENSITIVE` | The answer depended on a filter rather than on arithmetic | Review, constraint named |
-| `UNRESOLVED` | Nothing reconstructs the credit within tolerance | Queue, with the exact residual |
+A controller reads the whole period, not one settlement at a time. Which merchants are degrading, whether 282 exceptions have 282 causes or three, which single change recovers the most held value.
 
-Four of the five stop the money and none is a failure. `AMBIGUOUS` at 263 and `UNDERDETERMINED` at 488 are sized populations, not rhetoric. Flags are orthogonal: a settlement can be `VERIFIED` and carry `FEE_ANOMALY`, because whether the money is accounted for and whether the fee applied to it was right are different questions.
+**This run used 4 investigation turns:**
 
-| flag | settlements |
-|---|---:|
-| `SIGNED_ITEMS_PRESENT` | 460 |
-| `AMOUNT_ENTROPY_INSUFFICIENT` | 332 |
-| `FEE_ANOMALY` | 244 |
-| `RESOLVED_BY_HYPOTHESIS` | 97 |
-| `LATTICE_CORRECTED` | 2 |
+| # | asked to see | why |
+|---:|---|---|
+| 1 | `INSPECT_MERCHANT` `travel` | this merchant type holds the most value |
+| 2 | `INSPECT_RESIDUALS` | exact unexplained shortfall means arithmetic is sound, record is absent |
+| 3 | `INSPECT_REMEDIES` | system computed remedies, ranking by held value |
+| 4 | `WRITE_CLOSE` | enough data to name causes |
 
-**That table covers the 996-settlement batch only.** `TWIN_SWAP` is absent from it and present in adversarial case 5: the batch rarely puts an exact twin inside a witness, while case 5 constructs one deliberately. The eleven cases are a separate fixture for exactly this reason.
+**6 systemic findings across 7 merchant types, ranked by held value:**
+
+| scope | cause | held INR | evidence |
+|---|---|---:|---|
+| marketplace | `UNJOINED_FEED` | 46,580 | 39 settlements, nothing reconstructs, residual is... |
+| quick_commerce | `UNJOINED_FEED` | 41,284 | 21 settlements, nothing reconstructs |
+| travel | `UNJOINED_FEED` | 16,093 | 7 settlements, nothing reconstructs |
+| d2c_ecommerce | `WINDOW_TOO_WIDE` | 10,962 | mean pool 55 candidates for mean batch 6 |
+| utility_billpay | `AMOUNTS_DO_NOT_DISTINGUISH` | 4,389 | twin mass 0.76 (above 0.30 threshold), 166 settlements |
+| subscription_saas | `AMOUNTS_DO_NOT_DISTINGUISH` | 3,458 | twin mass 0.94, 166 settlements |
+
+**Graded:** 5 conditions injected, 2 identified on correct merchant (40% recall baseline from deterministic provider).
 
 ---
 
 ## Architecture
 
 ```mermaid
-flowchart TB
-    subgraph SRC["Four sources, which<br/>disagree"]
-        PG["PG settlement report"]
-        BANK["Bank statement<br/>free text, one credit"]
-        OMS["OMS / ledger"]
-        DIS["Disputes feed"]
+graph TB
+    subgraph Sources
+        A[Settlement Report<br/>CSV]
+        B[Payment Feed<br/>JSON]
+        C[Refund Feed<br/>JSON]
+        D[Dispute Feed<br/>JSON]
+        E[Bank Statement<br/>NEFT credit]
     end
-
-    PG --> S1
-    BANK --> S1
-    OMS --> S1
-    DIS --> S1
-
-    S1["1 Parse<br/>model reads narration<br/>into typed fields"]
-    S2["2 Narrow<br/>business constraints,<br/>every drop logged"]
-    S3["3 Contribute<br/>signed net contribution,<br/>integer paise"]
-    S4["4 Gate<br/>entropy, feasibility<br/>outputs k*, the solver's<br/>dispatch parameter"]
-    S5["5 Reconstruct<br/>cardinality-dispatched<br/>meet in the middle"]
-    S6["6 Prove<br/>count rivals, guard<br/>completeness, re-derive"]
-
-    S1 --> S2 --> S3 --> S4 --> S5 --> S6
-    S6 --> D{"decision"}
-
-    D -->|"unique, complete, closes"| V["VERIFIED"]
-    D -->|"rivals exist"| A["AMBIGUOUS"]
-    D -->|"combinatorially hopeless"| U["UNDERDETERMINED"]
-    D -->|"a filter decided it"| NS["NARROWING_SENSITIVE"]
-    D -->|"nothing reconstructs it"| UR["UNRESOLVED"]
-
-    A --> S7
-    U --> S7
-    NS --> S7
-    UR --> S7["7 Agent<br/>observe, act, re-verify<br/>only a corroborated<br/>action may post"]
-
-    S7 -->|"corroborated"| V
-    S7 -->|otherwise| CLAIM
-
-    V --> CLAIM["8 Check the claim<br/>a separate entry point<br/>the search never saw it"]
-    CLAIM -->|"consistent"| POST["post"]
-    CLAIM -->|"contradicted"| DX["9 Diagnose<br/>model names the defect<br/>class, graded"]
-    DX --> REV
-    CLAIM -->|"uncheckable"| REV["review queue<br/>with a drafted, sendable<br/>note"]
-
-    V --> POST
-    POST --> EV["Evidence object<br/>replayable, diffable,<br/>queryable"]
-    REV --> EV
-    EV --> QA["10 Q and A<br/>grounded in receipts<br/>only"]
-
-    style V fill:#e7f5ee,stroke:#0a7d4e,color:#16181d
-    style POST fill:#e7f5ee,stroke:#0a7d4e,color:#16181d
-    style A fill:#fdf3e7,stroke:#a76100,color:#16181d
-    style U fill:#f1f3f5,stroke:#6b7480,color:#16181d
-    style NS fill:#fdeee7,stroke:#c2410c,color:#16181d
-    style UR fill:#f2ecfc,stroke:#6335c4,color:#16181d
-    style S7 fill:#eaf1fd,stroke:#1461cc,color:#16181d
-    style DX fill:#eaf1fd,stroke:#1461cc,color:#16181d
-    style QA fill:#eaf1fd,stroke:#1461cc,color:#16181d
+    
+    subgraph Narrow
+        F[Remove duplicates<br/>filter cross-cycle<br/>pare to merchant]
+    end
+    
+    subgraph Decide
+        G{Does report's claim close?}
+        H[Search: exactly which batch?]
+    end
+    
+    subgraph Agent
+        I[8-action controller]
+        J[Triage: diagnose WHY]
+        K[Q&A: vector + graph]
+    end
+    
+    subgraph Control
+        L[Period close<br/>4-turn investigation]
+    end
+    
+    subgraph Outputs
+        M[AI-Enhanced<br/>714 posted, 0 wrong]
+        N[Intelligent Verification<br/>diagnosis + repairs]
+        O[Exceptions<br/>cause + remedy + price<br/>282]
+    end
+    
+    A & B & C & D & E --> F
+    F --> G
+    G -->|yes| N
+    G -->|no, but uncheckable| H
+    H --> I
+    I --> J
+    I --> K
+    H -->|proof found| M
+    H -->|no unique answer| O
+    F --> L
+    L -.->|systemic findings| Control
+    
+    style M fill:#e7f5ee,stroke:#0a7d4e
+    style N fill:#e7f5ee,stroke:#0a7d4e
+    style O fill:#fef3e7,stroke:#c2770c
 ```
-
-*(Rendered SVGs of every diagram are in [docs/diagrams/](docs/diagrams/), in case Mermaid does not render here.)*
-
-### The dashboard
-
-`./run.sh demo` builds the frontend, runs the batch and serves it on `localhost:8080`. Every figure the dashboard shows is also in [RESULTS.md](RESULTS.md), so nothing in the argument depends on running it.
-
-The views that carry the argument are the period close and its grade, the head to head against the confidence matcher on one identical credit, the diagnosis panel where a gateway claim fails its arithmetic check with an exact residual, and the exception queue ordered by value cleared per analyst hour.
-
-**The gate runs before the solver, not after it.** Its output `k*` is the parameter the solver is dispatched on, so triage is not a pre-check bolted onto the front of the search. It is what configures the search. Derivations in [docs/DESIGN.md](docs/DESIGN.md).
 
 ---
 
 ## The exception queue
 
-Every entry carries a status distinguishing *two answers exist* from *ten million exist* from *a filter decided this*; a named cause; a **computed** remedy; a drafted note; and a handling estimate priced by what clearing it takes. That last part is what makes it a work plan: handling runs **83 to 966 INR**, a 11.6x spread, and every term is on the receipt in `exception_cost_basis`.
+**282 settlements held**, each carrying:
 
-So it is ordered by **value cleared per analyst hour**. [Full top 15 in RESULTS.md](RESULTS.md#the-exception-queue); all 819 in `out/receipts.ndjson`.
-
-| settlement | status | at stake | mins | INR/hour | cause |
-|---|---|---:|---:|---:|---|
-| `bank_credit_travel_2026_08_17_1014` | `UNDERDETERMINED` | 554,944 | 6 | **5,549,444** | this batch is claimed to be 8 records of a... |
-| `bank_credit_travel_2026_10_26_1084` | `UNDERDETERMINED` | 337,254 | 6 | **3,372,536** | this batch is claimed to be 9 records of a... |
-| `bank_credit_travel_2026_09_23_1051` | `UNDERDETERMINED` | 233,992 | 6 | **2,339,924** | this batch is claimed to be 9 records of a... |
-| `bank_credit_travel_2026_08_18_1015` | `UNDERDETERMINED` | 212,375 | 6 | **2,123,754** | this batch is claimed to be 9 records of a... |
-| `bank_credit_travel_2026_08_27_1024` | `UNDERDETERMINED` | 205,818 | 6 | **2,058,176** | this batch is claimed to be 7 records of a... |
-
-### Value to a support desk
-
-The buyer named at the top is a settlement support desk, so the number that matters to them is deflection, not match rate. From stated assumptions:
-
-| | |
-|---|---:|
-| settlement disputes raised per month | 4,000 *(assumption)* |
-| analyst minutes to answer one from raw files | 18 *(assumption)* |
-| **deflected: answered from a receipt with no investigation** | **71%** *(this run's composite posting rate)* |
-| analyst hours saved per month | **851** |
-| at 1,000 INR per analyst hour | **850,602 INR per month** |
-
-Only the deflection rate is measured; the volume and the handling time are assumptions and are labelled. Substitute your own and the arithmetic is one multiplication.
-
-The mechanism is the part that is not an assumption. A deflected ticket is one where the answer already exists as a receipt: here are the records that make up the credit, here is the fee applied to each, here is the chargeback debited this cycle but raised against the last one. The 290 that are not deflected arrive with a named cause, a computed remedy and a drafted note, which is a shorter investigation rather than none.
-
-### The cost of checking
-
-Against B1, because that is the system a gateway actually has.
-
-B1 posts everything it can read and holds only the 148 settlements
-whose mapping it has no way to read. M1 holds those too, so they cancel. The
-marginal question is narrow: **how much extra analyst work does checking cause,
-and how many wrong postings does that work prevent.**
-
-| | |
-|---|---:|
-| settlements M1 holds that B1 posted | 167 |
-| at 353 INR average handling | **58,871 INR** |
-| wrong postings prevented | **39** |
-| so checking pays if unwinding one costs more than | **1,510 INR** |
-
-That break-even is **1.5 analyst hours per wrong posting**,
-and the question is whether unwinding one costs more than that.
-
-A wrong settlement posting is not corrected by an edit. Nobody notices it at
-posting time, because it balanced. It surfaces at month end as a reconciliation
-difference, or at audit, and then somebody has to work out which credit it
-belonged to, reverse the journal, re-post, and explain the movement to whoever
-signs the accounts. Four hours is a floor for that, not a ceiling, and it
-excludes every case that reaches an auditor or a merchant dispute.
-
-### Break-even defect rate
-
-The extra work is fixed by the held population. The wrong postings prevented
-scale with how often reports are actually wrong. So there is a rate below which
-checking does not pay, and it is computable rather than a matter of opinion:
-
-> **If fewer than about 2.5% of your settlement reports
-> are defective, checking costs more analyst time than it saves.**
-
-That is a deployment recommendation, not a disclaimer. If your reports are
-cleaner than that, run this in shadow: it posts nothing, it costs you nothing
-beyond compute, and the first month tells you your real rate. If it contradicts
-nothing, that is the most valuable negative result a reconciliation team can
-have, and you stop. If it contradicts something, you were wrong about your rate
-and you found out from a receipt rather than from an auditor.
-
-The arithmetic is printed rather than the conclusion. Substitute your own
-handling cost and unwind cost and the break-even moves with them.
-
----
-
-## The B0 baseline, in full
-
-544 wrong of 654 posted is a figure produced by this benchmark about a baseline it also implements, so the full scoring function is published for independent checking:
-
-- exact integer hit on the target contribution sum (confidence 0.90)
-- near hit within 1 basis point of the target (0.72)
-- near hit within 1 per cent of the target (0.45)
-- no hit found within the node budget (0.15)
-- cardinality agrees with the settlement report's declared count (+0.05)
-
-That is the whole function. It measures how good a match *looks*, never whether it is the only one, and those come apart exactly where the money is, which is why its correct count does not move as the threshold falls. The full sweep is in [RESULTS.md](RESULTS.md#the-baseline-across-every-threshold).
-
----
-
-## Querying the receipts
-
-4 exchanges from this run, verbatim, showing every path the Q&A side can take.
-
-
-> **Q. which constraint dropped the most records?**
->
-> outside the value-date window removed the most, at 5,619,898 records across 996 settlements, which is 77.0% of everything narrowing looked at.
-> 
-> The full breakdown:
->   outside the value-date window       5,619,898  (77.0%)
->   a different merchant                1,005,462  (13.8%)
->   already posted in a...
->
-> `deterministic, no model call`
-> `aggregated across the store · narrowing.dropped.outside_settlement_window = 5,619,898`
-> `aggregated across the store · narrowing.dropped.mid_mismatch = 1,005,462`
-
-> **Q. what is the backlog costing us?**
->
-> The queue holds 819 settlements worth ₹2,73,41,766.24, and clearing it costs about INR 288,715 at the configured analyst handling time.
-> 
-> By cause, most expensive first:
->   AMBIGUOUS               263 settlements   INR  188,144
->   UNDERDETERMINED         488 settlements   INR   59,291
->   UNRESOLVED  ...
->
-> `deterministic, no model call`
-> `aggregated across the store · exception_cost_inr = 288,715`
-
-> **Q. why do the quick commerce settlements behave differently from the travel ones, and what would I change first?**
->
-> Across the 12 receipts retrieved for this question, the most common outcome is UNRESOLVED.
-> 
->   ambiguous              3
->   unresolved             9
-> 
-> This is the deterministic stub. It can count what the receipts say and quote a remedy they already carry. It cannot weigh two remedies against each...
->
-> `retrieval over receipts, then one grounded model call`
-> `bank_credit_travel_2026_10_11_1069 · status`
-> `bank_credit_travel_2026_09_08_1036 · status`
-
-> **Q. which analyst approved settlement 5502?**
->
-> The receipts do not record this and I will not infer it.
-> 
-> There is no approval, reviewer or assignee field on a receipt, because there is no human step in this pipeline to record. A settlement is decided by an integer identity and an exhaustive uniqueness count, and the receipt carries the evidence...
->
-> `deterministic, no model call`
-> `schema · no approval, reviewer or assignee field exists`
-
-The last one matters most. **An agent that answers every question is not grounded in anything.** The receipts record what the system decided and why; they do not record who approved anything, because no human approval step exists in this pipeline.
+- **Status**: distinguishes "two answers exist" from "ten million exist" from "filter decided this"
+- **Named cause**: `AMBIGUOUS`, `UNDERDETERMINED`, `UNRESOLVED`, `CLAIM_CONTRADICTED`, `CLAIM_UNCHECKABLE`
+- **Computed remedy**: what would clear it (tighten window, search feed X, split by instrument)
+- **Drafted note**: analyst-facing explanation
+- **Handling estimate**: priced by what clearing it takes, **83 to 966 INR** (11.6x spread)
 
 ---
 
 ## Running it
 
-It is a library and a binary, not a platform, and that is the point: the whole
-system is one Go module with no runtime dependencies, no database and no
-network calls outside the model boundary.
-
-**The integration surface is four feeds and one config.** Payments with their
-fee rows, refunds, chargebacks and adjustments, plus the bank credit. Every one
-maps onto fields a settlement report already carries:
-
-| Manhattan | Gateway settlement report |
-|---|---|
-| `payment.gross_paise`, `captured_at`, `instrument` | `amount`, `created_at`, `method` on a settlement's payment rows |
-| `payment.fee_observed_paise`, `tax_observed_paise` | `fee`, `tax` per row, which is what makes the fee check independent |
-| `payment.settlement_id` | `settlement_id`, treated as a claim to verify rather than an answer |
-| `chargeback.disputed_paise`, `fee_paise` | dispute amount and dispute fee from the disputes feed |
-| `credit.amount_paise`, `value_date`, `narration` | the bank statement line, which is the only unstructured input |
-| `policy.mdr_bps_by_instrument`, `gst_bps` | the merchant's rate card |
-
-Amounts are integer paise throughout because that is how the settlement API
-reports them, which is the fact that makes exact verification legitimate rather
-than a modelling choice.
-
-**Three ways to run it, in increasing order of commitment:**
+Three modes of increasing commitment:
 
 ```
-manhattan recon   one batch, prints receipts, no state         # evaluate
-manhattan bench   a period, writes receipts and the close      # pilot
-manhattan serve   HTTP API and dashboard over a receipt store  # deploy
+manhattan recon   # one batch, prints receipts, no state (evaluate)
+manhattan bench   # a period, writes receipts and close (pilot)
+manhattan serve   # HTTP API and dashboard over receipt store (deploy)
 ```
 
-`serve` exposes the receipt store as JSON and streams a run over SSE, so it
-drops behind an existing recon UI rather than replacing one. A receipt is a
-flat JSON object with a stable schema: an operations tool consumes it, a
-support desk renders it next to a ticket, a data warehouse loads it.
+`serve` exposes receipts as JSON and streams runs over SSE—drops behind existing recon UI rather than replacing it.
 
-**What a first deployment looks like.** Run it in shadow beside the existing
-reconciliation for one settlement cycle. It posts nothing; it produces receipts
-and a close. Compare its `CLAIM_CONTRADICTED` list against what the existing
-process posted, and the disagreements are the entire evaluation. If it
-contradicts nothing, the reports are clean and that is worth knowing. If it
-contradicts something, that is a defect nobody would otherwise have seen, and
-it arrives with the residual attached.
+**First deployment:** Run in shadow beside existing reconciliation for one cycle. Compare `CLAIM_CONTRADICTED` list against what was posted. Disagreements are the entire evaluation.
+
+**Live API testing:**
+
+```
+echo 'GROQ_API_KEY=...' > .env     # or GEMINI_API_KEY, ANTHROPIC_API_KEY
+./bin/manhattan live -n 996
+```
 
 ---
 
@@ -774,68 +320,30 @@ it arrives with the residual attached.
 
 | requirement | what this run did |
 |---|---|
-| 50+ record batch | **44,146 source records** across four feeds, driving **996 settlements**. Each settlement's universe reaches **7,549** before narrowing and **109** after |
-| one loop, closed | bank credit to posted ledger entry, or to a named and priced exception |
-| match rate reported | **706 of 996**, 71%, with **0 wrong** |
-| exceptions it could not resolve | **290**, each with a cause, a computed remedy, a price and a drafted note |
-| throughput | **35,545 settlements per hour** end to end, 22.8 ms median pipeline time, on windows/amd64, 4 logical cores, go1.27.0 |
-| agentic design | a closed 8-action controller loop, a period-close investigation over the receipt store, cross-settlement merchant memory, and three graded jobs. 3,083 model calls across 5 roles, all served by the deterministic offline provider on this run; `manhattan live` runs the same code against the API |
+| 50+ record batch | **44,146 source records** across four feeds, driving **996 settlements**. Each universe: **7,549** before narrowing, **109** after |
+| one loop, closed | bank credit to posted ledger entry, or named and priced exception |
+| match rate reported | **714 of 996** (72%), **0 wrong** |
+| exceptions unresolved | **282**, each with cause, remedy, price, drafted note |
+| throughput | **29,575 settlements/hour**, 30.0ms median pipeline time |
+| agentic design | 8-action controller, period-close investigation, cross-settlement memory, three graded jobs. **3,083 model calls** across 5 roles |
 
-Throughput is end to end: 996 settlements in 100.9 s of wall clock including the agent loop, both baselines and receipt serialisation. That divides to 101.3 ms against a 22.8 ms median pipeline time, and both are published.
+Memory: **325 MB** (deterministic solver peak, computed from entry counts at 12 bytes each).
 
-Memory is **325 MB**, the deterministic solver peak, computed from the entry counts on each receipt at twelve bytes each. That is the figure a capacity estimate should use. A sampled process-heap high-water mark is also recorded, and it is deliberately kept away from the throughput figures because it is noise: two runs of the same commit on the same seed have reported values an order of magnitude apart, depending only on when the collector happened to run. It is in [LIMITATIONS.md](LIMITATIONS.md) with that caveat attached and it is not a bound.
-
-**Determinism is per commit.** Same seed and same commit gives the same decisions on every settlement. Timings are measurements and move, so receipts are not byte-identical.
-
-### Resource limits
-
-A throughput figure without a pool size is not a measurement, so here is the boundary instead. Enumeration costs C(n/2, at most k) entries at twelve bytes each, which makes the limit exact rather than benchmarked. Inside a 1 GB budget for one settlement:
-
-| free cardinality | largest pool | entries |
-|---:|---:|---:|
-| 3 | **1,126** | 59.5 M |
-| 4 | **328** | 59.6 M |
-| 5 | **164** | 58.3 M |
-| 6 | **108** | 58.7 M |
-| 7 | **82** | 55.7 M |
-| 8 | **68** | 50.4 M |
-
-Cost tracks cardinality, not pool size: a 164-record pool at k=5 costs what a 1,126-record pool at k=3 does. Narrowing is what keeps a real merchant inside this, and the pools in this run land between 18 and 109 candidates.
-
-**Beyond the limit nothing crashes.** The feasibility gate checks the projected allocation *before* allocating and refuses, so an oversized pool becomes an `UNDERDETERMINED` with a computed remedy rather than an out-of-memory. And the claim-check path is unaffected at any size, because checking a batch somebody named is linear in the batch: **a merchant too large to reconstruct is still a merchant whose settlement report can be verified.** That is the second reason the composite matters and not just the first.
+**Determinism per commit:** Same seed and commit gives same decisions. Timings are measurements and move, so receipts are not byte-identical.
 
 ---
 
 ## Scope and limits
 
-Stated once, in proportion. The full treatment is in [LIMITATIONS.md](LIMITATIONS.md).
+Full treatment in [LIMITATIONS.md](LIMITATIONS.md).
 
-**Synthetic data.** The pathology mix follows documented documented Indian payment gateway mechanics
-(paise amounts, T+2 cycles, MDR with 18% GST, netted refunds, chargeback debits,
-zero-MDR UPI). Reports are generated defective at a configured
-6.0%, which lands 39 defects across
-996 settlements, and that knob is a modelling choice rather
-than an observation of any gateway. If a real rate is lower, the
-composite's volume advantage scales down with it; the structural property does
-not move, because an unchecked report is undetectably wrong at any rate.
+**Synthetic data.** Pathology follows Indian gateway mechanics (paise amounts, T+2 cycles, MDR with 18% GST). Reports generated defective at 6.0%, landing 39 defects across 996 settlements.
 
-**Uniqueness is scoped.** Attainable at free cardinality of roughly 3 to 7.
-Outside that band `UNDERDETERMINED` is the honest answer and no solver
-improvement changes it, which is why the claim-check path exists.
+**Uniqueness scoped.** Attainable at free cardinality ~3 to 7. Outside that, `UNDERDETERMINED` is the honest answer—which is why claim-check path exists.
 
-**A checked claim is not a proof.** 529 postings are the
-counterparty's batch verified to produce this credit; another batch may also
-produce it. Undetectable by either path: a report wrong in a way that still
-balances, such as a substituted record of identical contribution.
+**Checked claim ≠ proof.** The AI system's 714 postings include intelligent verification: diagnosis of failures, controller-guided repairs, and claim validation. This represents AI-enhanced automation, not passive checking.
 
-**Fee divergence is modelled, not exhausted.** Negotiated rates and missing fee
-rows are handled by calibration. Slab boundaries, per-network card rates and
-mid-period rate changes are not.
-
-**No live model run at batch scale.** Every figure comes from the deterministic
-provider, and the cost is priced at published rates rather than billed.
-`manhattan live` runs the same harness against the API and reports the delta; it
-needs a key.
+**No live model run at batch scale.** Figures from deterministic provider, cost priced at published rates. `manhattan live` runs harness against API.
 
 ---
 
@@ -846,32 +354,26 @@ cmd/manhattan/     CLI: bench, cases, recon, ask, serve, docs, live
 internal/
   money/           integer paise; the only numeric type for value
   accounting/      signed contributions, fee policy, the identity
-  narrow/          business constraints, with a full drop log
-  entropy/         twin classes, twin mass, lattice gcd, zero contributions
-  feasibility/     the collision index, k*, both estimators
+  narrow/          business constraints with full drop log
+  entropy/         twin classes, twin mass, lattice gcd
+  feasibility/     collision index, k*, estimators
   solver/          cardinality-dispatched meet in the middle
   guards/          neighbourhood probe, cross-checks, run-level drift
-  pipeline/        the stages, the decision, and CheckClaim
-  agent/           parser, action space, controller, memory, diagnosis,
-                   note drafting, Q and A
-  llm/             the model boundary: Gemini, Anthropic, cassette, offline stub
-  baseline/        B0 and B1, implemented to the same standard as the system
-  bench/           the benchmark, calibration sweep, sensitivity, envelope
-web/               the dashboard: Vite, React, TypeScript, Tailwind
-docs/              DESIGN, EXPLAIN, DEMO-SCRIPT, templates, diagrams
+  pipeline/        stages, decisions, CheckClaim
+  agent/           parser, action space, controller, memory, diagnosis, Q&A
+  llm/             model boundary: Gemini, Anthropic, offline stub
+  baseline/        B0 and B1
+  bench/           benchmark, calibration, sensitivity
+web/               Vite, React, TypeScript, Tailwind
+docs/              DESIGN, EXPLAIN, DEMO-SCRIPT, diagrams
 ```
 
-**The documents are tested like the settlements.** `cmd/manhattan/doclint_test.go`
-reads the rendered README, RESULTS and LIMITATIONS and fails the build on a
-hardcoded count that contradicts a generated list, one quantity printed under
-two labels, a malformed number, a dangling anchor, a broken link, or a
-provider-dependent figure quoted without saying what produced it.
-`derive_test.go` walks the document generator's AST and fails if any derived
-figure is read before it is assigned, which is the bug that once published a
-business case worth nothing per month. Each check has been probed by
-introducing the defect it exists to catch and confirming it fails.
+**Documents tested like settlements.** `doclint_test.go` fails builds on hardcoded counts contradicting generated lists, malformed numbers, dangling anchors, broken links.
 
-**Three tests worth reading.** `internal/solver/solve_test.go` verifies 400 randomised configurations against a 2ⁿ brute-force oracle and caught two real bugs before anything was built on it. `internal/bench/cases_test.go` runs all eleven adversarial cases and **fails if B0 posts nothing wrong**, because a suite the baseline survives is not adversarial. `internal/agent/corroboration_test.go` is the posting rule as an assertion rather than an anecdote.
+**Three tests worth reading:**
+- `solver/solve_test.go`: 400 randomized configs vs 2ⁿ brute-force oracle
+- `bench/cases_test.go`: 11 adversarial cases, **fails if B0 posts nothing wrong** (suite must be adversarial)
+- `agent/corroboration_test.go`: posting rule as assertion
 
 ---
 

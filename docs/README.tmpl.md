@@ -376,7 +376,7 @@ These are two distinct claims, and Manhattan measures both. **`manhattan live` q
 
 ```
 echo 'GROQ_API_KEY=...' > .env     # or GEMINI_API_KEY, or ANTHROPIC_API_KEY
-./bin/manhattan live -n 60
+./bin/manhattan live -n 996
 ```
 
 The key goes in `.env` next to the repository, which is in `.gitignore`, or in

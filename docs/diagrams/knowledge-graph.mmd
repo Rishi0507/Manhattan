@@ -1,0 +1,45 @@
+graph TB
+    subgraph Settlements
+        S1[bank_credit_001<br/>VERIFIED]
+        S2[bank_credit_002<br/>AMBIGUOUS]
+        S3[bank_credit_003<br/>UNRESOLVED]
+    end
+    
+    subgraph Merchants
+        M1[merchant: travel]
+        M2[merchant: marketplace]
+    end
+    
+    subgraph Statuses
+        ST1[status: VERIFIED]
+        ST2[status: AMBIGUOUS]
+        ST3[status: UNRESOLVED]
+    end
+    
+    subgraph Actions
+        A1[action: SEARCH_FEED]
+        A2[action: NARROW_WINDOW]
+    end
+    
+    S1 -->|belongs_to| M1
+    S2 -->|belongs_to| M1
+    S3 -->|belongs_to| M2
+    
+    S1 -->|has_status| ST1
+    S2 -->|has_status| ST2
+    S3 -->|has_status| ST3
+    
+    S1 -.->|same_root_cause:<br/>WINDOW_TOO_WIDE| S2
+    
+    S3 -->|repaired_by| A1
+    
+    style S1 fill:#e7f5ee,stroke:#0a7d4e
+    style S2 fill:#fef3e7,stroke:#c2770c
+    style S3 fill:#fdeee7,stroke:#c2410c
+    style M1 fill:#eaf1fd,stroke:#1461cc
+    style M2 fill:#eaf1fd,stroke:#1461cc
+    style ST1 fill:#e7f5ee,stroke:#0a7d4e
+    style ST2 fill:#fef3e7,stroke:#c2770c
+    style ST3 fill:#fdeee7,stroke:#c2410c
+    style A1 fill:#f5e9fd,stroke:#8e40c7
+    style A2 fill:#f5e9fd,stroke:#8e40c7

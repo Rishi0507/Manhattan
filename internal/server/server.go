@@ -19,7 +19,9 @@ import (
 	"github.com/Rishi0507/manhattan/internal/agent"
 	"github.com/Rishi0507/manhattan/internal/bench"
 	"github.com/Rishi0507/manhattan/internal/evidence"
+	"github.com/Rishi0507/manhattan/internal/forecast"
 	"github.com/Rishi0507/manhattan/internal/llm"
+	"github.com/Rishi0507/manhattan/internal/taxmatch"
 )
 
 // Server holds the state a dashboard reads.
@@ -160,6 +162,73 @@ func (s *Server) Handler() http.Handler {
 			return
 		}
 		writeJSON(w, ans)
+	})
+
+	// Forward cash forecasting endpoint
+	mux.HandleFunc("POST /api/forecast", func(w http.ResponseWriter, r *http.Request) {
+		var body struct {
+			Horizon string `json:"horizon"` // "7d" or "30d"
+		}
+		_ = json.NewDecoder(r.Body).Decode(&body)
+		if body.Horizon == "" {
+			body.Horizon = "7d"
+		}
+
+		forecaster := forecast.New(s.provider, s.Store())
+		
+		// Check if we should use live AI or offline stub
+		useLive := false // Set to true via environment or config
+		if ctx := r.Context(); ctx != nil {
+			if v := r.Header.Get("X-Use-Live-AI"); v == "true" {
+				useLive = true
+			}
+		}
+
+		var fc forecast.Forecast
+		var err error
+		
+		if useLive {
+			ctx, cancel := context.WithTimeout(r.Context(), 60*time.Second)
+			defer cancel()
+			fc, err = forecaster.Predict(ctx, body.Horizon)
+		} else {
+			// Use offline deterministic forecast (saves tokens for demo)
+			fc = forecaster.PredictOffline(body.Horizon)
+		}
+
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+		writeJSON(w, fc)
+	})
+
+	// Tax reconciliation endpoint
+	mux.HandleFunc("GET /api/tax-analysis", func(w http.ResponseWriter, r *http.Request) {
+		matcher := taxmatch.New(s.provider, s.Store())
+		
+		useLive := false
+		if v := r.Header.Get("X-Use-Live-AI"); v == "true" {
+			useLive = true
+		}
+
+		var analysis taxmatch.Analysis
+		var err error
+
+		if useLive {
+			ctx, cancel := context.WithTimeout(r.Context(), 60*time.Second)
+			defer cancel()
+			analysis, err = matcher.Analyze(ctx)
+		} else {
+			// Offline analysis
+			analysis = matcher.AnalyzeOffline()
+		}
+
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+		writeJSON(w, analysis)
 	})
 
 	// A live run, streamed. This is what makes the demo read as an agent

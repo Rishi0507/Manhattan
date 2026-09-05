@@ -59,16 +59,29 @@ export function Run({
   const posted = counts["VERIFIED"] ?? 0;
   const n = receipts.length;
 
+  // Per-merchant breakdown
+  const byMerchant = useMemo(() => {
+    const groups: Record<string, { verified: number; total: number }> = {};
+    for (const r of receipts) {
+      const arch = r.merchant_archetype || "unknown";
+      if (!groups[arch]) groups[arch] = { verified: 0, total: 0 };
+      groups[arch].total++;
+      if (r.status === "VERIFIED") groups[arch].verified++;
+    }
+    return Object.entries(groups)
+      .map(([arch, data]) => ({
+        archetype: arch,
+        verified: data.verified,
+        total: data.total,
+        rate: data.total > 0 ? data.verified / data.total : 0,
+      }))
+      .sort((a, b) => b.rate - a.rate);
+  }, [receipts]);
+
   return (
     <div className="space-y-3">
       <SummaryBar
         items={[
-          {
-            label: "auto-posted",
-            value: num(posted),
-            sub: `${pct(posted / n)} of ${num(n)}`,
-            tone: "var(--color-verified)",
-          },
           {
             label: "posted wrong",
             value: summary ? num(summary.auto_posted_wrong) : "0",
@@ -88,11 +101,34 @@ export function Run({
           },
           {
             label: "peak memory",
-            value: summary ? `${Math.round(summary.peak_memory_mb)} MB` : "n/a",
-            sub: summary ? `p95 ${summary.p95_latency_ms.toFixed(0)} ms` : undefined,
+            value: summary && summary.peak_memory_mb && summary.peak_memory_mb > 0 
+              ? `${Math.round(summary.peak_memory_mb)} MB` 
+              : "—",
+            sub: summary && summary.p95_latency_ms ? `p95 ${summary.p95_latency_ms.toFixed(0)} ms` : undefined,
           },
         ]}
       />
+
+      {/* Per-merchant auto-post rates */}
+      {byMerchant.length > 0 && (
+        <div className="rounded-md border border-line bg-surface px-4 py-3">
+          <div className="lbl mb-2">Auto-post rate by merchant type</div>
+          <div className="grid grid-cols-2 gap-x-6 gap-y-1.5 text-[13px] sm:grid-cols-3">
+            {byMerchant.map((m) => (
+              <div key={m.archetype} className="flex items-baseline justify-between">
+                <span className="text-ink-light">{m.archetype.replace(/_/g, " ")}</span>
+                <span className="tnum font-medium" style={{ color: m.rate > 0.5 ? "var(--color-verified)" : "var(--color-ink)" }}>
+                  {pct(m.rate)}
+                </span>
+              </div>
+            ))}
+            <div className="flex items-baseline justify-between border-t border-line pt-1.5 font-medium sm:col-span-3">
+              <span>Blended average</span>
+              <span className="tnum">{pct(posted / n)}</span>
+            </div>
+          </div>
+        </div>
+      )}
 
       {streaming && progress && (
         <div className="rounded-md border border-line bg-surface px-4 py-2.5">

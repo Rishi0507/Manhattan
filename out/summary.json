@@ -1,5 +1,5 @@
 {
-  "run_id": "run_20260905_0405",
+  "run_id": "run_20260905_0904",
   "settlements": 996,
   "seed": 20260826,
   "status_counts": {
@@ -39,12 +39,12 @@
   "m1_clean_reports_checked": 809,
   "settlements_with_no_report_mapping": 148,
   "settlements_with_no_mapping_posted_by_reconstruction": 25,
-  "median_latency_ms": 22.77,
-  "p95_latency_ms": 221.819,
-  "b0_median_latency_ms": 8.123,
-  "wall_clock_s": 100.8746667,
-  "settlements_per_hour": 35545.098856817334,
-  "peak_memory_mb_sampled": 792.9242935180664,
+  "median_latency_ms": 29.976,
+  "p95_latency_ms": 278.186,
+  "b0_median_latency_ms": 9.256,
+  "wall_clock_s": 121.237606,
+  "settlements_per_hour": 29574.981874848305,
+  "peak_memory_mb_sampled": 792.7176284790039,
   "peak_solver_mb_deterministic": 324.94054412841797,
   "peak_solver_settlement": "bank_credit_marketplace_2026_11_08_1097",
   "parse_calls": 996,
@@ -55,14 +55,14 @@
   "agent_skipped": 332,
   "agent_proven_cures": 104,
   "model_calls": 3083,
-  "input_tokens": 2284562,
-  "output_tokens": 242436,
+  "input_tokens": 2257792,
+  "output_tokens": 207408,
   "exception_rate": 0.822289156626506,
-  "inr_per_1k_settlements": 1535.7426907630522,
+  "inr_per_1k_settlements": 1446.5455020080321,
   "b0_input_tokens_per_1k": 2287751.0040160646,
-  "input_tokens_per_1k": 2277879.5180722894,
+  "input_tokens_per_1k": 2251002.0080321287,
   "b0_inr_per_1k_settlements": 1270.6104417670683,
-  "provider": "replay",
+  "provider": "offline-stub",
   "provider_models": "parse=replay resolve=replay answer=replay",
   "measured_on": "windows/amd64, 4 logical cores, go1.27.0",
   "modelled_operational_conditions": [
@@ -176,7 +176,7 @@
       "confirm the value-date window configured for each merchant against their capture cutoff"
     ],
     "what_i_cannot_tell": "Whether two merchants showing the same class share one underlying configuration or two separate ones, and whether a merchant flagged for one cause also has a second. The stub reports the first rule that matches per merchant and stops.",
-    "provider": "replay",
+    "provider": "offline-stub",
     "investigation": [
       {
         "step": 1,
@@ -456,10 +456,10 @@
     "cache_read_usd_per_mtok": 0.5,
     "cache_write_usd_per_mtok": 6.25,
     "usd_to_inr": 88,
-    "uncached_input_tokens": 2268768,
+    "uncached_input_tokens": 2241998,
     "cached_input_tokens": 0,
     "cache_write_tokens": 0,
-    "output_tokens": 241519,
+    "output_tokens": 206491,
     "calls": 3078,
     "cache_hit_rate": 0,
     "b0_input_tokens": 2278600,
@@ -468,7 +468,7 @@
     "b0_tokens_overhead": 200,
     "b0_mean_narrowed_pool": 52.19377510040161,
     "b0_input_tokens_per_settlement": 2287.751004016064,
-    "manhattan_input_tokens_per_settlement": 2277.879518072289
+    "manhattan_input_tokens_per_settlement": 2251.0020080321283
   },
   "pool_stats": {
     "total_records_generated": 44146,

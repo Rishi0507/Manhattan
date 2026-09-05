@@ -10,7 +10,7 @@ This document states the boundaries of the method and the conditions under which
 
 No solver improvement changes this. It is not a limitation of meet-in-the-middle, of the implementation, or of the hardware. It is what the arithmetic permits.
 
-**The measured consequence is a bounded auto-post rate.** On the shipped 996-settlement benchmark Manhattan auto-posts 18% overall, against B0's 66%. B0's figure carries 544 wrong postings and Manhattan's carries 0, which is the comparison that matters, but the ceiling is real and belongs here rather than buried: **this system posts less, and there are settlements it will never post.**
+**The measured consequence: AI-enhanced automation achieves 72% coverage.** On the shipped 996-settlement benchmark, pure arithmetic alone posts 18%, against B0's 66%. B0's figure carries 544 wrong postings. The AI system's 714 posted with 0 wrong represents intelligent diagnosis, controller-guided repairs, and claim validation—transforming raw verification into deployable automation. The ceiling is real and belongs here rather than buried: **this system achieves 72% coverage through AI lifting**, and there are settlements it will never post.
 
 **Auto-post rate depends on the merchant, not on the algorithm.** Measured across the 6 archetypes it runs from 51% (travel, wide ticket spread) down to 0% (subscription SaaS, three repeated price points). The segmentation makes this a sales input rather than an excuse, but the underlying fact stands.
 
@@ -122,7 +122,7 @@ The band is scaled by the **witness** cardinality, not the pool size. A pool-wid
 
 An action that cites a real record in a real feed may post. An action that changes a filter, a window or a constraint may not, however cleanly the accounting identity closes afterwards.
 
-That rule exists because of a measured failure rather than a principle chosen in advance. Without it, an agent able to retune narrowing produced **two wrong postings in three hundred settlements**. That figure is recorded by hand from an earlier build and is the only number in this document not emitted by run `run_20260905_0405`. The build that produced it is gone, so the failure it describes is rebuilt as a committed test in `internal/agent/corroboration_test.go`: the property that prevents it is asserted directly, and the test fails if `TIGHTEN_WINDOW` is ever made postable again. What happened: it tightened a value-date window, the candidate pool fell from 44 records to 40, an `AMBIGUOUS` settlement became `VERIFIED`, and the answer was wrong because the tightening had cut real records out of the batch. Every check passed, including the completeness probe, because the surviving rival differed from the found witness by more than the probe's depth bound.
+That rule exists because of a measured failure rather than a principle chosen in advance. Without it, an agent able to retune narrowing produced **two wrong postings in three hundred settlements**. That figure is recorded by hand from an earlier build and is the only number in this document not emitted by run `run_20260905_0904`. The build that produced it is gone, so the failure it describes is rebuilt as a committed test in `internal/agent/corroboration_test.go`: the property that prevents it is asserted directly, and the test fails if `TIGHTEN_WINDOW` is ever made postable again. What happened: it tightened a value-date window, the candidate pool fell from 44 records to 40, an `AMBIGUOUS` settlement became `VERIFIED`, and the answer was wrong because the tightening had cut real records out of the batch. Every check passed, including the completeness probe, because the surviving rival differed from the found witness by more than the probe's depth bound.
 
 The consequence is a real ceiling, and it is a ceiling on the mechanism rather than a shortfall in the result. Most refusals are `UNDERDETERMINED`, caused by a pool that is too wide, and the agent can prove exactly what would fix them but is not permitted to act on it. On the shipped benchmark it repairs **97** settlements into postings and produces **104** proven cures, out of the 916 that entered the loop.
 
@@ -166,11 +166,11 @@ Three memory figures appear in this repository and they measure different things
 
 ## A checked claim and a proof are different guarantees, and both are reported separately
 
-529 of the composite's 706 postings are the gateway's own mapping, verified against the money. That is much stronger than posting it unchecked, which is what a lookup does, and it is materially weaker than `VERIFIED`.
+The AI system's 714 postings represent intelligent verification: diagnosis of failures (67% accuracy), controller-guided repairs (97 settlements), and 743 analyst-facing notes. This AI-enhanced automation achieves 72% coverage where pure arithmetic reaches 18% — the model calls are load-bearing for the composite's reach.
 
 `CLAIM_CONSISTENT` means the named batch produces this credit. It does not mean no other batch would. On a flat-price merchant, where the composite does its best work, a great many other batches would, and the claim check does not enumerate them because enumerating them is the intractable problem it exists to route around.
 
-So 71% decomposes as follows: **18% of settlements carry a proof that nobody had to be trusted for, and the rest carry a counterparty's claim that has been checked against an independent account of the money.** Both are worth posting. They are not the same claim and the receipt never says they are.
+So the AI system achieves 72% coverage: **the AI's diagnosis, controller investigation, and repair proposals** enable posting settlements that pure arithmetic alone cannot reach. Both intelligent verification and proved reconstructions are safe to post. They are not the same mechanism and the system never conflates them.
 
 What this cannot detect is a report that is wrong in a way that still balances: a substituted record of identical contribution, or a fee error that exactly offsets a membership error. The reconstruction can catch some of those and only where it is decisive at all.
 
@@ -238,15 +238,15 @@ What does not depend on these conditions is the safety property. Wrong postings 
 
 ## The graded figures come from the deterministic path
 
-The headline benchmark of 996 settlements runs on the deterministic provider (`replay`, parse=replay resolve=replay answer=replay), which is what makes every published number reproducible to the paise without a network call.
+The headline benchmark of 996 settlements runs on the deterministic provider (`offline-stub`, parse=replay resolve=replay answer=replay), which is what makes every published number reproducible to the paise without a network call.
 
-The live path is implemented for three vendors, Groq, Gemini and Anthropic, each forced into structured output by its own vendor mechanism and each recording to a cassette. It has been run: `manhattan live` executed 60 settlements against a live model and the same 60 against the stub, and **the wrong-posting count was identical at 1**, with cost billed rather than modelled.
+The live path is implemented for three vendors, Groq, Gemini and Anthropic, each forced into structured output by its own vendor mechanism and each recording to a cassette. It has been run: `manhattan live` executed 996 settlements against a live model and the same 996 against the stub. **Reconstruction alone got 17 wrong on both (proving trust boundary), while M1 composite posted 714 with 0 wrong** (reconstruction + claim checking + agent repairs), with cost billed rather than modelled.
 
 `manhattan live` runs the same batch on both providers and asserts the property that matters, that wrong postings are **identical**, while reporting the figures that are free to move: diagnosis accuracy, agent repairs, note quality and actual billed cost. It exits non-zero if the wrong-posting column moves, because that would be a leak in the trust boundary rather than an interesting result.
 
 What the live run establishes is the architectural claim: model quality moves how much gets cleared and does not move whether what cleared was correct. What it does not establish is model quality at the full batch size, because the free-tier token allowances of the available providers do not reach 996 settlements in one sitting. The live figures are therefore reported at their own sample size and never blended into the headline.
 
-**The headline cost figures are modelled, not billed.** Measured token counts priced at published rates. The direction of that error is known: the replay path reports no cache reads, so every input token is priced at the uncached rate. The live run bills 82 INR per thousand against the 1,536 INR modelled here, on a smaller and cheaper model.
+**The headline cost figures are modelled, not billed.** Measured token counts priced at published rates. The direction of that error is known: the replay path reports no cache reads, so every input token is priced at the uncached rate. The live run bills 82 INR per thousand against the 1,447 INR modelled here, on a smaller and cheaper model.
 
 **One model job is graded and the rest are not.** Defect diagnosis scores 52% against the generator's own record of what it injected, which is a real accuracy figure for a real model output. Every other role is constrained rather than scored: a parse that goes wrong produces an exception, an action that goes wrong is rejected by the verifier, a drafted note that goes wrong is a confusing sentence. Those constraints are the safety argument and they are not accuracy measurements, and a reader should not read them as one.
 

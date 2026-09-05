@@ -53,11 +53,21 @@ type QA struct {
 	Store    *evidence.Store
 	// MaxReceipts bounds how many receipts enter the context window.
 	MaxReceipts int
+	// VectorStore provides semantic search via TF-IDF embeddings.
+	VectorStore *VectorStore
+	// Graph provides multi-hop reasoning via knowledge graph.
+	Graph *KnowledgeGraph
 }
 
 // NewQA returns a question-answering agent over a receipt store.
 func NewQA(p llm.Provider, s *evidence.Store) *QA {
-	return &QA{Provider: p, Store: s, MaxReceipts: 12}
+	return &QA{
+		Provider:    p,
+		Store:       s,
+		MaxReceipts: 12,
+		VectorStore: BuildVectorStore(s.All()),
+		Graph:       BuildKnowledgeGraph(s.All()),
+	}
 }
 
 const qaSystem = `You answer questions from a finance team about settlement reconciliations that have
@@ -139,62 +149,154 @@ func (q *QA) Ask(ctx context.Context, question string) (Answer, error) {
 
 // retrieve selects the receipts relevant to a question.
 //
-// Retrieval is keyword and status based rather than semantic, which is
-// adequate here for a reason worth noting: the corpus is small, highly
-// structured, and the questions are about categories the receipts already
-// carry as fields. An embedding index would be more machinery for the same
-// answers.
+// Enhanced with semantic embeddings and graph-based RAG retrieval.
+// Uses TF-IDF vectors for semantic matching combined with keyword scoring.
 func (q *QA) retrieve(question string) []*evidence.Receipt {
 	all := q.Store.All()
 	lower := strings.ToLower(question)
+	
+	// Phase 1: Vector search for semantic similarity (if available)
+	var vectorIDs []string
+	if q.VectorStore != nil {
+		vectorIDs = q.VectorStore.Search(question, q.MaxReceipts*2)
+	}
 
 	type scored struct {
 		r *evidence.Receipt
 		s int
 	}
 	var out []scored
+	
+	// Build index for vector results
+	vectorRank := make(map[string]int)
+	for i, id := range vectorIDs {
+		vectorRank[id] = len(vectorIDs) - i // Higher rank for earlier results
+	}
 
 	for _, r := range all {
 		s := 0
+		
+		// Boost from vector search
+		if rank, ok := vectorRank[r.SettlementRef]; ok {
+			s += rank * 5 // Significant boost for vector matches
+		}
+		// Direct reference matching (highest priority)
 		if strings.Contains(lower, strings.ToLower(r.SettlementRef)) {
 			s += 100
 		}
-		// A bare settlement number, as a finance lead would say it.
+		// Bare settlement number
 		if tail := lastSegment(r.SettlementRef); tail != "" && strings.Contains(lower, tail) {
 			s += 80
 		}
+		
+		// Semantic field matching (RAG-style)
+		// Status-related queries
 		if strings.Contains(lower, strings.ToLower(string(r.Status))) {
 			s += 20
 		}
+		if strings.Contains(lower, "fail") || strings.Contains(lower, "exception") ||
+			strings.Contains(lower, "not post") || strings.Contains(lower, "didn't post") {
+			if !r.Status.Postable() {
+				s += 15
+			}
+		}
+		if strings.Contains(lower, "verify") || strings.Contains(lower, "proof") ||
+			strings.Contains(lower, "unique") {
+			if r.Status == evidence.StatusVerified {
+				s += 15
+			}
+		}
+		
+		// Merchant/archetype context
 		if r.MerchantName != "" && strings.Contains(lower, strings.ToLower(r.MerchantName)) {
 			s += 30
 		}
 		if r.Archetype != "" && strings.Contains(lower, strings.ReplaceAll(r.Archetype, "_", " ")) {
 			s += 20
 		}
+		
+		// Flag-based semantic matching
 		for _, f := range r.Flags {
-			if strings.Contains(lower, strings.ToLower(strings.ReplaceAll(string(f), "_", " "))) {
+			flagText := strings.ToLower(strings.ReplaceAll(string(f), "_", " "))
+			if strings.Contains(lower, flagText) {
 				s += 25
+			}
+		}
+		
+		// Complex query patterns (RAG-enhanced)
+		if strings.Contains(lower, "ambiguous") || strings.Contains(lower, "multiple") ||
+			strings.Contains(lower, "rival") {
+			if r.Status == evidence.StatusAmbiguous {
+				s += 30
+			}
+		}
+		if strings.Contains(lower, "collision") || strings.Contains(lower, "twin") {
+			if r.AmountEntropy.TwinMass > 0.3 {
+				s += 25
+			}
+		}
+		if strings.Contains(lower, "narrow") || strings.Contains(lower, "window") ||
+			strings.Contains(lower, "filter") {
+			// Check for narrowing-related issues in remediation
+			for _, rem := range r.Remediation {
+				if strings.Contains(strings.ToLower(rem.Action), "narrow") ||
+					strings.Contains(strings.ToLower(rem.Action), "window") {
+					s += 35
+					break
+				}
 			}
 		}
 		if strings.Contains(lower, "circular") && r.FeeCheck != nil && r.FeeCheck.Circular {
 			s += 40
 		}
-		if (strings.Contains(lower, "fail") || strings.Contains(lower, "exception") ||
-			strings.Contains(lower, "not post") || strings.Contains(lower, "didn't post") ||
-			strings.Contains(lower, "backlog") || strings.Contains(lower, "cost")) && !r.Status.Postable() {
-			s += 15
+		if strings.Contains(lower, "agent") || strings.Contains(lower, "repair") ||
+			strings.Contains(lower, "action") {
+			if r.Agent.Invoked {
+				s += 30
+			}
 		}
-		if strings.Contains(lower, "hardest") || strings.Contains(lower, "merchant") {
-			s += 5
+		
+		// Amount-related queries
+		if strings.Contains(lower, "large") || strings.Contains(lower, "biggest") ||
+			strings.Contains(lower, "highest") {
+			// Boost high-value settlements
+			if r.TargetPaise > 1000000 { // > ₹10,000
+				s += 10
+			}
 		}
+		
+		// Cost/value queries
+		if strings.Contains(lower, "cost") || strings.Contains(lower, "expensive") {
+			if r.ExceptionCostINR > 1000 {
+				s += 20
+			}
+		}
+		
 		out = append(out, scored{r, s})
 	}
+	
+	// Phase 2: Graph-based expansion for similar settlements
+	// If we have a highly scored receipt, find graph neighbors
+	if q.Graph != nil && len(out) > 0 {
+		topID := out[0].r.SettlementRef
+		similar := q.Graph.FindSimilarSettlements(topID, 5)
+		for _, simID := range similar {
+			// Boost similar settlements found via graph
+			for i := range out {
+				if out[i].r.SettlementRef == simID {
+					out[i].s += 15 // Graph similarity boost
+					break
+				}
+			}
+		}
+	}
 
+	// Sort by relevance score (RAG + Graph-enhanced ranking)
 	sort.SliceStable(out, func(i, j int) bool {
 		if out[i].s != out[j].s {
 			return out[i].s > out[j].s
 		}
+		// Secondary sort by exception cost (prioritize high-value issues)
 		return out[i].r.ExceptionCostINR > out[j].r.ExceptionCostINR
 	})
 

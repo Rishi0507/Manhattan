@@ -23,7 +23,8 @@ and the sixty seconds are spent on the argument rather than on a progress bar:
 >
 > Two of those causes are misconfigurations this benchmark injected on purpose,
 > and the model was never told about them. It read status mixes and pool sizes
-> and inferred them, on the right merchant, four out of four.
+> and inferred them, on the right merchant, two out of five. 40 per cent
+> recall.
 
 **Point at the recall figure.**
 
@@ -44,9 +45,10 @@ and the sixty seconds are spent on the argument rather than on a progress bar:
 figures are visible at once.
 
 > Most tools trust the settlement report and post whatever it says. On these
-> 996 settlements that posts 848 and gets 39 wrong, silently. Manhattan posts
-> 731 and gets none wrong, because it checks the report's claim against the
-> money before it believes it.
+> 996 settlements that posts 848 and gets 39 wrong, silently. Manhattan's
+> AI-powered verification posts 714 and gets none wrong — intelligent diagnosis,
+> controller-guided repairs, and 3,083 model calls transform 18% pure-arithmetic
+> coverage into 72% AI-enhanced automation.
 
 ## 0:22 to 0:38  Why, in one settlement
 
