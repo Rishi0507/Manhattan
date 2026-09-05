@@ -4,7 +4,7 @@
 
 **Settlement reconciliation that proves its answers, and refuses when it cannot.**
 
-AI Finance Controller · Multi-source settlement reconciliation · 3,083 model calls · Vector embeddings + Knowledge graph RAG
+AI Finance Controller · Multi-source settlement reconciliation · Vector embeddings + Knowledge graph RAG
 
 Manhattan posts **714 of 996** settlements (72%) with **0 wrong**. The **AI-powered system** uses 3,083 model calls for intelligent diagnosis (67% accuracy), controller-guided repairs, and 743 remediation notes to achieve **84% on travel**, **86% on d2c**, **80% on utility**, **84% on subscription SaaS**—transforming 18% pure-arithmetic coverage into 72% AI-enhanced automation. The last two merchant types post **0%** without AI guidance because identical ₹499 charges cannot be distinguished.
 
