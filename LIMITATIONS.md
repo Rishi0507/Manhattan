@@ -240,13 +240,13 @@ What does not depend on these conditions is the safety property. Wrong postings 
 
 The headline benchmark of 996 settlements runs on the deterministic provider (`replay`, parse=replay resolve=replay answer=replay), which is what makes every published number reproducible to the paise without a network call.
 
-The live path is implemented for three vendors, Groq, Gemini and Anthropic, each forced into structured output by its own vendor mechanism and each recording to a cassette. It has been run: `manhattan live` executed 60 settlements against a live model and the same 60 against the stub, and **the wrong-posting count was identical at 0**, with cost billed rather than modelled.
+The live path is implemented for three vendors, Groq, Gemini and Anthropic, each forced into structured output by its own vendor mechanism and each recording to a cassette. It has been run: `manhattan live` executed 60 settlements against a live model and the same 60 against the stub, and **the wrong-posting count was identical at 1**, with cost billed rather than modelled.
 
 `manhattan live` runs the same batch on both providers and asserts the property that matters, that wrong postings are **identical**, while reporting the figures that are free to move: diagnosis accuracy, agent repairs, note quality and actual billed cost. It exits non-zero if the wrong-posting column moves, because that would be a leak in the trust boundary rather than an interesting result.
 
 What the live run establishes is the architectural claim: model quality moves how much gets cleared and does not move whether what cleared was correct. What it does not establish is model quality at the full batch size, because the free-tier token allowances of the available providers do not reach 996 settlements in one sitting. The live figures are therefore reported at their own sample size and never blended into the headline.
 
-**The headline cost figures are modelled, not billed.** Measured token counts priced at published rates. The direction of that error is known: the replay path reports no cache reads, so every input token is priced at the uncached rate. The live run bills 44 INR per thousand against the 1,536 INR modelled here, on a smaller and cheaper model.
+**The headline cost figures are modelled, not billed.** Measured token counts priced at published rates. The direction of that error is known: the replay path reports no cache reads, so every input token is priced at the uncached rate. The live run bills 82 INR per thousand against the 1,536 INR modelled here, on a smaller and cheaper model.
 
 **One model job is graded and the rest are not.** Defect diagnosis scores 52% against the generator's own record of what it injected, which is a real accuracy figure for a real model output. Every other role is constrained rather than scored: a parse that goes wrong produces an exception, an action that goes wrong is rejected by the verifier, a drafted note that goes wrong is a confusing sentence. Those constraints are the safety argument and they are not accuracy measurements, and a reader should not read them as one.
 

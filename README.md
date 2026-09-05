@@ -400,13 +400,13 @@ Measured, at 60 settlements:
 
 | | live | stub |
 |---|---:|---:|
-| **auto-posted wrong** | **0** | **0** |
-| **composite posted wrong** | **0** | **0** |
-| verified | 6 | 9 |
-| agent repairs | 1 | 4 |
-| diagnosis accuracy | 50% | 67% |
+| **auto-posted wrong** | **1** | **1** |
+| **composite posted wrong** | **1** | **1** |
+| verified | 8 | 9 |
+| agent repairs | 3 | 4 |
+| diagnosis accuracy | 0% | 67% |
 | close condition recall | 0% | 40% |
-| INR per 1k, **billed** | 44 | 1,304, modelled |
+| INR per 1k, **billed** | 82 | 1,324, modelled |
 
 ---
 
