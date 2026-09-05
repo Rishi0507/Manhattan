@@ -44,6 +44,16 @@ type Case struct {
 func Cases() []Case {
 	base := func(seed int64) Spec {
 		s := DefaultSpec()
+		// The adversarial cases keep the shared fee schedule.
+		//
+		// Each one is a hand-built pathology with an exact expected outcome,
+		// constructed against the verifier's own constants so that the case
+		// isolates the mechanism it is named for. Building them under the
+		// divergent generator schedule would add a second, unrelated source of
+		// residual and the case would then be testing two things at once. The
+		// divergence exists to make the batch's false-alarm figure falsifiable,
+		// which is a property of the batch rather than of these eleven.
+		s.Policy = accounting.DefaultPolicy()
 		s.Seed = seed
 		s.Settlements = 6
 		s.BatchJitter = 0

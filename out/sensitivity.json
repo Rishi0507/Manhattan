@@ -4,17 +4,17 @@
     "window_slack_scale": 0,
     "report_defect_rate": 0,
     "missing_fee_rows_priced_naively": false,
-    "verified": 117,
+    "verified": 108,
     "auto_posted_wrong": 0,
-    "agent_repaired": 14,
+    "agent_repaired": 12,
     "agent_repairs_by_action": {
-      "SEARCH_FEED": 14
+      "SEARCH_FEED": 12
     },
-    "agent_proven_cures": 2,
-    "agent_invoked": 128,
-    "m1_auto_posted": 282,
+    "agent_proven_cures": 5,
+    "agent_invoked": 136,
+    "m1_auto_posted": 272,
     "m1_auto_posted_wrong": 0,
-    "m1_false_alarms": 0,
+    "m1_false_alarms": 9,
     "b1_auto_posted_wrong": 0,
     "report_defects_present": 0
   },
@@ -23,17 +23,17 @@
     "window_slack_scale": 0,
     "report_defect_rate": 0.06,
     "missing_fee_rows_priced_naively": false,
-    "verified": 104,
-    "auto_posted_wrong": 0,
-    "agent_repaired": 9,
+    "verified": 103,
+    "auto_posted_wrong": 1,
+    "agent_repaired": 7,
     "agent_repairs_by_action": {
-      "SEARCH_FEED": 9
+      "SEARCH_FEED": 7
     },
-    "agent_proven_cures": 5,
-    "agent_invoked": 122,
-    "m1_auto_posted": 272,
-    "m1_auto_posted_wrong": 0,
-    "m1_false_alarms": 0,
+    "agent_proven_cures": 3,
+    "agent_invoked": 125,
+    "m1_auto_posted": 267,
+    "m1_auto_posted_wrong": 1,
+    "m1_false_alarms": 7,
     "b1_auto_posted_wrong": 16,
     "report_defects_present": 16
   },
@@ -42,18 +42,18 @@
     "window_slack_scale": 1,
     "report_defect_rate": 0.06,
     "missing_fee_rows_priced_naively": false,
-    "verified": 47,
+    "verified": 42,
     "auto_posted_wrong": 0,
-    "agent_repaired": 19,
+    "agent_repaired": 14,
     "agent_repairs_by_action": {
-      "NARROW_TO_HISTORY": 9,
-      "SEARCH_FEED": 10
+      "NARROW_TO_HISTORY": 6,
+      "SEARCH_FEED": 8
     },
-    "agent_proven_cures": 54,
+    "agent_proven_cures": 58,
     "agent_invoked": 212,
-    "m1_auto_posted": 259,
+    "m1_auto_posted": 251,
     "m1_auto_posted_wrong": 0,
-    "m1_false_alarms": 0,
+    "m1_false_alarms": 7,
     "b1_auto_posted_wrong": 16,
     "report_defects_present": 16
   },
@@ -62,18 +62,18 @@
     "window_slack_scale": 1,
     "report_defect_rate": 0.006,
     "missing_fee_rows_priced_naively": false,
-    "verified": 46,
+    "verified": 42,
     "auto_posted_wrong": 0,
-    "agent_repaired": 18,
+    "agent_repaired": 12,
     "agent_repairs_by_action": {
-      "NARROW_TO_HISTORY": 8,
-      "SEARCH_FEED": 10
+      "NARROW_TO_HISTORY": 4,
+      "SEARCH_FEED": 8
     },
-    "agent_proven_cures": 56,
-    "agent_invoked": 212,
-    "m1_auto_posted": 264,
+    "agent_proven_cures": 55,
+    "agent_invoked": 209,
+    "m1_auto_posted": 252,
     "m1_auto_posted_wrong": 0,
-    "m1_false_alarms": 0,
+    "m1_false_alarms": 8,
     "b1_auto_posted_wrong": 2,
     "report_defects_present": 2
   },
@@ -82,17 +82,17 @@
     "window_slack_scale": 1.5,
     "report_defect_rate": 0.06,
     "missing_fee_rows_priced_naively": false,
-    "verified": 24,
+    "verified": 30,
     "auto_posted_wrong": 0,
-    "agent_repaired": 5,
+    "agent_repaired": 7,
     "agent_repairs_by_action": {
-      "SEARCH_FEED": 5
+      "SEARCH_FEED": 7
     },
-    "agent_proven_cures": 73,
-    "agent_invoked": 221,
-    "m1_auto_posted": 256,
+    "agent_proven_cures": 66,
+    "agent_invoked": 217,
+    "m1_auto_posted": 249,
     "m1_auto_posted_wrong": 0,
-    "m1_false_alarms": 0,
+    "m1_false_alarms": 7,
     "b1_auto_posted_wrong": 16,
     "report_defects_present": 16
   },
@@ -103,12 +103,12 @@
     "missing_fee_rows_priced_naively": true,
     "verified": 14,
     "auto_posted_wrong": 0,
-    "agent_repaired": 3,
+    "agent_repaired": 2,
     "agent_repairs_by_action": {
-      "SEARCH_FEED": 3
+      "SEARCH_FEED": 2
     },
-    "agent_proven_cures": 28,
-    "agent_invoked": 229,
+    "agent_proven_cures": 34,
+    "agent_invoked": 228,
     "m1_auto_posted": 243,
     "m1_auto_posted_wrong": 0,
     "m1_false_alarms": 13,

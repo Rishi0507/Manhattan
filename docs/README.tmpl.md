@@ -193,6 +193,40 @@ A validation layer is only usable if it leaves correct reports alone, so this is
 the number that decides whether it ships: **{{ .D.FeeFalseAlarms }} false alarms
 on {{ .D.FeeFAClean }} clean reports** ({{ pct1 .D.FeeFAPct }}).
 
+**The generator does not share the verifier's fee schedule.** A false-alarm
+count measured against the verifier's own constants would be arithmetic agreeing
+with itself: re-derive a fee from the numbers that produced it and a clean report
+cannot fail, so a zero would mean nothing. The synthetic data is therefore priced
+under a deliberately different and equally plausible convention, and the verifier
+is never told which:
+
+| | generator | verifier assumes |
+|---|---|---|
+| fee rounding | half to even | half away from zero |
+| tax rounding | truncated | half away from zero |
+| minimum fee, card and netbanking | 2 rupees | none |
+| maximum fee, EMI | 1,500 rupees | none |
+
+Both arms are run rather than argued about. `MANHATTAN_FEE_MODEL=shared`
+reproduces the control:
+
+| across {{ .S.Settlements }} settlements | verifier knows the schedule | verifier does not |
+|---|---:|---:|
+| composite posted | 731 | **{{ .D.M1Posted }}** |
+| **composite posted wrong** | **0** | **{{ .D.M1Wrong }}** |
+| reconstruction posted | 212 | {{ .S.AutoPosted }} |
+| false alarms on clean reports | 0 | **{{ .D.FeeFalseAlarms }}** |
+
+The right-hand column is the one published throughout this document, because it
+is the only one that is falsifiable. Not knowing the schedule costs 25 postings,
+35 reconstructions, and {{ .D.FeeFalseAlarms }} clean reports wrongly held out of
+{{ .D.FeeFAClean }}, which is {{ pct1 .D.FeeFAPct }} of them.
+
+**The wrong-posting count does not move.** That is the result worth having. The
+guarantee that nothing is posted unless the arithmetic closes does not depend on
+the verifier having been handed the fee schedule that produced the data, which is
+exactly the assumption a real deployment cannot make.
+
 It gets there by taking the counterparty's data more seriously than its own
 config. Real reports drop a per-payment fee row on some payments, and large
 merchants are signed below the published schedule. Pricing a missing row at the

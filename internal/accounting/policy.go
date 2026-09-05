@@ -100,6 +100,47 @@ func DefaultPolicy() Policy {
 	}
 }
 
+// GeneratorPolicy is the schedule the synthetic data is BUILT with, and it is
+// deliberately not the schedule the verifier assumes.
+//
+// This exists to make one number falsifiable. The headline false-alarm figure
+// says the system does not flag clean settlement reports as defective, and it
+// is the number that decides whether an operations team can run this without
+// being buried in bogus exceptions. If the generator and the verifier share a
+// fee model, that figure is arithmetic agreeing with itself: the verifier
+// re-derives fees using the very constants that produced them, so a clean
+// report cannot fail, and a result of zero means nothing at all.
+//
+// So the generator prices the same transactions under a different, equally
+// plausible convention, and the verifier is never told. The differences are
+// the ones real schedules actually vary on:
+//
+//   - fees rounded half to even rather than half away from zero, which moves
+//     a paise on roughly half of the exact-half cases
+//   - tax truncated rather than rounded, which biases every tax down
+//   - a per-transaction minimum fee on card and netbanking, which the
+//     verifier's schedule does not carry at all
+//   - a cap on EMI, likewise absent
+//
+// The verifier now has to absorb this through the rounding band and the
+// per-merchant fee calibration rather than through knowing the answer. Whatever
+// false-alarm count comes out the other side is a measurement. A non-zero
+// result is more informative than the zero it replaces.
+func GeneratorPolicy() Policy {
+	p := DefaultPolicy()
+	p.Version = "fees_2026_08_generator"
+	p.FeeRounding = money.RoundHalfEven
+	p.TaxRounding = money.RoundFloor
+	p.MinFee = map[model.Instrument]money.Paise{
+		model.InstrumentCard:       money.FromRupees(2),
+		model.InstrumentNetbanking: money.FromRupees(2),
+	}
+	p.MaxFee = map[model.Instrument]money.Paise{
+		model.InstrumentEMI: money.FromRupees(1500),
+	}
+	return p
+}
+
 // MDR computes the merchant discount rate on one transaction, applying any
 // configured floor and cap.
 func (p Policy) MDR(inst model.Instrument, gross money.Paise) money.Paise {

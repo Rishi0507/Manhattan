@@ -224,6 +224,21 @@ func (p *groqProvider) structuredOnce(ctx context.Context, req Request) (*Result
 	if maxTokens <= 0 {
 		maxTokens = 2048
 	}
+	// Clamp the output budget to what the tier will accept.
+	//
+	// This endpoint rates output tokens per minute, and it does not merely
+	// throttle a request that asks for more than the whole minute's allowance,
+	// it refuses it: "Request too large ... Limit 1000, Requested 2048". So a
+	// caller's perfectly reasonable 2048 was rejected before the model ran, on
+	// every single call to a model whose limit is 1000, and the batch recorded
+	// each one as an exception the agent could not clear. Nothing in the output
+	// suggested the requests were never attempted.
+	//
+	// The ceiling is per tier rather than per model, so it is configuration
+	// rather than a table that would go stale.
+	if maxTokens > groqMaxOutput {
+		maxTokens = groqMaxOutput
+	}
 
 	messages := []groqMessage{
 		{Role: "system", Content: req.System + "\n\nRespond with valid JSON only."},
@@ -430,12 +445,21 @@ func strictSchema(in map[string]any) map[string]any {
 		return nil
 	}
 
+	// The schemas in this repository write "required" as a []string and this
+	// once only handled []any, so the list read as empty and every field,
+	// including the genuinely required ones, was marked optional. Both shapes
+	// are accepted now, because a Go literal may reasonably be either.
 	wasRequired := map[string]bool{}
-	if req, ok := in["required"].([]any); ok {
+	switch req := in["required"].(type) {
+	case []any:
 		for _, r := range req {
 			if name, ok := r.(string); ok {
 				wasRequired[name] = true
 			}
+		}
+	case []string:
+		for _, name := range req {
+			wasRequired[name] = true
 		}
 	}
 
@@ -495,13 +519,23 @@ func strictSchema(in map[string]any) map[string]any {
 
 // nullable widens a property's type so it may be present and empty.
 //
-// An enum is left alone: adding null to a closed vocabulary would let the
-// model answer "none of these", and the vocabulary being closed is a property
-// other tests depend on.
+// Strict mode requires every property to be listed as required, so a field the
+// schema treated as optional must now be emitted even where it does not apply.
+// A model asked for a value it does not have correctly answers null, and the
+// declared type then rejects the whole response.
+//
+// An enum needs the same treatment and an earlier version skipped it, on the
+// reasoning that adding null to a closed vocabulary would let the model answer
+// "none of these". That was the wrong call. The vocabulary stays closed for
+// every answer that IS one: null is not a member of it, it is the absence of a
+// member, which is precisely what the field being optional already meant. And
+// skipping it meant an optional enum could not be filled in at all, so every
+// planning call that did not involve that field failed outright, which is a
+// far worse outcome than the one the exclusion was guarding against.
+//
+// JSON Schema validates enum membership as well as type, so null has to be
+// added to both or the widened type is not enough on its own.
 func nullable(spec map[string]any) map[string]any {
-	if _, hasEnum := spec["enum"]; hasEnum {
-		return spec
-	}
 	switch t := spec["type"].(type) {
 	case string:
 		if t == "null" {
@@ -516,5 +550,34 @@ func nullable(spec map[string]any) map[string]any {
 		}
 		spec["type"] = append(t, "null")
 	}
+
+	switch vals := spec["enum"].(type) {
+	case []any:
+		for _, v := range vals {
+			if v == nil {
+				return spec
+			}
+		}
+		spec["enum"] = append(vals, nil)
+	case []string:
+		widened := make([]any, len(vals), len(vals)+1)
+		for i, v := range vals {
+			widened[i] = v
+		}
+		spec["enum"] = append(widened, nil)
+	}
 	return spec
 }
+
+// groqMaxOutput is the largest output budget a request may ask for.
+//
+// 900 leaves headroom under the free tier's 1000 output tokens per minute. A
+// paid tier raises the limit and GROQ_MAX_OUTPUT raises this with it.
+var groqMaxOutput = func() int {
+	if v := os.Getenv("GROQ_MAX_OUTPUT"); v != "" {
+		if n, err := strconv.Atoi(v); err == nil && n > 0 {
+			return n
+		}
+	}
+	return 900
+}()

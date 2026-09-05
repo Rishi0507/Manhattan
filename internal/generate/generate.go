@@ -3,6 +3,7 @@ package generate
 import (
 	"fmt"
 	"math/rand"
+	"os"
 	"sort"
 	"strings"
 	"time"
@@ -133,7 +134,7 @@ func DefaultSpec() Spec {
 		DeclareTxnCount:  true,
 		JoinDisputes:     true,
 		ReportDefectRate: 0.06,
-		Policy:           accounting.DefaultPolicy(),
+		Policy:           generatorPolicy(),
 		Start:            time.Date(2026, 8, 1, 0, 0, 0, 0, time.UTC),
 	}
 }
@@ -601,4 +602,20 @@ func contains(xs []string, v string) bool {
 		}
 	}
 	return false
+}
+
+// generatorPolicy selects the schedule the synthetic data is built with.
+//
+// The divergent schedule is the default because a false-alarm figure measured
+// against the verifier's own constants is not a measurement. The shared
+// schedule is kept reachable so the two arms can be compared directly, which
+// is the only way to show the divergence actually changes the data rather than
+// being asserted to:
+//
+//	MANHATTAN_FEE_MODEL=shared ./bin/manhattan bench -n 120
+func generatorPolicy() accounting.Policy {
+	if os.Getenv("MANHATTAN_FEE_MODEL") == "shared" {
+		return accounting.DefaultPolicy()
+	}
+	return accounting.GeneratorPolicy()
 }

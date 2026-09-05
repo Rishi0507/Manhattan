@@ -1,46 +1,46 @@
 {
-  "run_id": "run_20260904_1845",
+  "run_id": "run_20260905_0405",
   "settlements": 996,
   "flags": null,
   "status_counts": {
-    "AMBIGUOUS": 249,
-    "NARROWING_SENSITIVE": 3,
-    "UNDERDETERMINED": 477,
-    "UNRESOLVED": 55,
-    "VERIFIED": 212
+    "AMBIGUOUS": 263,
+    "NARROWING_SENSITIVE": 1,
+    "UNDERDETERMINED": 488,
+    "UNRESOLVED": 67,
+    "VERIFIED": 177
   },
   "flag_counts": {
     "AMOUNT_ENTROPY_INSUFFICIENT": 332,
-    "FEE_ANOMALY": 250,
-    "LATTICE_CORRECTED": 136,
-    "RESOLVED_BY_HYPOTHESIS": 123,
-    "SIGNED_ITEMS_PRESENT": 454
+    "FEE_ANOMALY": 244,
+    "LATTICE_CORRECTED": 2,
+    "RESOLVED_BY_HYPOTHESIS": 97,
+    "SIGNED_ITEMS_PRESENT": 460
   },
-  "auto_posted": 212,
+  "auto_posted": 177,
   "auto_posted_wrong": 0,
-  "exceptions": 784,
+  "exceptions": 819,
   "throughput": {
-    "wall_clock_s": 94.9746281,
-    "settlements_per_hour": 37753.24075209514,
-    "median_latency_ms": 21.71,
-    "p95_latency_ms": 211.654,
-    "peak_memory_mb": 851.1758804321289
+    "wall_clock_s": 100.8746667,
+    "settlements_per_hour": 35545.098856817334,
+    "median_latency_ms": 22.77,
+    "p95_latency_ms": 221.819,
+    "peak_memory_mb": 792.9242935180664
   },
   "cost": {
-    "model_calls": 2976,
+    "model_calls": 3083,
     "parse_calls": 996,
-    "agent_calls": 1234,
-    "exception_rate": 0.7871485943775101,
-    "input_tokens": 2200099,
-    "output_tokens": 236988,
+    "agent_calls": 1289,
+    "exception_rate": 0.822289156626506,
+    "input_tokens": 2284562,
+    "output_tokens": 242436,
     "inr": 0,
-    "inr_per_1k_settlements": 1486.3637349397593
+    "inr_per_1k_settlements": 1535.7426907630522
   },
   "aggregate_drop_rates": {
-    "already_reconciled": 0.08694940091253393,
-    "mid_mismatch": 0.13768693368031842,
-    "outside_settlement_window": 0.7696845323184878,
-    "zero_net_contribution": 0.000019582273140392713
+    "already_reconciled": 0.08694941281929722,
+    "mid_mismatch": 0.1376869525350283,
+    "outside_settlement_window": 0.7695831659254159,
+    "zero_net_contribution": 0.000019719214813731475
   },
   "replay_seed": 20260826,
   "policy_version": "fees_2026_08"
